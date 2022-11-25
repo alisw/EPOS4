@@ -1,0 +1,172 @@
+echo off
+
+#define  bim00   0.00 
+#define  bi100  20.00
+
+#define  npo100  50000
+#define  npoXX  50000
+#define  npo00  0
+
+
+#define  bim03  2.55   #define  bim05  3.32   
+#define  bim06  3.64   #define  bim10  4.73     #define  bim12  5.16 
+#define  bim15  5.81   #define  bim20  6.68   
+#define  bim25  7.46   #define  bim30  8.17  
+#define  bim35  8.83   #define  bim40  9.42   
+#define  bim45  10.00  #define  bim50  10.55  
+#define  bim55  11.10  #define  bim60  11.57  
+#define  bim65  12.03  #define  bim70  12.48  
+#define  bim75  12.93  #define  bim80  13.37  
+#define  bim85  13.87  #define  bim90  14.37  
+#define  bim92  14.57  #define  bim95  14.87  
+
+#if1 ma !--------------------take ma
+         #define npo05 2.63
+         #define npo10 5.25
+         #define npo15 7.88
+         #define npo20 11.67
+         #define npo25 20.56
+         #define npo30 39.08
+         #define npo35 81.53
+         #define npo40 129.5
+         #define npo45 180.5
+         #define npo50 241.0
+         #define npo55 316.3
+         #define npo60 408.6
+         #define npo65 523.9
+         #define npo70 670.6
+         #define npo75 855.3
+         #define npo80 1074.
+         #define npo85 1348.
+         #define npo90 1675.
+         #define npo95 2039.
+#fi
+#if1 #not ma  !------------------take my 
+         #define npo05 2.19
+         #define npo10 4.38
+         #define npo15 6.57
+         #define npo20 8.76
+         #define npo25 13.06
+         #define npo30 20.19
+         #define npo35 32.24
+         #define npo40 51.16
+         #define npo45 75.71
+         #define npo50 112.4
+         #define npo55 163.0
+         #define npo60 231.5
+         #define npo65 314.4
+         #define npo70 436.8
+         #define npo75 601.6
+         #define npo80 783.8
+         #define npo85 992.6
+         #define npo90 1277.
+         #define npo95 1652.
+#fi
+
+
+CentralityClass cc20
+CentralityClass 1    0     bim05  1 !1  new 3.124c
+CentralityClass 2    bim05 bim10  1 !1
+CentralityClass 3    bim10 bim15  1 !2
+CentralityClass 4    bim15 bim20  1 !2
+CentralityClass 5    bim20 bim25  1 !2
+CentralityClass 6    bim25 bim30  1 !2
+CentralityClass 7    bim30 bim35  2 !4
+CentralityClass 8    bim35 bim40  2 !4
+CentralityClass 9    bim40 bim45  2 !4
+CentralityClass 10   bim45 bim50  2 !4
+CentralityClass 11   bim50 bim55  2 !4
+CentralityClass 12   bim55 bim60  4 !4
+CentralityClass 13   bim60 bim65  4 !4
+CentralityClass 14   bim65 bim70  4 !4
+CentralityClass 15   bim70 bim75  8 !8
+CentralityClass 16   bim75 bim80  8 !8
+CentralityClass 17   bim80 bim85  8 !8
+CentralityClass 18   bim85 bim90  8 !8
+CentralityClass 19   bim90 bim95  8 !8
+CentralityClass 20   bim95 bi100  8 !8
+
+CentralityLimit 0  0
+CentralityLimit 5  bim05
+CentralityLimit 10 bim10
+CentralityLimit 15 bim15
+CentralityLimit 20 bim20
+CentralityLimit 25 bim25
+CentralityLimit 30 bim30
+CentralityLimit 35 bim35
+CentralityLimit 40 bim40
+CentralityLimit 45 bim45
+CentralityLimit 50 bim50
+CentralityLimit 55 bim55
+CentralityLimit 60 bim60
+CentralityLimit 65 bim65
+CentralityLimit 70 bim70
+CentralityLimit 75 bim75
+CentralityLimit 80 bim80
+CentralityLimit 85 bim85
+CentralityLimit 90 bim90
+CentralityLimit 95 bim95
+CentralityLimit 100 bi100
+
+
+set bref80 bim80
+
+#define  bimrange0to10  "::bim00::bim10::"
+#define  bimrange0to20  "::bim00::bim20::"
+#define  bimrange20to40 "::bim20::bim40::"
+#define  bimrange40to60 "::bim40::bim60::"
+#define  bimrange60to80 "::bim60::bim80::"
+
+#define  bimrange0to5   "::bim00::bim05::"
+#define  bimrange5to10  "::bim05::bim10::"
+#define  bimrange10to20 "::bim10::bim20::"
+#define  bimrange20to30 "::bim20::bim30::"
+#define  bimrange30to40 "::bim30::bim40::"
+#define  bimrange40to50 "::bim40::bim50::"
+#define  bimrange50to60 "::bim50::bim60::"
+#define  bimrange60to70 "::bim60::bim70::"
+#define  bimrange70to80 "::bim70::bim80::"
+#define  bimrange80to90 "::bim80::bim90::"
+#define  bimrange90to100 "::bim90::bi100::"
+
+#define  bim0to10  "::bim00::bim10::"
+#define  bim0to20  "::bim00::bim20::"
+#define  bim20to40 "::bim20::bim40::"
+#define  bim40to60 "::bim40::bim60::"
+#define  bim60to80 "::bim60::bim80::"
+
+#define  bim0to5   "::bim00::bim05::"
+#define  bim5to10  "::bim05::bim10::"
+#define  bim10to20 "::bim10::bim20::"
+#define  bim20to30 "::bim20::bim30::"
+#define  bim30to40 "::bim30::bim40::"
+#define  bim40to50 "::bim40::bim50::"
+#define  bim50to60 "::bim50::bim60::"
+#define  bim60to70 "::bim60::bim70::"
+#define  bim70to80 "::bim70::bim80::"
+#define  bim80to90 "::bim80::bim90::"
+#define  bim90to100 "::bim90::bi100::"
+
+
+#define  nporange0to5    "::npo95::npoXX::"
+#define  nporange5to10   "::npo90::npo95::"
+#define  nporange10to20  "::npo80::npo90::"
+#define  nporange20to30  "::npo70::npo80::"
+#define  nporange30to40  "::npo60::npo70::"
+#define  nporange40to50  "::npo50::npo60::"
+#define  nporange50to60  "::npo40::npo50::"
+#define  nporange60to70  "::npo30::npo40::"
+#define  nporange70to80  "::npo20::npo30::"
+#define  nporange80to90  "::npo10::npo20::"
+#define  nporange90to100 "::npo00::npo10::"
+
+#define  nporange20to40  "::npo60::npo80::"
+#define  nporange40to60  "::npo40::npo60::"
+#define  nporange60to80  "::npo20::npo40::"
+#define  nporange60to90  "::npo10::npo40::"
+#define  nporange80to100 "::npo00::npo20::"
+#define  nporange0to20   "::npo80::npoXX::"
+#define  nporange0to10   "::npo90::npoXX::"
+
+
+echo on

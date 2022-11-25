@@ -1,0 +1,199 @@
+echo off
+
+#define  bi100  20.00
+#define  bimXX  20.00
+#define  bim00   0.00 
+
+#define  npo100  50000
+#define  npoXX  50000
+#define  npo100.00  50000
+#define  npo00  0
+
+!========> After copy/paste, remove manually '.00' for bim <=========
+#define2  bim01   1.53    1.50         3  
+#define2  bim02   2.18    2.23        -5  
+#define2  bim025  2.44    2.46        -2  
+#define2  bim03   2.68    2.68         0  
+#define2  bim05   3.48    3.45         3  
+#define2  bim06   3.81    3.78         3  
+#define2  bim075  4.26    4.22         4  
+#define2  bim10   4.92    4.90         2  
+#define2  bim12   5.39    5.36         3  
+#define2  bim15   6.02    5.99         3  
+#define2  bim20   6.96    6.93         3  
+#define2  bim25   7.77    7.74         3  
+#define2  bim30   8.51    8.48         3  
+#define2  bim35   9.19    9.17         2  
+#define2  bim40   9.82    9.81         1  
+#define2  bim45  10.42   10.40         2  
+#define2  bim50  10.99   10.96         3  
+#define2  bim55  11.52   11.50         2  
+#define2  bim60  12.03   12.0          3  
+#define2  bim65  12.52   12.50         2  
+#define2  bim70  12.99   12.97         2  
+#define2  bim75  13.44   13.43         1  
+#define2  bim80  13.90   13.88         2  
+#define2  bim85  14.37   14.36         1  
+#define2  bim90  14.89   14.89         0  
+#define2  bim92  15.14   15.15        -1  
+#define2  bim95  15.60   15.64        -4  
+
+!from http://cds.cern.ch/record/2118084/
+! bimx used for analysis, whereas bim is used for generating 5% packages  
+         #define bimx03 2.71
+         #define bimx05 3.51
+         #define bimx06 3.84
+         #define bimx10 4.96
+         #define bimx12 5.40
+         #define bimx15 6.08
+         #define bimx20 7.01
+         #define bimx25 7.84
+         #define bimx30 8.59
+         #define bimx35 9.27
+         #define bimx40 9.92
+         #define bimx45 10.5
+         #define bimx50 11.1
+         #define bimx55 11.6
+         #define bimx60 12.1
+         #define bimx65 12.6
+         #define bimx70 13.1
+         #define bimx75 13.6
+         #define bimx80 14.0
+         #define bimx85 14.5
+         #define bimx90 15.0
+         #define bimx92 15.3
+         #define bimx95 15.7
+
+!------------------
+!from http://cds.cern.ch/record/2118084/ :
+!0.0–2.5% 2035     1942
+!2.5–5.0% 1850
+!5.0–7.5% 1666
+!7.5–10.% 1505
+!0–5%  1943±56     1765
+!5–10% 1587±48     1383
+!10–20% 1180±31    983
+!20–30% 786±20     649
+!30–40% 512±15     415
+!40–50% 318±12     250
+!50–60% 183±8      139.65
+!60–70% 96.3±5.8   70.6
+!70–80% 44.9±3.4   32.45 
+!from  https://journals.aps.org/prc/pdf/10.1103/PhysRevC.101.044907 :
+!80-90% 20
+!-----------------
+#define hei100 2119
+#define hei975  1942
+#define hei95 1765
+#define hei925  1585
+#define hei90 1383 
+#define hei80 983
+#define hei70 649
+#define hei60 415   !251
+#define hei50 250   !205
+#define hei40 140
+#define hei30 71    
+#define hei20 32    !40      
+#define hei10 10    !19  (see  2118084 fig 1)   
+#define hei05  5
+#define hei0  0
+
+CentralityLimit 0  0
+CentralityLimit 5  bim05
+CentralityLimit 10 bim10
+CentralityLimit 15 bim15
+CentralityLimit 20 bim20
+CentralityLimit 25 bim25
+CentralityLimit 30 bim30
+CentralityLimit 35 bim35
+CentralityLimit 40 bim40
+CentralityLimit 45 bim45
+CentralityLimit 50 bim50
+CentralityLimit 55 bim55
+CentralityLimit 60 bim60
+CentralityLimit 65 bim65
+CentralityLimit 70 bim70
+CentralityLimit 75 bim75
+CentralityLimit 80 bim80
+CentralityLimit 85 bim85
+CentralityLimit 90 bim90
+CentralityLimit 95 bim95
+CentralityLimit 100 bi100
+
+CentralityClass cc20
+CentralityClass 1    0     bim05  1
+CentralityClass 2    bim05 bim10  1
+CentralityClass 3    bim10 bim15  2
+CentralityClass 4    bim15 bim20  2
+CentralityClass 5    bim20 bim25  2
+CentralityClass 6    bim25 bim30  2
+CentralityClass 7    bim30 bim35  4
+CentralityClass 8    bim35 bim40  4
+CentralityClass 9    bim40 bim45  4
+CentralityClass 10   bim45 bim50  4
+CentralityClass 11   bim50 bim55  4
+CentralityClass 12   bim55 bim60  8
+CentralityClass 13   bim60 bim65  8
+CentralityClass 14   bim65 bim70  16
+CentralityClass 15   bim70 bim75  16
+CentralityClass 16   bim75 bim80  16
+CentralityClass 17   bim80 bim85  16
+CentralityClass 18   bim85 bim90  16
+CentralityClass 19   bim90 bim95  16
+CentralityClass 20   bim95 bi100  16
+
+#if1 mx
+CentralityClass cc20
+CentralityClass 1    0     bim05  1
+CentralityClass 2    bim05 bim10  1
+CentralityClass 3    bim10 bim15  2
+CentralityClass 4    bim15 bim20  2
+CentralityClass 5    bim20 bim25  2
+CentralityClass 6    bim25 bim30  2
+CentralityClass 7    bim30 bim35  2
+CentralityClass 8    bim35 bim40  2
+CentralityClass 9    bim40 bim45  2
+CentralityClass 10   bim45 bim50  2
+CentralityClass 11   bim50 bim55  2
+CentralityClass 12   bim55 bim60  2
+CentralityClass 13   bim60 bim65  2
+CentralityClass 14   bim65 bim70  2
+CentralityClass 15   bim70 bim75  4
+CentralityClass 16   bim75 bim80  4
+CentralityClass 17   bim80 bim85  4
+CentralityClass 18   bim85 bim90  4
+CentralityClass 19   bim90 bim95  4
+CentralityClass 20   bim95 bi100  4
+#fi
+
+#define  bimrange0to10  "::bim00::bim10::"
+#define  bimrange0to20  "::bim00::bim20::"
+#define  bimrange20to40 "::bim20::bim40::"
+#define  bimrange40to60 "::bim40::bim60::"
+#define  bimrange60to80 "::bim60::bim80::"
+#define  bimrange60to90 "::bim60::bim90::"
+#define  bimrange95to100 "::bim95::bi100::"
+#define  bimrange80to100 "::bim80::bi100::"
+
+#define  bimrange0to1   "::bim00::bim01::"
+#define  bimrange0to5   "::bim00::bim05::"
+#define  bimrange5to10  "::bim05::bim10::"
+#define  bimrange10to20 "::bim10::bim20::"
+#define  bimrange20to30 "::bim20::bim30::"
+#define  bimrange30to40 "::bim30::bim40::"
+#define  bimrange40to50 "::bim40::bim50::"
+#define  bimrange50to60 "::bim50::bim60::"
+#define  bimrange60to70 "::bim60::bim70::"
+#define  bimrange70to80 "::bim70::bim80::"
+#define  bimrange80to90 "::bim80::bim90::"
+#define  bimrange90to100 "::bim90::bi100::"
+
+! use: xparas 8 0 0.5 0 100 1 1 1 0. trigger muxevt heirange0to5 
+#define  heirange0to5    "::hei95::heiXX::"
+#define  heirange20to40  "::hei60::hei80::"
+#define  heirange40to60  "::hei40::hei60::"
+#define  heirange60to80  "::hei20::hei40::"
+#define  heirange80to100 "::hei00::hei20::"
+#define  heirange0to20   "::hei80::hei100::"
+
+echo on

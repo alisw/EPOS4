@@ -1,0 +1,133 @@
+echo off
+
+#define  bim00    0.00 
+#define  bimXX   20.00
+#define  bim100  20.00
+
+#define  bim01  0.67
+#define  bim025 1.06
+#define  bim03  1.16
+#define  bim05  1.50
+#define  bim06  1.65
+#define  bim075 1.84
+#define  bim10  2.13
+#define  bim12  2.33  
+#define  bim15  2.60 
+#define  bim20  3.00 
+#define  bim25  3.36 
+#define  bim30  3.68 
+#define  bim35  3.98 
+#define  bim40  4.26 
+#define  bim45  4.52 
+#define  bim50  4.78 
+#define  bim55  5.03 
+#define  bim60  5.27 
+#define  bim65  5.53 
+#define  bim70  5.79 
+#define  bim75  6.07
+#define  bim80  6.38
+#define  bim85  6.74 
+#define  bim90  7.19
+#define  bim92  7.42 
+#define  bim95  7.88
+
+#define  bimrange00to05  "::bim00::bim05::"
+#define  bimrange05to10  "::bim05::bim10::"
+#define  bimrange00to10  "::bim00::bim10::"
+#define  bimrange10to20  "::bim10::bim20::"
+#define  bimrange20to30  "::bim20::bim30::"
+#define  bimrange30to40  "::bim30::bim40::"
+#define  bimrange40to50  "::bim40::bim50::"
+#define  bimrange50to60  "::bim50::bim60::"
+#define  bimrange60to70  "::bim60::bim70::"
+#define  bimrange70to80  "::bim70::bim80::"
+#define  bimrange80to90  "::bim80::bim90::"
+#define  bimrange90to100 "::bim90::bim100::"
+
+CentralityLimit 0   0
+CentralityLimit 5   bim05
+CentralityLimit 10  bim10
+CentralityLimit 15  bim15
+CentralityLimit 20  bim20
+CentralityLimit 25  bim25
+CentralityLimit 30  bim30
+CentralityLimit 35  bim35
+CentralityLimit 40  bim40
+CentralityLimit 45  bim45
+CentralityLimit 50  bim50
+CentralityLimit 55  bim55
+CentralityLimit 60  bim60
+CentralityLimit 65  bim65
+CentralityLimit 70  bim70
+CentralityLimit 75  bim75
+CentralityLimit 80  bim80
+CentralityLimit 85  bim85
+CentralityLimit 90  bim90
+CentralityLimit 95  bim95
+CentralityLimit 100 bim100
+
+CentralityClass cc20
+CentralityClass 1    0     bim05   1
+CentralityClass 2    bim05 bim10   1
+CentralityClass 3    bim10 bim15   2
+CentralityClass 4    bim15 bim20   2
+CentralityClass 5    bim20 bim25   2
+CentralityClass 6    bim25 bim30   2
+CentralityClass 7    bim30 bim35   4
+CentralityClass 8    bim35 bim40   4
+CentralityClass 9    bim40 bim45   4
+CentralityClass 10   bim45 bim50   4
+CentralityClass 11   bim50 bim55   4
+CentralityClass 12   bim55 bim60   8
+CentralityClass 13   bim60 bim65   8
+CentralityClass 14   bim65 bim70   16
+CentralityClass 15   bim70 bim75   16
+CentralityClass 16   bim75 bim80   16
+CentralityClass 17   bim80 bim85   16
+CentralityClass 18   bim85 bim90   16
+CentralityClass 19   bim90 bim95   16
+CentralityClass 20   bim95 bim100  16
+
+#define  centmult00   0.0
+#define  centmult100  1000
+
+!For pT>0 + |eta|<0.5
+#if1 #not my
+  #define  centmult10  3.24
+  #define  centmult20  7.65
+  #define  centmult30  14.97
+  #define  centmult40  25.51
+  #define  centmult50  39.36
+  #define  centmult60  59.17
+  #define  centmult70  88.03
+  #define  centmult80  129.9
+  #define  centmult90  190.9
+  #define  centmult95  236.0
+#fi
+#if1 my
+  #define  centmult10  3.40
+  #define  centmult20  7.89
+  #define  centmult30  14.07
+  #define  centmult40  21.50
+  #define  centmult50  31.16
+  #define  centmult60  44.55
+  #define  centmult70  61.33
+  #define  centmult80  83.83
+  #define  centmult90  116.7
+  #define  centmult95  137.9
+#fi
+
+#define  centmult00to05   "::centmult95::centmult100::"
+#define  centmult05to10   "::centmult90::centmult95::"
+#define  centmult10to20   "::centmult80::centmult90::"
+#define  centmult20to30   "::centmult70::centmult80::"
+#define  centmult30to40   "::centmult60::centmult70::"
+#define  centmult40to50   "::centmult50::centmult60::"
+#define  centmult50to60   "::centmult40::centmult50::"
+#define  centmult60to70   "::centmult30::centmult40::"
+#define  centmult70to80   "::centmult20::centmult30::"
+#define  centmult80to90   "::centmult10::centmult20::"
+#define  centmult90to100  "::centmult00::centmult10::"
+#define  centmult00to100  "::centmult00::centmult100::"
+
+echo on

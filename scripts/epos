@@ -1,0 +1,298 @@
+#!/bin/sh 
+if [ $# -le 0 ]; then
+    echo 
+    echo  " syntax:  epos [-hepmc] [-root] [-cproot] [-q|-c] "
+    echo  "            [-eee[e] \$e1 \$e2 \$e3] [-n \$n] \$filen [\$n]"
+    echo 
+    exit 1
+fi
+
+SRC='src/'   
+SRCEXT='srcext/'
+CONF='config/'
+
+if [ $OPT = './' ]; then 
+    OPX=`pwd`/
+else
+    OPX=$OPT
+fi
+
+hepmc='no'
+root='no'
+cproot='no'
+scr='no'
+ext=''
+num='0'
+prone=''
+mi1='no'
+mi5='no'
+system="i"
+ext1='-'
+ext2='-'
+ext3='-'
+ext4='-'
+tmp='-'
+end=0
+gefac=1
+
+while [ $end -eq 0 ];
+do
+   end=1
+   case "$1"
+   in
+   -n) shift 
+         num="$1"
+         shift
+         end=0
+         ;;
+   -e1) shift 
+         ext1="$1"
+         shift
+         end=0
+         ;;
+   -e2) shift 
+         ext2="$1"
+         shift
+         end=0
+         ;;
+   -e3) shift 
+         ext3="$1"
+         shift
+         end=0
+         ;;
+   -eeee) shift 
+         ext1="$1"
+         shift
+         ext2="$1"
+         shift
+         ext3="$1"
+         shift
+         ext4="0"
+         end=0
+         ;;
+   -eee) shift 
+         ext1="$1"
+         shift
+         ext2="$1"
+         shift
+         ext3="$1"
+         shift
+         end=0
+         ;;
+   -ee) shift 
+         ext1="$1"
+         shift
+         ext2="$1"
+         shift
+         end=0
+         ;;
+   -hepmc)  shift 
+         hepmc="yes"
+         end=0
+         ;;
+   -root)  shift 
+         root="yes"
+         end=0
+         ;;
+   -gf) shift 
+         gefac=$1
+         shift
+         end=0
+         ;;
+   -cproot)  shift  
+         cproot="yes"
+         end=0   
+         ;;   
+   -scr)  shift  
+         system="-q"
+         end=0   
+         ;;   
+   -q)  shift  
+         system="-q"
+         end=0   
+         ;;   
+   -c)  shift  
+         system="-c"
+         end=0   
+         ;;   
+   -1)  shift  
+         mi1="yes"
+         end=0   
+         ;;   
+   -5)  shift  
+         mi5="yes"
+         end=0   
+         ;;   
+   esac
+done
+
+filei=$1
+
+shift  
+if [ $# -gt 0 ]; then
+    num="$1"
+fi
+
+
+file=$filei
+if [ ! "$ext1" = "-" ]; then
+file=$file$ext1
+fi
+if [ ! "$ext2" = "-" ]; then
+file=$file$ext2
+fi
+if [ ! "$ext3" = "-" ]; then
+file=$file$ext3
+fi
+if  [ ! "$file" = "$filei" ]; then
+echo cp $filei.optns $file.optns
+     cp $filei.optns $file.optns
+     tmp=$file.optns
+fi
+ 
+if [ ! -f ${OPX}${file}.optns ]; then
+echo ${OPX}${file}.optns "does not exist"
+exit
+fi
+
+rootcproot=$root$cproot
+
+one=${file}
+if [ "$num" != "0" ]; then
+  one=${file}"-"${num}
+fi
+cp ${OPX}${file}.optns ${OPX}z-${one}.optns
+
+rm -f ${CHK}z-${one}.check 
+rm -f ${CHK}z-${one}.data 
+rm -f ${CHK}z-${one}.copy 
+rm -f ${CHK}z-${one}.copyDo1 
+rm -f ${CHK}z-${one}.copyDo2 
+rm -f ${CHK}z-${one}.log 
+
+gunzip -c ${EPO}${SRC}KWt/eos4f.eos.gz > z-eos4f.eos
+
+seedj=111111111
+seedi=222222222    
+seedspo=`date  '+%N'`
+
+#---------------------------------------------------------------------
+clinput=z-${one}'.clinput'
+ echo "!fname mtr ${CHK}z-${one}.mtr" > $clinput
+ echo "set seedj $seedj  set seedi $seedi" >> $clinput
+ echo "echo off" >> $clinput
+ echo "rootcproot $rootcproot" >> $clinput
+ echo "system $system" >> $clinput
+ echo "ext1 $ext1" >> $clinput
+ echo "ext3 $ext3" >> $clinput
+ echo "ext4 $ext4" >> $clinput
+ echo "set gefac $gefac" >> $clinput
+ echo "!!!beginoptns spherio !No longer used." >> $clinput
+ echo "!!!...                !See version < 3118  " >> $clinput
+ echo "!!!endoptns spherio   !if needed again         " >> $clinput
+ echo "fname pathep $EPO" >> $clinput
+ echo "!-------HQ--------" >> $clinput
+ echo "fname user1  ${EPO}${SRCEXT}VOt/" >> $clinput
+ echo "fname user2  ${HTO}z-${one}.hq" >> $clinput
+ echo "fname user3  ${EPO}${SRCEXT}URt/" >> $clinput
+ echo "!-------HQ END--------" >> $clinput
+ echo "fname pathpdf ${EPO}${SRC}TPt/" >> $clinput
+ echo "fname histo  ${HTO}z-${one}.histo" >> $clinput
+ echo "fname check  ${CHK}z-${one}.check" >> $clinput
+ echo "fname copy   ${CHK}z-${one}.copy" >> $clinput
+ echo "fname log    ${CHK}z-${one}.log" >> $clinput
+ echo "fname data   ${CHK}z-${one}.data" >> $clinput
+ echo "fname initl  ${EPO}${SRC}KWt/aa.i" >> $clinput
+ echo "fname inidi  ${EPO}${SRC}TPt/di.i              " >> $clinput
+ echo "fname inidr  ${EPO}${SRC}KWt/dr.i              " >> $clinput
+ echo "fname iniev  ${EPO}${SRC}KWt/ev.i   " >> $clinput
+ echo "fname inirj  ${EPO}${SRC}KWt/rj.i" >> $clinput
+ echo "fname inics  ${EPO}${SRC}TPt/cs.i" >> $clinput
+ echo "fname inigrv ${EPO}${SRC}grv.i" >> $clinput
+ echo "fname partab ${EPO}${SRCEXT}YK/ptl6.data" >> $clinput
+ echo "fname dectab ${EPO}${SRCEXT}YK/dky6.data" >> $clinput
+ echo "fname hpf srcext/UR/tables.dat " >> $clinput
+ echo "fqgsjet dat   ${EPO}${SRC}qgsjet/qgsjet.dat" >> $clinput
+ echo "fqgsjet ncs   ${EPO}${SRC}qgsjet/qgsjet.ncs" >> $clinput
+ echo "fqgsjetII dat   ${EPO}${SRC}qgsjetII/qgsdat-II-03" >> $clinput
+ echo "fqgsjetII ncs   ${EPO}${SRC}qgsjetII/sectnu-II-03" >> $clinput
+ echo "nodecay 1220" >> $clinput
+ echo "nodecay -1220" >> $clinput
+ echo "nodecay 120" >> $clinput
+ echo "nodecay -120" >> $clinput
+ echo "nodecay 130" >> $clinput
+ echo "nodecay -130" >> $clinput
+ echo "nodecay -20" >> $clinput
+ echo "nodecay 14" >> $clinput
+ echo "nodecay -14" >> $clinput
+ echo "nodecay 16" >> $clinput
+ echo "nodecay -16" >> $clinput
+ echo "echo on" >> $clinput
+ echo "input  ${EPO}${CONF}parbf.i" >> $clinput
+ echo "input ${OPX}z-${one}.optns" >> $clinput
+ echo "input  ${EPO}${SRC}KWn/paraf.i" >> $clinput
+ echo "input  ${EPO}${CONF}partx.i" >> $clinput
+ echo "runprogram" >> $clinput
+ echo "stopprogram" >> $clinput
+# to use gdb, type "epos ..." as usually, then in gdb type "run", then "z-clinput"  
+#gdb ${OBJ}epos$EPOVSN/Xepos 
+time ${LIBDIR}/Xepos -n <<EOF
+$clinput
+EOF
+rm $clinput
+if [ -s ${CHK}z-${one}.data ]; then
+  echo "###############################################################"
+  echo "      output written to ${CHK}z-${one}.data"
+  echo "###############################################################"
+else
+  rm -f ${CHK}z-${one}.data
+fi 
+rm -f ${CHK}z-${one}.dump
+if [ "$root" = "no" ]; then 
+rm -f ${CHK}z-${one}.root
+fi
+if [ ! -s ${CHK}z-${one}.check ]; then
+  rm -f ${CHK}z-${one}.check
+fi
+if [ ! -s ${HTO}z-${one}.histo ]; then
+  rm -f ${HTO}z-${one}.histo
+fi
+if [ ! -s ${HTO}z-${one}.hq ]; then
+  rm -f ${HTO}z-${one}.hq
+fi
+if [ ! -s ${CHK}z-${one}.hepmc ]; then
+  rm -f ${CHK}z-${one}.hepmc
+fi
+if [ -s ${CHK}z-${one}.hepmc ]; then
+ if [ "$hepmc" = "no" ]; then 
+  rm -f ${CHK}z-${one}.hepmc
+ fi
+fi
+
+rm -f ${OPX}z-${one}.optns
+rm -f ${CHK}z-${one}.log
+rm -f ${CHK}z-${one}.copy
+rm -f ${CHK}z-${one}.copyDo1
+rm -f ${CHK}z-${one}.copyDo2
+rm -f ${HTO}z-${one}.ztr
+rm -f ${CHK}z-${one}.dataR
+
+rm -f z-eos4f.eos
+
+if [ ! "$tmp" = "-" ]; then
+rm -v $tmp 
+fi
+
+if [ -s ${CHK}z-${one}.see ]; then
+rm -f ${CHK}z-${one}.see
+fi
+if [ "$cproot" = "yes" ]; then
+rm -f ${OPX}z-${one}.optns
+fi
+if [ "$2" = "y-" ]; then
+rm -f ${OPX}z-${one}.optns
+fi
+rm -f gmon.out
+date
+exit
+

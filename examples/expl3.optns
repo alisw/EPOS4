@@ -1,0 +1,98 @@
+!--------------------------------------------------------------------
+!           proton-proton collision no hydro no hadronic cascade
+!--------------------------------------------------------------------
+
+!---------------------------------------
+!            Define run
+!---------------------------------------
+
+application hadron !hadron-hadron, hadron-nucleus, or nucleus-nucleus                                                 
+set laproj 1 !projectile atomic number
+set maproj 1 !projectile mass number
+set latarg 1 !target atomic number
+set matarg 1 !target mass number
+set ecms 7000 !sqrt(s)_pp
+set istmax 25 !max status considered for storage 
+set iranphi 1 !for internal use. if iranphi=1 event will be rotated such that 
+              !the impact parameter angle and the (n=2) event plane angle
+              !(based on string segments) coincide. Particles rotated back at the end. 
+ftime on     !string formation time non-zero
+!suppressed decays: 
+nodecays 
+ 110 20 2130 -2130 2230 -2230 1130 -1130 1330 -1330 2330 -2330 3331 -3331 
+end
+
+set ninicon 1            !number of initial conditions used for hydro evolution
+core off                 !core/corona not activated
+hydro off                !hydro not activated
+eos off                  !eos not activated
+hacas off                !hadronic cascade not activated  
+set nfull 200            !number of events
+set nfreeze 1            !number of freeze out events per hydro event 
+set modsho 1             !printout every modsho events
+set centrality 0         !0=min bias 
+
+!fillTree(C1)               !uncomment to get root tree output
+
+!----------------------------------------------------------
+!                   Define analysis
+!----------------------------------------------------------
+
+write "Our first histogram"        !the "write" writes litterally to the output file
+
+beginanalysis 
+  histogram 
+    pt     !variable name (x-axis)    (The pt variable refers to "transverse momentum")
+    numptl !what is counted (yaxis)   (The numptl variable refers to "number of particles")
+    12     !normalisation (see below)
+    0      !xmin  (range for
+    20     !xmax   x variable)   
+    100    !number of bins
+  trigger iptl A+B+1 inf  !do not consider spectators (the iptl variable refers to the particle index in the particle list)
+  trigger rap -1 1        !rapidity range  (The rap variable refers to "rapidity") 
+  set hisfac 0.5          !overall normalization factor
+  idcode 120  idcode -120 !define particle species (see EPOS id codes)   (+-120 are pions)
+  noweak                  !no weak decays  
+endanalysis
+
+!----------------------------------------------------------
+!      Write out final results to output file
+!----------------------------------------------------------
+
+histoweight              !provides event weight
+writearray 3             !provides histogram table (x,y,y-error)
+
+echo off
+
+!##########################################
+!  the normalization is a 
+!    number hijk with the following options
+!##########################################
+!
+!  k  0:  * 1
+!     1:  / number of events
+!     2:  / number of triggered events
+!     4:  / bin-counts
+!     5:  / bin sum
+!     6:  / number of summed bin-counts (yield=1.)
+!     7:  uses same normalization as one histo before
+!
+!  j  0:  * 1
+!     1:  / bin-width
+!     2:  * sigma_total / bin-width
+!     3:  * sigma_diff / bin-width
+!
+!  i  0:  * 1
+!     1:  y => y*x
+!     2:  y => y/x/2/pi (modified for mt0)
+!     3:  kno-scaling
+!     4:  y => y/x**1.5
+!     5:  y => y/x
+!     6:  y => y*xi (for conex, xi=x of the bin)
+!     7:  y => y/x/(x-m)
+!
+!  h  0: normal
+!     1: accumulated
+
+
+

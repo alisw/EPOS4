@@ -1,0 +1,435 @@
+
+########################################################################################################
+# /!\ IMPORTANT REMARKS about idky5.dt /!\
+#
+# By convention (from PDG), antibaryons are written with their own charge, not the charge of their 
+# corresponding particle (for instance  : sigma+ (1130) and asigma- (-1130) are antiparticles).
+# 
+# Decays with >5 daughter particles are neglected because they cannot be read by the program.
+# 
+########################################################################################################
+
+#-------------------------------------------------------------------------------------------------------
+# /!\ TO BE CORRECTED - current "preliminary" channels :
+#  - 350 -> q aq q aq    (mimics the "-> g g" decay channel)
+#  - 553 -> 221 q aq     (marked as "-> omega anything" in PDG, so considered as a "553 -> g g"  
+#                         channel with one gluon going into 221)
+#  - 553 -> -140 140     (marked as "-> D0b X" in PDG, but only possible strong decay channel 
+#                         seen with a D0 is "553 -> g g -> D0 D0b" )
+#  - 555 -> 441 q aq     (mimics the "-> J/Psi g" channel)
+# ----
+#  - 44{6,7,9} -> q aq q aq         (mimics the "-> g g" decay channel)
+#  - 447 -> gamma q aq q aq         (mimics the "-> gamma g g" decay channel)
+#  - 55{0,1,2,3,5,6,7} -> q aq q aq (mimics the "-> g g (g)" decay channel)
+#  - 55{1,6,7} -> gamma q aq q aq   (mimics the "-> gamma g g" decay channel)
+#  - 551 -> 330 q aq                (mimics the "-> eta' g" channel)
+#  - 55{1,6} -> q aq                (mimics the "-> g" channel used to complete the bRatios sum to 1)
+#  - 2140 -> q dq                   (mimics the weak decay of "4" but neglects the quarks coming from
+#                                    the W+ decay)
+#     => READ "UPDATE : 28/10/2021"
+# ---- 
+#  - 706 -> q aq   (mimics )
+#  - 714 -> q aq   (mimics )
+#  - 732 -> q aq   (mimics )
+#     => READ "UPDATE : 06/09/2021"
+# ---- 
+#  - top hadrons -> q aq q dq       (mimics the weak decay ot the top by treating quarks individually ;
+#                                    /!\ is it relevant to define top hadrons decays ???)
+#     => READ "UPDATE : 26/08/2021"
+#  
+#-------------------------------------------------------------------------------------------------------
+
+
+UPDATE : 28/10/2021 (J.Jahan)
+-> EPOS v.3437
+
+The issue found here are inherited from previous modifications toward decays :
+ => READ "UPDATE : 06/09/2021" 
+
+Some partons are still found in final state because of impossible decays. It concerns in particular the 
+following channels (= it has been seen for sure for these channels) :
+- 446 -> (gamma) q aq 4 -4
+- 447 -> gamma q aq 4 -4
+- 550 -> q aq 5 -5
+- 551 -> gamma q aq 5 -5
+
+It seems that the problem comes from the fact that even though energy is conserved when considering 
+masses of the quarks involved, energy conservation is actually violated when considering masses of the 
+mesons that can be formed from those quarks. 
+
+To solve the issue, all following channels has been removed :
+44x / 55x -> [..] 4 -4 / [..] 5 -5
+
+The partons that will bind together are the ones that follow each other in the definition of the 
+decay channel (known from T. Pierog), e.g. in the following case :
+"X -> q_i aq_i q_j aq_j"
+the only mesons that can be formed are (q_i aq_i) and (q_j aq_j) mesons.
+
+Hence, in order to allow all possible mesons formation from these decays, all possible configurations of 
+partons have been considered, i.e. both :
+"X -> q_i aq_i q_j aq_j" 
+"X -> q_j aq_i q_i aq_j"
+
+This modification has also been applied to some other channels implying decays into gluons, like :
+- 557 -> 556 g g
+
+
+The same issue of quarks in the final state was found in the decay of Lambda_c+ (2140)
+ => READ "UPDATE : 26/08/2021"
+
+To solve it, decay channels had been re-written neglecting the partons produced by the decay of the W+ 
+boson. Thus, the decay channels are just made of a quark + diquark, and more specifically keeping the 
+u & d quarks (1 & 2) but changing c quark (4) into a d or s quark (2 or 3), because of the weak decay.
+
+It leads to 2 possible combinations : (1 2 3) or (1 2 2), used to build all possible configurations
+of q + dq then, e.g. for the (1 2 2) combination :
+- 2140 -> 1 2200
+- 2140 -> 2 1200
+- 2140 -> 2 2100
+
+
+/!\ IMPORTANT : all those solutions, in particular about the treatment of quarkonia decays, are intended
+                to be temporary and would require a more consistent treatment in the future, e.g. using 
+                string decays
+
+########################################################################################################
+UPDATE : 06/09/2021 (J.Jahan)
+-> EPOS v.3432
+
+As gluons were found in the final-state particles list, all decays leading to a gluon have been modified
+such that each gluon has been replaced by 1 quark-antiquark pair (obviously both of the same flavour).
+
+The flavour considered was checked to respect the kinematics : sum(M(q/aq)) < M(mother particle) ;
+each flavour has been used with an equivalent weight compared to the other ones.
+
+As it is impossible to define a channel with 6 children, the bRatio("X => g g g") value was added to 
+the bRatio("X => g g") value, which channel has thus been modified to "X => q_i aq_i q_j aq_j" 
+(i,j : flavour indices).
+
+This channel eventually had to be removed from the light mesons decay, because there is no phase space 
+for a 4-body decay. Hence, for 706, 714 and 732, the channel "X => g g" was changed to "X => q_i aq_i".
+
+Particles impacted :
+- 446 {eta_c(2S)}
+- 447 {Psi(2S)} 
+- 449 {chi_c2(3930)} 
+- 550 {eta_b} 
+- 551 {Upsilon(1S)} 
+- 552 {chi_b0(1P)}
+- 553 {chi_b1(1P)} 
+- 555 {chi_b2(1P)} 
+- 556 {Upsilon(2S)} 
+- 557 {Upsilon(3S)} 
+- 706 {eta_2(1645)}
+- 714 {f_2(1950)} 
+- 732 {eta(1405)}
+
+########################################################################################################
+UPDATE : 26/08/2021 (J.Jahan)
+-> EPOS v.3431
+
+- 2140 {Lambda_c+} :
+  Error in the definition of some decays leading to quark production (based on Pythia)
+   -> Corrections :
+      2140 => d u ad    was corrected by   2140 (duc) (=> d ud W+) => d ud u ad
+      2140 => d u ad    was corrected by   2140 (duc) (=> d us W+) => d us u ad
+      2140 => d u ad    was corrected by   2140 (duc) (=> d su W+) => d su u ad
+      2140 => d u as    was corrected by   2140 (duc) (=> d us W+) => d us u as
+  Branching  2140 => d ud u as  ignored because realtive proba negligible 
+  (when calculated with CKM matrix elements).
+ 
+    
+- 160, 260, 360, 1160, 1260, 1360, 2160, 2260, 2360, 3360 {ALL top mesons/baryons} :
+  Particles not defined neither in PDG nor Pythia, but decay definitions were wrong (lack of 1 quark).
+   -> Correction example 160
+      160 => e+ nu_e u    was corrected by   160 (u at => W+ u ab) => e+ nu_e u ab
+          => u  ad   u    was corrected by   160 (u at => W+ u ab) => u  ad   u ab
+   -> Correction example 1160
+      1160 => e+ nu_e ub    was corrected by   1160 (=> W+ u ub) => e+ nu_e u ub
+           => u  ad   ub    was corrected by   1160 (=> W+ u ub) => u  ad   u ub
+  bRatios are shared following the W+ bRatios, which decays with a weight proportionnal to :
+   - 1 for each of the 3 leptonic flavours (because of lepton flavour universality)
+   - 3 * |Vqq|^2 (3 because of colour, |Vqq| being the elements of the CKM matrix) for each of 
+     the 6 possible quark-antiquark decays involving u, d, s, c & b quarks
+  Then, because of unitarity of the CKM matrix, sum(|Vuq|^2) = sum(|Vcq|^2) = 1 so the 
+  hadronic decay weight is equal to sum(3*|Vuq|^2) + sum(3*|Vcq|^2) = 6.
+  This leads to a total hadronic bR_h = 6 / (6+3) = 66.66%, and a total leptonic bR_l = 3 / (6+3) = 33.33%.
+  As a consequence : 
+   - bR_e = bR_mu = bR_tau = bR_l / 3 = 11.11%.
+  Eventually, the only W+ quark-antiquark decays used are the W+ -> (u ad) / (c as) decays, because 
+  |Vud| = 0.9737 & |Vcs| = 0.987 while all other ones are < 0.3 so can be neglected. 
+  Hence :
+   - bR_ud = bR_h * |Vud|^2 / (|Vud|^2 + |Vcs|^2) = 32.88%
+   - bR_cs = bR_h * |Vcs|^2 / (|Vud|^2 + |Vcs|^2) = 33.78%
+
+   https://pdg.lbl.gov/2021/reviews/contents_sports.html
+
+########################################################################################################
+UPDATE : 04/05/2021 (J.Jahan)
+-> EPOS v.3419
+
+The following modifications has been made after realising that many particles had a sum of decay 
+branching ratios different from 1.
+
+#-------------------------------------------------------------------------------------------------------
+# If no precision given, all channels with bRatio < e-04 (from PDG) neglected for all the particles.
+#
+# CG = Clebsch-Gordan
+# c[..] = decay channel number [..] in PDG (indicated as partial widths Gamma_[..])
+#
+# - PDG data are taken from the 2020 version : 
+#  https://pdg.lbl.gov/2020/listings/contents_listings.html
+# - Pythia data are taken from "pythia8303/share/Pythia8/xmldoc/ParticleData.xml", accessible via :
+#  http://home.thep.lu.se/~torbjorn/Pythia.html
+#-------------------------------------------------------------------------------------------------------
+
+
+List of modifications :
+- ordering of the file by increasing particle ID values
+
+- 112 {h1(1170)0} :
+  Particle previously declared twice 
+   -> corrected
+  Only 1 "seen" channel ("rho pi") in PDG
+   -> bRatio shared equally between 2 possible sub-channels "rho+ pi-" and "rho- pi+" ("rho0 pi0" channel forbidden by CG coef)
+
+    https://pdg.lbl.gov/2020/listings/rpp2020-list-h1-1170.pdf
+
+- 120 {pi+} :
+  Particle previously declared twice 
+   -> corrected
+  Updated decay channels and bRatios with PDG 
+
+    https://pdg.lbl.gov/2020/listings/rpp2020-list-pi-plus-minus.pdf
+
+- 122 {b1(1235)+} :
+  Particle previously declared twice 
+   -> corrected
+  Updated decay channels and bRatios with PDG : bR(c2) ("pi+ gamma") specified, only "seen" channels or '<' bRatio values otherwise
+   -> shared total bRatio excluding bR(c2) between c1 ("omega pi+") and all channels with c(?)/c1 ratio provided, considering '<' as '='
+       ~ c1 ("omega pi+"): bR(c1) = 56.5986395%
+       ~ c2 ("pi+ gamma"): bR(c2) = 0.16%
+       ~ c3 ("rho eta"): bR(c2) = 0.1 * bR(c1) = 5.65986395%
+       ~ c4 ("pi+ pi+ pi- pi0"): bR(c2) = 0.5 * bR(c1) = 28.2993197%
+       ~ c6 ("K+ K0b pi0"): bR(c2) = 0.08 * bR(c1) = 4.52789116%
+       ~ c7 ("K0S K0L pi+"): bR(c2) = 0.06 * bR(c1) = 3.39591837%
+       ~ c8 ("K0S K0S pi+"): bR(c2) = 0.02 * bR(c1) = 1.13197279%
+       ~ c9 ("phi pi+"): bR(c2) = 0.004 * bR(c1) = 0.226394558%
+          -> 1 - bR(c2) = 99.84% = sum{bR(c1/3/4/6/7/8/9)} = bR(c1)*(1+0.1+0.5+0.08+0.06+0.02+0.004)  
+          -->  bR(c1) = 99.84% / 1.764
+
+    https://pdg.lbl.gov/2020/listings/rpp2020-list-b1-1235.pdf
+
+- 123 {a_1(1260)+} :
+  Considered 3 main "seen" channels from PDG:
+   ~ c1 ("pi pi pi"): total width of this channel deduced from bR(c1) = 1 - bR(c12) - bR(c14) = 0.965678801
+      -> c2+3 ("rho pi"): possible through "rho+ pi0" or "rho0 pi+", each of them equally possible (CG^2 = <1 1|1 1/0;1 0/1>^2 = 1/2)
+                          bR(c2+3) = 60.19 + 1.30 = 61.49% (sum of partial widths from ASNER)
+      -> c4+5 ("rho(1450) pi"): possible through "rho(1450)+ pi0" or "rho(1450)0 pi+", each of them equally possible (CG^2 = <1 1|1 1/0;1 0/1>^2 = 1/2)
+                          bR(c4+5) = 0.56 + 2.04 = 2.60% (sum of partial widths from ASNER)
+      -> c6 ("f0(500) pi+"): bR(c6) = 18.76% (partial width from ASNER) 
+      -> c8 ("f0(1370) pi+"): bR(c8) = 7.40% (partial width from ASNER)
+      -> c9 ("f2(1270) pi+"): bR(c9) = 1.19% (partial width from ASNER)
+      -> remaining bRatio bR(c1)-bR(c2+3)-bR(c4+5)-bR(c6)-bR(c8)-bR(c9) = 5.1278801% shared between direct "pi pi pi" channels 
+          "pi+ pi0 pi0": CG("pi0 pi0")^2 = <0 0|1  0 ; 1  0>^2 = 1/3
+          "pi+ pi+ pi-": CG("pi+ pi-")^2 + CG("pi- pi+")^2 = <0 0|1 +1 ; 1 -1>^2 + <0 0|1 -1 ; 1 +1>^2 = 2/3
+   ~ c12 ("K K pi"): only seen through "K* K" (c13) with two possible sub-channels ("K*+ K0b" and "K+ K*0b")
+      -> bR(c13) estimated with a mean weighted by the number of events observed for each different partial width values from COAN, DRUTSKOY and ASNER
+           bR(c13) = (2.2*2255 + 11.5*205 + 3.3*37000) / (2255 + 205 + 37000) = 3.27973898E-02
+      -> bRatio of each sub-channel taken as bR(c13)/2 as their CG coef are equals (<1 1|1/2 +1/2 ; 1/2 +1/2> = 1)
+   ~ c14 ("pi gamma"): bR(c14) = 1.52380952E-03, calculated with partial width from ZIELINSKI (640 keV/420 MeV)
+
+    https://pdg.lbl.gov/2020/listings/rpp2020-list-a1-1260.pdf
+
+- 141 {D*0b} :
+  Particle previously declared twice 
+   -> corrected
+  Updated decay channels and bRatios with PDG 
+
+    https://pdg.lbl.gov/2020/listings/rpp2020-list-D-star-2007-zero.pdf
+
+- 223 {a1(1260)0} :
+  Considered 3 main "seen" channels from PDG:
+   ~ c1 ("pi pi pi"): total width of this channel deduced from bR(c1) = 1 - bR(c12) - bR(c14) = 0.965678801 ("rho0/f0/f2 pi0" channels forbidden by CG coef)
+      -> c2+3 ("rho pi"): possible through "rho+ pi-" or "rho- pi+", each of them equally possible (CG^2 = <1 0|1 +-1;1 -+1>^2 = 1/2) 
+                          bR(c2+3) = 60.19 + 1.30 = 61.49 % (sum of partial widths from ASNER)
+      -> c4+5 ("rho(1450) pi"): possible through "rho(1450)+ pi-" or "rho(1450)- pi+", each of them equally possible (CG^2 = <1 0|1 +-1;1 -+1>^2 = 1/2)
+                          bR(c4+5) = 0.56 + 2.04 = 2.60 % (sum of partial widths from ASNER)
+      -> remaining bRatio bR(c10) = bR(c1)-bR(c2+3)-bR(c4+5) = 32.4778801% (set to c10 "pi+ pi- pi0" as c11 "pi0 pi0 pi0" is "not seen" in PDG)
+   ~ c12 ("K K pi"): only seen through "K* K" (c13) with 4 possible sub-channels possible ("K*+ K-", "K*- K+", "K*0 K0b" or "K*0b K0") 
+      -> bR(c13) estimated with a mean weighted by the number of events observed for each different partial width values from COAN, DRUTSKOY and ASNER
+           bR(c13) = (2.2*2255 + 11.5*205 + 3.3*37000) / (2255 + 205 + 37000) = 3.27973898e-02
+      -> bRatio of each of the 4 sub-channels taken as bR(c13)/4 = 8.19934745e-03
+           as bR("+-") = bR("00") = bR(c13) * <1 1|1/2 +-1/2 ; 1/2 -+1/2>^2 = bR(c13)/2
+   ~ c14 ("pi gamma"): bR(c14) = 1.52380952E-03, calculated with partial width from ZIELINSKI (640 keV/420 MeV)
+
+    https://pdg.lbl.gov/2020/listings/rpp2020-list-a1-1260.pdf
+
+- 245 {D2*(2460)-} :
+  Particle previously declared twice 
+   -> corrected
+  Updated decay channels and bRatios with PDG, neglecting some "not seen" ("D pi pi") or not written in PDG ("D(*)- pi0" even though seem possible) previous channels
+
+    https://pdg.lbl.gov/2020/listings/rpp2020-list-D2-star-2460-plus-minus.pdf
+
+- 332 {f_0(1370)0} :
+  Particle previously declared twice 
+   -> corrected
+  Updated decay channels and bRatios with PDG, sharing bRatio equally between all main "seen" channels: bR(c1) = bR(c2) = bR(c10) = bR(c11) = bR(c15) = 20%
+   ~ c1 ("pi pi"): two sub-channels possible
+      -> "pi0 pi0": bR(c1) * <0 0|1 0 ; 1 0>^2 = 6.6666667%
+      -> "pi+ pi-": bR(c1) * 2*<0 0|1 +1 ; 1 -1>^2) = 13.3333333%
+   ~ c2 ("pi pi pi pi"): shared bR(c2) equally between all sub-channel types (bR(c2) / 4 = 5%)
+      -> "pi pi pi pi": bR("2pi+ 2pi-") = 2 * bR("pi+ pi- 2pi0") = 4 * bR("4pi0"), so bR("4pi0") = 5% * 1/7
+                        (with CG coef hierarchy, when considering each sub-channel composed of 2 systems <0 0|1 ..;1 ..>)
+      -> "rho rho": bR("rho0 rho0") = 5% * <0 0|1 0 ; 1 0>^2 = 1.6666667% 
+                    bR("rho+ rho-") = 5% * 2*<0 0|1 +1 ; 1 -1>^2 = 3.33333333%
+      -> "pi(1300) pi": bR("pi(1300)+ pi-") = 5% * <0 0|1 +1 ; 1 -1>^2 = 1.6666667%
+                        bR("pi(1300)0 pi0") = 5% * <0 0|1  0 ; 1  0>^2 = 1.6666666%
+                        bR("pi(1300)- pi+") = 5% * <0 0|1 -1 ; 1 +1>^2 = 1.6666667%
+      -> "a1(1260) pi": bR("a1(1260)+ pi-") = 5% * <0 0|1 +1 ; 1 -1>^2 = 1.6666667%
+                        bR("a1(1260)0 pi0") = 5% * <0 0|1  0 ; 1  0>^2 = 1.6666666%
+                        bR("a1(1260)- pi+") = 5% * <0 0|1 -1 ; 1 +1>^2 = 1.6666667%
+   ~ c10 ("eta eta"): unique channel
+   ~ c11 ("K Kb"): same bRatio = bR(c11)/2 = 10% for "K+ K-" and "K0 K0b" (CG^2 = <0 0|1/2 +-1/2;1/2 -+1/2>^2 = 1/2)
+   ~ c15 ("gamma gamma"): unique channel
+
+    https://pdg.lbl.gov/2020/listings/rpp2020-list-f0-1370.pdf
+
+- 446 {eta_c(2S)} : 
+  Copy-paste from Pythia (based on the PDG), with completion of the bRatios sum up to 1 via "g g" channel (='Pythia method')
+
+    https://pdg.lbl.gov/2020/listings/rpp2020-list-eta-c-2S.pdf
+
+- 447 {Psi(2S)} : 
+  Decreased the "g g g" channel (c3) bRatio to not exceed 1
+  For channels with "+c.c." (="charge conjugate"), set the indicated bRatio value for the explicited channels and for its conjugate one :
+   ~ c31 : 1.40e-04 for "lambda asigma+ pi-" and for "alambda sigma- pi+" (c.c.)
+   ~ c32 : 1.54e-04 for "lambda asigma- pi-" and for "alambda sigma+ pi+" (c.c.)
+   ~ c92 : 6.70e-04 for "K+ K*0b pi-" and for "K- K*0 pi+" (c.c.)
+   ~ c103 : 2.07e-04 for "K- w K*+" and for "K+ w K*-" (c.c.)
+   ~ c125 : 1.09e-04 for "K0b K*0" and for "K0 K*0b" (c.c.)
+   ~ c182 : 3.70e-04 for "pi- K*0 K+" and for "pi+ K*0b K-" (c.c.)
+   ~ c184 : 2.60e-04 for "pi- K0S K+" and for "pi+ K0L K-" (c.c.)
+  For channels with "or c.c.", shared equally the indicated bRatio between the 2 channels :
+   ~ c68 : 1.24e-04 for "p an pi-" and for "ap n pi+" (c.c.)
+  Channels with >5 daughter particles neglected : 
+   ~ c16 ("3(pi+ pi-) pi0"): 3.5e-03 
+   ~ c70 ("2(pi+ pi- pi0)"): 4.8e-03
+   ~ c87 ("K+ K- 2(pi+ pi-) pi0"): 1e-03
+   ~ c88 ("K+ K- 2(pi+ pi-)"): 1.9e-03
+   ~ c111 ("3(pi+ pi-)"): 1.9e-03
+  Other specifications :
+   ~ c17 ("pi+ pi+ pi- pi- pi0"): c18 being an intermediary channel for c17, bRatio set as bR(17)-bR(18) = (2.9e-03) - (2.6e-04) = 2.64e-03
+   ~ c18 ("rho a2(1320)"): 3 configurations possible, so bRatio value divided between the 3 configurations (CG^2 = <1 0|1 0/1/-1;1 0/-1/1>^2 = 1/3 for each)
+   ~ c76 ("omega pi+ pi-"): c77-79 being intermediary channels, bRatio set as bR(76)-[bR(77)+bR(78)+bR(79)] = 2.166e-04 
+   ~ c77 ("b1+- pi-+"): for each of the 2 channels, bRatios set as bR(77)*CG^2 = (4.0e-04) * <2 0|1 +-1;1 -+1>^2 = (4.0e-04) * 1/6 = 6.67e-05
+   ~ c78 ("b10 pi0"): bRatios set as bR(78)*CG^2 = (2.4e-04) * <2 0|1 0;1 0>^2 = (2.4e-04) * 2/3 = 1.6e-04
+   ~ c79 ("omega f2(1270)"): bRatios set as bR(79)*CG^2 = (2.2e-04) * <2 0|0 0;0 0>^2 = 2.2e-04
+   ~ c95 ("K+ K- pi+ pi- pi0"): bRatio set as bR(95) = 1.26e-03, intermediary channels c96-100 neglected as the sum of their bRatios exceeds bR(95)
+
+    https://pdg.lbl.gov/2020/listings/rpp2020-list-psi-2S.pdf
+
+- 449 {chi_c2(3930)} : 
+  Only "seen" channels in PDG, previous channel not even referenced 
+   -> set bR("g g") = 1 (Pythia method)
+
+    https://pdg.lbl.gov/2020/listings/rpp2020-list-chi-c2-3930.pdf
+
+- 450 {B_c+} :
+  Previous channels identical to Pythia, but only few predicted by PDG 
+   -> neglected all channels with bRatio < e-03, except the ones in PDG + some channels involving B mesons to reach a bRatios sum = 1
+
+    https://pdg.lbl.gov/2020/listings/rpp2020-list-Bc-plus-minus.pdf
+
+- 552 {chi_b0(1P)} :
+  Particle previously declared twice 
+   -> corrected
+  Updated decay channels and bRatios with PDG: only c7 given with fixed bRatio (and with < 6 daughter particles)
+   ~ c7 ("gamma Upsilon(1S)")
+  Completed the bRatios sum up to 1 via "g g" channel (Pythia method)
+
+    https://pdg.lbl.gov/2020/listings/rpp2020-list-chi-b0-1P.pdf
+
+- 553 {chi_b1(1P)} :
+  Particle previously declared twice 
+   -> corrected
+  Updated decay channels and bRatios with PDG, for the following channels:
+   ~ c1 ("gamma Upsilon(1S)")
+   ~ c2 ("D0 X"): as X is a "c-cb" quarkonia, set the decay to "D0 g"
+   ~ c3 ("pi+ pi- K+ K- pi0") 
+   ~ c4 ("pi+ pi+ pi- K- K0S")
+   ~ c17 ("omega anything"): set to "omega g" as it seems do decay via 
+  Completed the bRatios sum up to 1 via "g g" channel (Pythia method)
+  
+    https://pdg.lbl.gov/2020/listings/rpp2020-list-chi-b1-1P.pdf
+
+- 555 {chi_b2(1P)} :
+  Particle previously declared twice 
+   -> corrected
+  Updated decay channels and bRatios with PDG, for the following channels:
+   ~ c1 ("gamma Upsilon(1S)")
+   ~ c17 ("J/Psi anything"): set to "J/Psi g"
+  Completed the bRatios sum up to 1 via "g g" channel (Pythia method)
+
+    https://pdg.lbl.gov/2020/listings/rpp2020-list-chi-b2-1P.pdf
+
+- 556 {Upsilon(2S)} :
+  Kept previous channels + added some new ones
+  Updated decay channels and bRatios with PDG values, or Pythia values for quark-antiquark channels (not in PDG, why such channels ?? Mimic quarkonia suppression ?)
+  Decreased the "g g g" channel (c37) bRatio to not exceed 1
+
+    https://pdg.lbl.gov/2020/listings/rpp2020-list-upsilon-2S.pdf
+
+- 557 {Upsilon(3S)} :
+  Updated bRatios with PDG values
+  Completed the bRatios sum up to 1 via "g g" channel (Pythia method)
+
+    https://pdg.lbl.gov/2020/listings/rpp2020-list-upsilon-3S.pdf
+
+- 558 {Upsilon(4S)} :
+  Updated bRatios with PDG values
+  BB channels sum up to 1 in PDG 
+   -> re-scaled them by 1 - bR(Upsilon) = 0.9997 to include the Upsilon decays
+
+    https://pdg.lbl.gov/2020/listings/rpp2020-list-upsilon-4S.pdf
+
+- 706 {eta_2(1645)} :
+  Particle previously declared twice 
+   -> corrected
+  Only "seen" channels in PDG, previous channel not even referenced 
+   -> set bR("g g") = 1 (Pythia method)
+
+    https://pdg.lbl.gov/2020/listings/rpp2020-list-eta2-1645.pdf
+
+- 714 {f_2(1950)} :
+  Only "seen" channels in PDG, previous channel not even referenced 
+   -> set bR("g g") = 1 (Pythia method)
+
+   https://pdg.lbl.gov/2020/listings/rpp2020-list-f2-1950.pdf
+
+- 732 {eta(1405)} :
+  Only "seen" channels in PDG, previous channel not even referenced 
+   -> set bR("g g") = 1 (Pythia method)
+
+   https://pdg.lbl.gov/2020/listings/rpp2020-list-eta-1405.pdf
+
+- 1122 {N+(1440)} :
+  Imprecise bRatio values 
+   -> took values from 1 paper (HUNT), using uncertainties to have a sum exactly = 1 with :
+       ~ c1 ("N pi"): bRatio set to bR(c1)=60%, equally divided between <1/2 +1/2|3/2 .. ; 1 ..> ("Delta pi") and <1/2 +1/2|1/2 .. ; 1 ..> ("p/n pi") channels
+                      -> for each channel, bR(c1)/2 shared between each sub-channel using CG coef
+       ~ c3 ("N pi pi") : bRatio set to bR(c3)=40%, equally shared between the 3 possible sub-channels ("p/n pi pi")
+  Neglected c2 ("N eta") as seems impossible with mass sum (0.938 + 0.548 = 1.486 > 1.440 !)
+
+   https://pdg.lbl.gov/2020/listings/rpp2020-list-N-1440-1o2-plus.pdf
+
+- 1333 {Xi0(1690)} / 2333 {Xi-(1690)} :
+  Only "seen" channels in PDG
+   -> equally shared the bRatio between "seen" channels : bR(c1) = bR(c2) = bR(c3) = 0.333333333
+       ~ c1 ("Lambda Kb"): only "Lambda K0b" possible for Xi0 / only "Lambda K-" possible for Xi-
+       ~ c2 ("Sigma Kb"): bR(c2) shared using <1/2 +1/2|1 .. ; 1/2 ..> between "Sigma+ K-" and "Sigma0 K0b" / <1/2 -1/2|1 .. ; 1/2 ..> between "Sigma- K0b" and "Sigma0 K-"
+       ~ c3 ("Xi pi"): bR(c3) shared using <1/2 +1/2|1/2 .. ; 1 ..> between "Xi+ pi-" and "Xi0 pi0" / <1/2 +1/2|1/2 .. ; 1 ..> between "Xi0 pi-" and "Xi- pi0"
+
+   https://pdg.lbl.gov/2020/listings/rpp2020-list-xi-1690.pdf
+

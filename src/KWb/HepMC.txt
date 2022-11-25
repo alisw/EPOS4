@@ -1,0 +1,107 @@
+#
+#  This file is part of EPOS4
+#  Copyright (C) 2022 research institutions and authors (See CREDITS file)
+#  This file is distributed under the terms of the GNU General Public License version 3 or later
+#  (See COPYING file for the text of the licence)
+#
+
+######################
+######################
+    HepMC package
+######################
+######################
+
+HepMC copied from 
+http://hepmc.web.cern.ch/hepmc/
+version 2.06.09
+
+######################
+######################
+    HepMC in EPOS
+######################
+######################
+
+# Written by J. Jahan, 2022/06/11
+# Contact : jahan.johannes@gmail.com
+
+##########################################################################
+# Here are some explanations on how the .hepmc files are written from an 
+# event generated with EPOS.
+#
+# We use libraries coming from HepMC 2.06.09 
+#
+# For any question, problem encountered, or if you need more detail, 
+# contact the author or K. Werner at : werner@subatech.in2p3.fr
+##########################################################################
+
+From EPOS, we provide the following information to the "header" of each event
+(if an information is not written in this list here, then it is not provided
+ from EPOS so it is just left defined by default / = 0)
+
+- in 'E' line :
+	~ number of vertices in the event
+
+- in 'C' line :
+	~ the corresponding p-p cross-section for the energy of the collision generated
+
+- in 'H' line (if heavy-ion collision) :
+	~ the number of participants from the projectile (according to Glauber calculations, NOT the real number from the simulation)
+	~ the number of participants from the target     (according to Glauber calculations, NOT the real number from the simulation)
+	~ the number of NN collisions                    (according to Glauber calculations, NOT the real number from the simulation) 
+	~ the number of neutron spectators   (including the diffractive nucleon states)
+	~ the number of proton spectators    (including the diffractive nucleon states)
+	~ the impact parameter
+
+/!\ WARNING : the number of spectators is directly coming from the simulation itself, while 
+    the number of participants is coming from Glauber calculation and not from the simulation  
+    =>  (n_spec + n_part) is NOT equal to (A_proj + A_targ)
+
+
+If the event has been simulated in a different frame than the one wanted for the record in the .hepmc file
+(e.g. p-Pb collisions that is simulated in center-of-mass frame but wanted in the lab frame for RIVET analysis),
+one needs to add in the .optns file the command "set ihepframe 1".
+It will then calculate, in the lab frame, the recorded event(s) particles coordinates that has been simulated in the 
+center-of-mass frame. The rapidity boost of the center-of-mass in comparison with the lab frame is defined in the 
+.optns file by the command "set rapcms dy", dy being a value (-0.468 for p-Pb collisions at LHC).
+
+All events start with the original vertex of the collision, defined at space-time coordinates (0,0,0,0).
+The 2 first particles listed then are the beam particles.
+
+They are followed by all the spectators, remaining unchanged from their initial trajectory, and the 
+diffractive proton and neutron states (sum of both should be equal to the numbers of spectators indicated 
+in the 'H' line) ; all of them are considered as outgoing from the initial vertex.
+
+Then, not all the rest of the event is registered in the .hepmc output. Depending on the value of the variable 
+"which_table", are recorded :
+ = 1 : only final-state particles, regardless of who are their parents 
+ = 2 : all final-state particle + their ancestors when they're originating from weak and EM decays 
+	(most of the strong decays are ignored, except some exceptions listed below)
+ = 3 : only particles before hadronic cascades, i.e. just after hadronisation of the core + corona strings fragmentation
+	(/!\ works ONLY if hadronic cascades were activated, recording then particles with ist = 3 in EPOS)
+
+To do so for the case 2, the particle list is browsed (ordered following their creation time during the event), and 
+ONLY the non final-state (FS) particles which decay with a lifetime tau > e-19s are recorded, the ones with tau < e-20s 
+are ignored. Hence, the eta meson is the shortest-lived particle to have its decay recorded, and the Sigma0 baryon the 
+longest-lived particle to be ignored.
+
+However, there is a list of exceptions, i.e. particles with tau < e-20s that are recorded anyway (this list "excptn_list" 
+is modifiable directly by hand in KWb/fill_hep.cpp, based on EPOS IDs of particles listed in KWt/idt.dt).
+Here are the ones included for the moment (commonly studied quarkonia) :
+ - J/Psi
+ - Psi(2S)/(3770)
+ - Upsilon(1S)/(2S)/(3S)/(4S)
+
+Starting from a non FS particle which has its decay recorded (and which will be considered as outgoing particle of 
+the initial vertex, even if it doesn't originates from initial interactions), all the children particles and their 
+decay products will be recorded too, decay after decay, until reaching the FS descendants.
+
+All the intermediary particles (non FS particles recorded because they decay weakly/EMly or are exceptions, or because 
+they are children of such particles) are recorded with a status = 2.
+
+/!\ WARNING : in case a non FS particle is registered but its children cannot be found, the particle is then recorded 
+	with a status = 12, which is not defined in the standard HepMC ('12' because it should be '2',but ends up
+	being like '1' as children are not found).
+	Such situation should not happen, but "better safe than sorry".  
+
+Finally, are also recorded all the FS particles (with a status = 1, indeed), considered as outgoing from the 
+original vertex if they are not coming from recorded decays.

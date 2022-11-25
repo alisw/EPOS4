@@ -1,0 +1,338 @@
+echo off
+
+#define  bi100  20.00
+#define  bim00   0.00 
+
+#define  npo100  1000
+#define  npoXX  1000
+#define  npo00  0
+
+#define hei100 100   
+#define heiXX 100   
+#define hei00  0 
+
+#define  vza100  1000
+#define  vzaXX  1000
+#define  vza00  0
+
+#define etr100  1000
+#define etrXX  1000
+#define etr00      0
+
+#define bim01 1.10
+#define bim02 1.30
+#define bim025 1.40
+#define bim03 1.46
+#define bim05 1.88
+#define bim06 2.06
+#define bim075 2.30 
+#define bim10 2.65
+#define bim12 2.89
+#define bim15 3.24
+#define bim20 3.73
+#define bim25 4.17
+#define bim30 4.57
+#define bim35 4.93
+#define bim40 5.27
+#define bim45 5.58
+#define bim50 5.89
+#define bim55 6.17
+#define bim60 6.45
+#define bim65 6.72
+#define bim70 6.98
+#define bim75 7.24
+#define bim80 7.52
+#define bim85 7.82
+#define bim90 8.19
+#define bim92 8.37
+#define bim95 8.72
+
+#if1 mb   !--------------------take mb
+         #define npo05 0.61
+         #define npo10 0.95
+         #define npo15 1.30
+         #define npo20 1.78
+         #define npo25 2.41
+         #define npo30 3.26
+         #define npo35 4.27
+         #define npo40 5.43
+         #define npo45 6.68
+         #define npo50 7.99
+         #define npo55 9.32
+         #define npo60 10.67
+         #define npo65 12.02
+         #define npo70 13.39
+         #define npo75 14.82
+         #define npo80 16.34
+         #define npo85 18.06
+         #define npo90 20.16
+         #define npo95 23.19
+#fi
+#if1 #not mb  !--------------take ma 
+         #define npo05 0.63
+         #define npo10 0.98
+         #define npo15 1.32
+         #define npo20 1.74
+         #define npo25 2.25
+         #define npo30 2.85
+         #define npo35 3.53
+         #define npo40 4.34
+         #define npo45 5.27
+         #define npo50 6.33
+         #define npo55 7.53
+         #define npo60 8.95
+         #define npo65 10.58
+         #define npo70 12.53
+         #define npo75 14.90
+         #define npo80 17.82
+         #define npo85 21.63
+         #define npo90 27.09
+         #define npo95 36.58
+#fi
+#if1 ma !--------------------take ma
+         #define vza05 3.38
+         #define vza10 5.66
+         #define vza15 8.04
+         #define vza20 10.71
+         #define vza25 13.74
+         #define vza30 17.14
+         #define vza35 20.93
+         #define vza40 25.12
+         #define vza45 29.75
+         #define vza50 34.85
+         #define vza55 40.51
+         #define vza60 46.83
+         #define vza65 53.98
+         #define vza70 62.20
+         #define vza75 71.87
+         #define vza80 83.60
+         #define vza85 98.55
+         #define vza90 118.95
+         #define vza95 151.40
+ 
+         #define etr10 3.64
+         #define etr20 6.21
+         #define etr40 13.46
+         #define etr60 23.98
+         #define etr70 31.27
+         #define etr80 41.30
+         #define etr90 57.52
+         #define etr95 72.16
+         #define etr99 101.41
+#fi
+#if1 mb !--------------------take mb
+         #define vza05 3.40
+         #define vza10 5.82
+         #define vza15 8.50
+         #define vza20 11.73
+         #define vza25 15.73
+         #define vza30 20.52
+         #define vza35 26.00
+         #define vza40 32.15
+         #define vza45 38.87
+         #define vza50 46.06
+         #define vza55 53.54
+         #define vza60 61.16
+         #define vza65 68.91
+         #define vza70 76.82
+         #define vza75 85.08
+         #define vza80 93.98
+         #define vza85 104.02
+         #define vza90 116.28
+         #define vza95 133.99
+ 
+         #define etr10 3.84
+         #define etr20 7.09
+         #define etr40 17.58
+         #define etr60 31.33
+         #define etr70 38.75
+         #define etr80 47.13
+         #define etr90 58.44
+         #define etr95 67.75
+         #define etr99 85.68
+#fi
+#if1 #not #2 ma mb  !--------------take my
+         #define vza05 3.28
+         #define vza10 5.42
+         #define vza15 7.51
+         #define vza20 9.73
+         #define vza25 12.11
+         #define vza30 14.64
+         #define vza35 17.30
+         #define vza40 20.09
+         #define vza45 23.01
+         #define vza50 26.07
+         #define vza55 29.31
+         #define vza60 32.77
+         #define vza65 36.51
+         #define vza70 40.63
+         #define vza75 45.27
+         #define vza80 50.66
+         #define vza85 57.25
+         #define vza90 65.99
+         #define vza95 79.44
+ 
+         #define etr10 3.56
+         #define etr20 5.95
+         #define etr40 12.28
+         #define etr60 20.78
+         #define etr70 26.44
+         #define etr80 34.05
+         #define etr90 46.16
+         #define etr95 57.14
+         #define etr99 79.10
+#fi
+
+!--------------------------------------------------------------
+
+!from arXiv:1307.6796 pi, K, p, Lda, production :
+#define hei95  41 
+#define hei80 27
+#define hei60 20 
+#define hei40 13 
+#define hei20  8 
+
+CentralityLimit 0  0
+CentralityLimit 5  bim05
+CentralityLimit 10 bim10
+CentralityLimit 15 bim15
+CentralityLimit 20 bim20
+CentralityLimit 25 bim25
+CentralityLimit 30 bim30
+CentralityLimit 35 bim35
+CentralityLimit 40 bim40
+CentralityLimit 45 bim45
+CentralityLimit 50 bim50
+CentralityLimit 55 bim55
+CentralityLimit 60 bim60
+CentralityLimit 65 bim65
+CentralityLimit 70 bim70
+CentralityLimit 75 bim75
+CentralityLimit 80 bim80
+CentralityLimit 85 bim85
+CentralityLimit 90 bim90
+CentralityLimit 95 bim95
+CentralityLimit 100 bi100
+
+CentralityClass cc20
+#if1 #not ma 
+CentralityClass 1    0     bim05  1
+CentralityClass 2    bim05 bim10  1
+CentralityClass 3    bim10 bim15  1
+CentralityClass 4    bim15 bim20  1
+CentralityClass 5    bim20 bim25  1
+CentralityClass 6    bim25 bim30  1
+CentralityClass 7    bim30 bim35  1
+CentralityClass 8    bim35 bim40  1
+CentralityClass 9    bim40 bim45  1
+CentralityClass 10   bim45 bim50  1
+CentralityClass 11   bim50 bim55  2
+CentralityClass 12   bim55 bim60  2
+CentralityClass 13   bim60 bim65  2
+CentralityClass 14   bim65 bim70  2
+CentralityClass 15   bim70 bim75  2
+CentralityClass 16   bim75 bim80  2
+CentralityClass 17   bim80 bim85  2
+CentralityClass 18   bim85 bim90  2
+CentralityClass 19   bim90 bim95  2
+CentralityClass 20   bim95 bi100  2
+#fi
+#if1 ma
+CentralityClass 1    0     bim05  1
+CentralityClass 2    bim05 bim10  1
+CentralityClass 3    bim10 bim15  1
+CentralityClass 4    bim15 bim20  1
+CentralityClass 5    bim20 bim25  1
+CentralityClass 6    bim25 bim30  1
+CentralityClass 7    bim30 bim35  1
+CentralityClass 8    bim35 bim40  1
+CentralityClass 9    bim40 bim45  1
+CentralityClass 10   bim45 bim50  2
+CentralityClass 11   bim50 bim55  2
+CentralityClass 12   bim55 bim60  2
+CentralityClass 13   bim60 bim65  2
+CentralityClass 14   bim65 bim70  4
+CentralityClass 15   bim70 bim75  4
+CentralityClass 16   bim75 bim80  4
+CentralityClass 17   bim80 bim85  4
+CentralityClass 18   bim85 bim90  4
+CentralityClass 19   bim90 bim95  4
+CentralityClass 20   bim95 bi100  4
+#fi
+
+
+#define  bimrange0to5   "::bim00::bim05::"
+#define  bimrange5to10  "::bim05::bim10::"
+#define  bimrange10to20 "::bim10::bim20::"
+#define  bimrange20to30 "::bim20::bim30::"
+#define  bimrange30to40 "::bim30::bim40::"
+#define  bimrange40to50 "::bim40::bim50::"
+#define  bimrange50to60 "::bim50::bim60::"
+#define  bimrange60to70 "::bim60::bim70::"
+#define  bimrange70to80 "::bim70::bim80::"
+#define  bimrange80to90 "::bim80::bim90::"
+#define  bimrange90to100 "::bim90::bi100::"
+
+#define  bimrange0to10  "::bim00::bim10::"
+#define  bimrange0to1   "::bim00::bim01::"
+#define  bimrange60to80 "::bim60::bim80::"
+
+
+#define  nporange0to5    "::npo95::npoXX::"
+#define  nporange5to10   "::npo90::npo95::"
+#define  nporange10to20  "::npo80::npo90::"
+#define  nporange20to30  "::npo70::npo80::"
+#define  nporange30to40  "::npo60::npo70::"
+#define  nporange40to50  "::npo50::npo60::"
+#define  nporange50to60  "::npo40::npo50::"
+#define  nporange60to70  "::npo30::npo40::"
+#define  nporange70to80  "::npo20::npo30::"
+#define  nporange80to90  "::npo10::npo20::"
+#define  nporange90to100 "::npo00::npo10::"
+
+#define  nporange20to40  "::npo60::npo80::"
+#define  nporange40to60  "::npo40::npo60::"
+#define  nporange60to80  "::npo20::npo40::"
+#define  nporange80to100 "::npo00::npo20::"
+#define  nporange0to20   "::npo80::npoXX::"
+#define  nporange0to10   "::npo90::npoXX::"
+
+#define  vzarange0to5    "::vza95::vzaXX::"
+#define  vzarange5to10   "::vza90::vza95::"
+#define  vzarange10to20  "::vza80::vza90::"
+#define  vzarange20to40  "::vza60::vza80::"
+#define  vzarange40to60  "::vza40::vza60::"
+#define  vzarange60to80  "::vza20::vza40::"
+#define  vzarange80to100 "::vza00::vza20::"
+#define  vzarange0to20   "::vza80::vzaXX::"
+
+#define  vzairange10to20 "::vza10::vza20::"
+#define  vzairange30to40 "::vza30::vza40::"
+#define  vzairange50to60 "::vza50::vza60::"
+#define  vzairange70to80 "::vza70::vza80::"
+#define  vzairange90to100 "::vza90::vzaXX::"
+
+#define  etrange00to05  "::etr95::etrXX::"
+#define  etrange5to10   "::etr90::etr95::"
+#define  etrange10to20  "::etr80::etr90::"
+#define  etrange20to40  "::etr60::etr80::"
+#define  etrange40to60  "::etr40::etr60::"
+#define  etrange60to80  "::etr20::etr40::"
+#define  etrange80to100 "::etr00::etr20::"
+
+#define  etrange0to10   "::etr90::etrXX::"
+#define  etrange0to20   "::etr80::etrXX::"
+#define  etrange00to01  "::etr99::etrXX::"
+#define  etrange01to05  "::etr95::etr99::"
+#define  etrange20to30  "::etr70::etr80::"
+#define  etrange30to40  "::etr60::etr70::"
+#define  etrange60to90  "::etr10::etr40::"
+
+#define  heirange0to5    "::hei95::heiXX::"
+#define  heirange20to40  "::hei60::hei80::"
+#define  heirange40to60  "::hei40::hei60::"
+#define  heirange60to80  "::hei20::hei40::"
+#define  heirange80to100 "::hei00::hei20::"
+#define  heirange0to20   "::hei80::hei100::"
+
+echo on

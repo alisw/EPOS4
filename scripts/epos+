@@ -1,0 +1,204 @@
+#!/bin/sh 
+if [ $# -le 0 ]; then
+    echo 
+    echo  "        "syntax:  epos+  \$filename \$system \$rootcproot
+    echo 
+    echo  "                               " system: q, c     
+    echo 
+    exit 1
+fi
+
+SRC='src/'   
+SRCEXT='srcext/'
+CONF='config/'
+    
+echo "start epos+ (sh)"
+
+ext1='-'
+ext2='-'
+ext3='-'
+ext4='-'
+end=0
+gefac=1
+
+while [ $end -eq 0 ];
+do
+   end=1
+   case "$1"
+   in
+   -e1) shift 
+         ext1="$1"
+         shift
+         end=0
+         ;;
+   -e2) shift 
+         ext2="$1"
+         shift
+         end=0
+         ;;
+   -e3) shift 
+         ext3="$1"
+         shift
+         end=0
+         ;;
+   -e4) shift 
+         ext4="$1"
+         shift
+         end=0
+         ;;
+   -gf) shift 
+         gefac=$1
+         shift
+         end=0
+         ;;
+   esac
+done
+
+if [ ! -f ${OPT}$1.optns ]; then
+echo ${OPT}$1.optns "does not exist"
+exit
+fi
+
+rm -f ${CHK}$1.check 
+rm -f ${CHK}$1.data 
+rm -f ${CHK}$1.copy 
+rm -f ${CHK}$1.log 
+
+if [ "$OPT" = "./" ]; then 
+    odir=`pwd`/
+else
+    odir="$OPT"
+fi
+
+if [ "$2" = "q" ]; then
+    XXepos="${OBJ}epos$EPOVSN/Xepos"
+    EPX=$EPO
+else
+    XXepos="./Xepos"
+    ls -l X*
+fi
+
+echo "EPX ===>  ${EPX}  <==="
+
+if [ ! "$2" = "q" ];then gunzip -c ${EPX}${SRC}KWt/eos4f.eos.gz > z-eos4f.eos; fi
+
+#---------------------------------------------------------------------
+clinput=$1'.clinput'
+ echo "fill $clinput"
+ echo "fname mtr ${CHK}$1.mtr"    > $clinput
+ echo "set seedj $seedj"    >> $clinput
+ echo "set seedi $seedi"    >> $clinput
+ echo "beginoptns spherio"    >> $clinput
+ echo "set seedspo $seedspo"    >> $clinput
+ echo "endoptns spherio"    >> $clinput
+ echo "echo off"    >> $clinput
+ echo "system $2"    >> $clinput
+ echo "ext1 $ext1"    >> $clinput
+ echo "ext3 $ext3"    >> $clinput
+ echo "ext4 $ext4"    >> $clinput
+ echo "rootcproot $3"    >> $clinput
+ echo "set gefac $gefac"    >> $clinput
+ echo "!!!beginoptns spherio !No longer used."    >> $clinput
+ echo "!!!...                !See version < 3118  "    >> $clinput
+ echo "!!!endoptns spherio   !if needed again     "    >> $clinput
+ echo "fname pathep ${EPX}"    >> $clinput
+ echo "!-------HQ--------"    >> $clinput
+ echo "fname user1  ${EPX}${SRCEXT}VOt/"    >> $clinput
+ echo "fname user2  ${HTO}$1.hq"    >> $clinput
+ echo "fname user3  ${EPX}${SRCEXT}URt/"    >> $clinput
+ echo "!-------HQ END--------"    >> $clinput
+ echo "fname pathpdf ${EPX}${SRC}TPt/"    >> $clinput
+ echo "fname histo  ${HTO}$1.histo"    >> $clinput
+ echo "fname check  ${CHK}$1.check"    >> $clinput
+ echo "fname copy   ${CHK}$1.copy"    >> $clinput
+ echo "fname log    ${CHK}$1.log"    >> $clinput
+ echo "fname data   ${CHK}$1.data"    >> $clinput
+ echo "fname initl  ${EPX}${SRC}KWt/aa.i"    >> $clinput
+ echo "fname inidi  ${EPX}${SRC}TPt/di.i"    >> $clinput
+ echo "fname inidr  ${EPX}${SRC}KWt/dr.i"    >> $clinput
+ echo "fname iniev  ${EPX}${SRC}KWt/ev.i"    >> $clinput
+ echo "fname inirj  ${EPX}${SRC}KWt/rj.i"    >> $clinput
+ echo "fname inics  ${EPX}${SRC}TPt/cs.i"    >> $clinput
+ echo "fname inigrv ${EPX}${SRC}grv.i"    >> $clinput
+ echo "fname partab ${EPX}${SRCEXT}YK/ptl6.data"    >> $clinput
+ echo "fname dectab ${EPX}${SRCEXT}YK/dky6.data"    >> $clinput
+ echo "fname hpf srcext/UR/tables.dat "    >> $clinput
+ echo "fqgsjet dat   ${EPX}${SRC}qgsjet/qgsjet.dat"    >> $clinput
+ echo "fqgsjet ncs   ${EPX}${SRC}qgsjet/qgsjet.ncs"    >> $clinput
+ echo "fqgsjetII dat   ${EPX}${SRC}qgsjetII/qgsdat-II-03"    >> $clinput
+ echo "fqgsjetII ncs   ${EPX}${SRC}qgsjetII/sectnu-II-03"    >> $clinput
+ echo "nodecay 1220"    >> $clinput
+ echo "nodecay -1220"    >> $clinput
+ echo "nodecay 120"    >> $clinput
+ echo "nodecay -120"    >> $clinput
+ echo "nodecay 130"    >> $clinput
+ echo "nodecay -130"    >> $clinput
+ echo "nodecay -20"    >> $clinput
+ echo "nodecay 14"    >> $clinput
+ echo "nodecay -14"    >> $clinput
+ echo "echo on"    >> $clinput
+ echo "input  ${EPX}${CONF}parbf.i"    >> $clinput
+ echo "input ${odir}$1.optns"    >> $clinput
+ echo "echo off"    >> $clinput
+ echo "input  ${EPX}${SRC}KWn/paraf.i"    >> $clinput
+ echo "input  ${EPX}${CONF}partx.i"    >> $clinput
+ echo "runprogram"    >> $clinput
+ echo "stopprogram"    >> $clinput
+echo "start Xepos"
+time $XXepos -n <<EOF
+$clinput
+EOF
+rm $clinput
+echo "end Xepos"
+# if [ "$SGE_CELL" == "ccin2p3" ]; then
+ if [ -s ${CHK}$1.dataR ]; then
+  echo "run RIVET"
+  chmod +x ${EPO}/Misc3/Rivet/rivet_analysis
+  chmod +x ${EPO}/Misc3/Rivet/RIVET_to_histo_analysis.py
+  module add Compilers/gcc/10.3.0
+  source /pbs/software/centos-7-x86_64/rivet/3.1.5/rivetenv.sh
+  filei=${1#*-} ; filei=${filei%$ext1*}
+  export filei ext1
+  ${EPO}/Misc3/Rivet/rivet_analysis ${CHK}$1.dataR
+  rm -rf ${EPO}/Misc3/Rivet/__pycache__/
+ else 
+  echo "the file ${CHK}$1.dataR is missing"
+ fi
+# fi
+if [ -s ${CHK}$1.data ]; then
+  echo "###############################################################"
+  echo "      output written to ${CHK}$1.data"
+  echo "###############################################################"
+else
+  rm -f ${CHK}$1.data
+fi
+rm -f ${CHK}$1.dump
+if [ ! -s ${CHK}$1.check ]; then
+  rm -f ${CHK}$1.check
+fi
+if [ ! -s ${HTO}$1.histo ]; then
+  rm -f ${HTO}$1.histo
+fi
+if [ ! -s ${HTO}$1.hq ]; then
+  rm -f ${HTO}$1.hq
+fi
+if [ ! -s ${CHK}$1.hepmc ]; then
+  rm -f ${CHK}$1.hepmc
+fi
+
+rm -f ${CHK}$1.log
+rm -f ${CHK}$1.copy
+rm -f ${CHK}$1.dataR
+
+if [ ! "$2" = "q" ];then rm -f z-eos4f.eos; fi
+
+if [ -s ${CHK}$1.see ]; then
+rm -f ${CHK}$1.see
+fi
+rm -f gmon.out
+echo -n "Worker (nanpcw41-nanpcw65) : "
+hostname
+date
+#echo "job finished" > ${CHK}$1.fin
+exit
+

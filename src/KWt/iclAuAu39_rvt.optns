@@ -1,0 +1,62 @@
+!========> After copy/paste, remove manually '.00' <=========
+#define2  STAimp05   3.42    3.50        -8  
+#define2  STAimp10   4.77    4.92       -15  
+#define2  STAimp15   5.85    5.87        -2  
+#define2  STAimp20   6.75    6.72         3  
+#define2  STAimp25   7.52    7.46         6  
+#define2  STAimp30   8.21    8.19         2  
+#define2  STAimp35   8.88    8.84         4  
+#define2  STAimp40   9.49    9.44         5  
+#define2  STAimp45  10.08   10.02         6  
+#define2  STAimp50  10.61   10.56         5  
+#define2  STAimp55  11.12   11.07         5  
+#define2  STAimp60  11.60   11.59         1  
+#define2  STAimp65  12.07   12.04         3  
+#define2  STAimp70  12.53   12.55        -2  
+#define2  STAimp75  12.94   12.96        -2  
+#define2  STAimp80  13.39   13.38         1  
+#define2  STAimp85  13.84   13.84         0  
+#define2  STAimp90  14.38   14.34         4  
+#define2  STAimp95  15.10   15.07         3  
+
+#if1 #5 mx my hu m2 m3 
+#define2  STAmult05   0.50    0.51        -1  
+#define2  STAmult10   1.01    1.02        -1  
+#define2  STAmult15   1.51    1.52        -1  
+#define2  STAmult20   2.02    2.06        -4  
+#define2  STAmult25   3.0     3.03        -3  
+#define2  STAmult30   3.97    4.01        -4  
+#define2  STAmult35   5.38    5.44        -6  
+#define2  STAmult40   7.06    7.10        -4  
+#define2  STAmult45   9.13    9.11         2  
+#define2  STAmult50  11.58   11.49         9  
+#define2  STAmult55  14.49   14.39        10  
+#define2  STAmult60  17.96   17.64        32  
+#define2  STAmult65  22.18   21.41        77  
+#define2  STAmult70  27.20   25.83       137  
+#define2  STAmult75  33.15   30.68       247  
+#define2  STAmult80  40.43   36.52       391  
+#define2  STAmult85  49.64   43.09       655  
+#define2  STAmult90  61.24   51.38       986  
+#define2  STAmult95  76.75   62.28      1447  
+#else1
+#define2  STAmult05  0.0   0.0      0
+#define2  STAmult10  0.0   0.0      0
+#define2  STAmult15  0.0   0.0      0
+#define2  STAmult20  0.0   0.0      0
+#define2  STAmult25  0.0   0.0      0
+#define2  STAmult30  0.0   0.0      0
+#define2  STAmult35  0.0   0.0      0
+#define2  STAmult40  0.0   0.0      0
+#define2  STAmult45  0.0   0.0      0
+#define2  STAmult50  0.0   0.0      0
+#define2  STAmult55  0.0   0.0      0
+#define2  STAmult60  0.0   0.0      0
+#define2  STAmult65  0.0   0.0      0
+#define2  STAmult70  0.0   0.0      0
+#define2  STAmult75  0.0   0.0      0
+#define2  STAmult80  0.0   0.0      0
+#define2  STAmult85  0.0   0.0      0
+#define2  STAmult90  0.0   0.0      0
+#define2  STAmult95  0.0   0.0      0
+#fi1

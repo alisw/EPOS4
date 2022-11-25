@@ -1,0 +1,58 @@
+#!/bin/sh 
+
+ext1='-'
+ext3='-'
+ext4='-'
+end=0
+
+while [ $end -eq 0 ];
+do
+   end=1
+   case "$1"
+   in
+   -e1) shift 
+         ext1="$1"
+         shift
+         end=0
+         ;;
+   -e3) shift 
+         ext3="$1"
+         shift
+         end=0
+         ;;
+   -e4) shift 
+         ext4="$1"
+         shift
+         end=0
+         ;;
+   esac
+done
+
+if [ ! -f ${OPT}$1.optns ]; then
+echo ${OPT}$1.optns "does not exist"
+exit
+fi
+
+pref=""
+
+if [ "$OPT" = "./" ]; then 
+    odir=`pwd`/
+else
+    odir="$OPT"
+fi
+
+clinput=$1'.clinput'
+ echo "system $2"    > $clinput
+ echo "ext1 $ext1"    >> $clinput
+ echo "ext3 $ext3"    >> $clinput
+ echo "ext4 $ext4"    >> $clinput
+ echo "rootcproot $3"    >> $clinput
+ echo "fname pathep ${EPX}"    >> $clinput
+ echo "fname data   ${CHK}${pref}$1.dataX"    >> $clinput
+ echo "input ${odir}$1.optns"    >> $clinput
+ echo "runprogram"    >> $clinput
+${OBJ}epos$EPXVSN/XeposC -n <<EOF
+$clinput
+EOF
+rm $clinput
+

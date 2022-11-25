@@ -1,0 +1,146 @@
+echo off
+
+#define  bim00   0.00 
+#define  bi100  20.00
+#define  bimXX  20.00
+
+#define  npo100  50000
+#define  npoXX  50000
+#define  npo00  0
+
+#define2  bim01   1.53    1.45         8  
+#define2  bim02   2.14    2.0        14  
+#define2  bim025  2.37    2.34         3  
+#define2  bim03   2.58    2.57         1  
+#define2  bim05   3.33    3.34        -1  
+#define2  bim06   3.61    3.66        -5  
+#define2  bim075  4.02    4.11        -9  
+#define2  bim10   4.69    4.75        -6  
+#define2  bim12   5.14    5.23        -9  
+#define2  bim15   5.77    5.83        -6  
+#define2  bim20   6.69    6.71        -2  
+#define2  bim25   7.47    7.49        -2  
+#define2  bim30   8.16    8.21        -5  
+#define2  bim35   8.83    8.87        -4  
+#define2  bim40   9.46    9.46         0  
+#define2  bim45  10.03   10.04        -1  
+#define2  bim50  10.57   10.59        -2  
+#define2  bim55  11.07   11.14        -7  
+#define2  bim60  11.57   11.61        -4  
+#define2  bim65  12.03   12.07        -4  
+#define2  bim70  12.51   12.52        -1  
+#define2  bim75  12.96   12.96         0  
+#define2  bim80  13.42   13.40         2  
+#define2  bim85  13.87   13.89        -2  
+#define2  bim90  14.39   14.38         1  
+#define2  bim92  14.64   14.56         8  
+#define2  bim95  15.10   14.89        21  
+
+!++++++++++++++++++++++++++++++++++++++++++++++
+! CHECK for 0.000 values, change them manually
+!++++++++++++++++++++++++++++++++++++++++++++++
+#define2  epresStar01   0.330   0.449  119
+#define2  epresStar02   0.436   0.559  123
+#define2  epresStar03   0.526   0.621   95
+#define2  epresStar04   0.540   0.650  110
+#define2  epresStar05   0.546   0.659  113
+#define2  epresStar06   0.552   0.648   96
+#define2  epresStar07   0.498   0.622  124
+#define2  epresStar08   0.486   0.593  107
+#define2  epresStar09   0.445   0.545  100
+#define2  epresStar10   0.424   0.489   65
+#define2  epresStar11   0.362   0.430   68
+#define2  epresStar12   0.315   0.384   69
+#define2  epresStar13   0.270   0.326   56
+#define2  epresStar14   0.247   0.308   61
+#define2  epresStar15   0.218   0.278   60
+#define2  epresStar16   0.139   0.250  111
+#define2  epresStar17   0.218   0.298   80
+#define2  epresStar18   0.219   0.310   91
+#define2  epresStar19   0.292   0.315   23
+#define2  epresStar20   0.315   0.404   89
+
+CentralityClass cc20
+CentralityClass 1    0     bim05  1 !1  new 3.124c
+CentralityClass 2    bim05 bim10  1 !1
+CentralityClass 3    bim10 bim15  1 !2
+CentralityClass 4    bim15 bim20  1 !2
+CentralityClass 5    bim20 bim25  1 !2
+CentralityClass 6    bim25 bim30  1 !2
+CentralityClass 7    bim30 bim35  2 !4
+CentralityClass 8    bim35 bim40  2 !4
+CentralityClass 9    bim40 bim45  2 !4
+CentralityClass 10   bim45 bim50  2 !4
+CentralityClass 11   bim50 bim55  2 !4
+CentralityClass 12   bim55 bim60  4 !4
+CentralityClass 13   bim60 bim65  4 !4
+CentralityClass 14   bim65 bim70  4 !4
+CentralityClass 15   bim70 bim75  8 !8
+CentralityClass 16   bim75 bim80  8 !8
+CentralityClass 17   bim80 bim85  8 !8
+CentralityClass 18   bim85 bim90  8 !8
+CentralityClass 19   bim90 bim95  8 !8
+CentralityClass 20   bim95 bi100  8 !8
+
+CentralityLimit 0  0
+CentralityLimit 5  bim05
+CentralityLimit 10 bim10
+CentralityLimit 15 bim15
+CentralityLimit 20 bim20
+CentralityLimit 25 bim25
+CentralityLimit 30 bim30
+CentralityLimit 35 bim35
+CentralityLimit 40 bim40
+CentralityLimit 45 bim45
+CentralityLimit 50 bim50
+CentralityLimit 55 bim55
+CentralityLimit 60 bim60
+CentralityLimit 65 bim65
+CentralityLimit 70 bim70
+CentralityLimit 75 bim75
+CentralityLimit 80 bim80
+CentralityLimit 85 bim85
+CentralityLimit 90 bim90
+CentralityLimit 95 bim95
+CentralityLimit 100 bi100
+
+
+set bref80 bim80
+
+#define  bimrange0to10  "::bim00::bim10::"
+#define  bimrange0to20  "::bim00::bim20::"
+#define  bimrange20to40 "::bim20::bim40::"
+#define  bimrange40to60 "::bim40::bim60::"
+#define  bimrange60to80 "::bim60::bim80::"
+
+#define  bimrange0to5   "::bim00::bim05::"
+#define  bimrange5to10  "::bim05::bim10::"
+#define  bimrange10to20 "::bim10::bim20::"
+#define  bimrange20to30 "::bim20::bim30::"
+#define  bimrange30to40 "::bim30::bim40::"
+#define  bimrange40to50 "::bim40::bim50::"
+#define  bimrange50to60 "::bim50::bim60::"
+#define  bimrange60to70 "::bim60::bim70::"
+#define  bimrange70to80 "::bim70::bim80::"
+#define  bimrange80to90 "::bim80::bim90::"
+#define  bimrange90to100 "::bim90::bi100::"
+
+#define  bim0to10  "::bim00::bim10::"
+#define  bim0to20  "::bim00::bim20::"
+#define  bim20to40 "::bim20::bim40::"
+#define  bim40to60 "::bim40::bim60::"
+#define  bim60to80 "::bim60::bim80::"
+
+#define  bim0to5   "::bim00::bim05::"
+#define  bim5to10  "::bim05::bim10::"
+#define  bim10to20 "::bim10::bim20::"
+#define  bim20to30 "::bim20::bim30::"
+#define  bim30to40 "::bim30::bim40::"
+#define  bim40to50 "::bim40::bim50::"
+#define  bim50to60 "::bim50::bim60::"
+#define  bim60to70 "::bim60::bim70::"
+#define  bim70to80 "::bim70::bim80::"
+#define  bim80to90 "::bim80::bim90::"
+#define  bim90to100 "::bim90::bi100::"
+
+echo on

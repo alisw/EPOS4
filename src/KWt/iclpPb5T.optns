@@ -1,0 +1,263 @@
+echo off
+
+#define  bi100  20.00
+#define  bimXX  20.00
+#define  bim00   0.00 
+
+#define  npo100  1000
+#define  npoXX  1000
+#define  npo100.00  1000
+#define  npo00  0
+
+#define hei100 100   
+#define heiXX 100   
+#define hei00  0 
+
+#define  vza100  1000
+#define  vzaXX  1000
+#define  vza100.00  1000
+#define  vza00  0
+
+#define etr100  1000
+#define etr100.00  1000
+#define etrXX  1000
+#define etr00      0
+
+!========> After copy/paste, remove manually '.00' for bim <=========
+#define2  bim01   0.76    0.79        -3  
+#define2  bim02   1.08    1.0          8  
+#define2  bim025  1.21    1.24        -3  
+#define2  bim03   1.32    1.36        -4  
+#define2  bim05   1.71    1.75        -4  
+#define2  bim06   1.87    1.92        -5  
+#define2  bim075  2.09    2.15        -6  
+#define2  bim10   2.42    2.48        -6  
+#define2  bim12   2.65    2.71        -6  
+#define2  bim15   2.96    3.03        -7  
+#define2  bim20   3.42    3.49        -7  
+#define2  bim25   3.83    3.90        -7  
+#define2  bim30   4.20    4.26        -6  
+#define2  bim35   4.54    4.60        -6  
+#define2  bim40   4.87    4.91        -4  
+#define2  bim45   5.17    5.21        -4  
+#define2  bim50   5.47    5.49        -2  
+#define2  bim55   5.76    5.76         0  
+#define2  bim60   6.04    6.03         1  
+#define2  bim65   6.32    6.29         3  
+#define2  bim70   6.60    6.55         5  
+#define2  bim75   6.89    6.82         7  
+#define2  bim80   7.20    7.11         9  
+#define2  bim85   7.52    7.44         8  
+#define2  bim90   7.91    7.83         8  
+#define2  bim92   8.10    8.02         8  
+#define2  bim95   8.46    8.40         6  
+
+#if1 #5 mx my mz oy hu
+
+#define2  npo05.00   0.70    0.82       -12  
+#define2  npo10.00   0.97    1.30       -33  
+#define2  npo15.00   1.25    1.88       -63  
+#define2  npo20.00   1.52    2.53      -101  
+#define2  npo25.00   1.86    3.37      -151  
+#define2  npo30.00   2.20    3.96      -176  
+#define2  npo35.00   2.54    4.51      -197  
+#define2  npo40.00   2.96    5.23      -227  
+#define2  npo45.00   3.38    6.03      -265  
+#define2  npo50.00   3.87    6.98      -311  
+#define2  npo55.00   4.39    8.13      -374  
+#define2  npo60.00   4.99    9.51      -452  
+#define2  npo65.00   5.64   11.31      -567  
+#define2  npo70.00   6.46   13.33      -687  
+#define2  npo75.00   7.43   15.67      -824  
+#define2  npo80.00   8.63   18.53      -990  
+#define2  npo85.00  10.12   21.89     -1177  
+#define2  npo90.00  12.10   26.13     -1403  
+#define2  npo95.00  15.26   31.51     -1625  
+#define2  vza05.00   4.29    4.05        24  
+#define2  vza10.00   6.53    6.70       -17  
+#define2  vza15.00   8.57    9.32       -75  
+#define2  vza20.00  10.63   12.05      -142  
+#define2  vza25.00  12.79   14.77      -198  
+#define2  vza30.00  15.06   17.44      -238  
+#define2  vza35.00  17.43   20.10      -267  
+#define2  vza40.00  19.89   22.85      -296  
+#define2  vza45.00  22.48   25.75      -327  
+#define2  vza50.00  25.22   28.82      -360  
+#define2  vza55.00  28.21   32.21      -400  
+#define2  vza60.00  31.52   35.91      -439  
+#define2  vza65.00  35.27   40.02      -475  
+#define2  vza70.00  39.60   44.62      -502  
+#define2  vza75.00  44.67   49.82      -515  
+#define2  vza80.00  50.81   55.80      -499  
+#define2  vza85.00  58.40   62.86      -446  
+#define2  vza90.00  68.36   71.78      -342  
+#define2  vza95.00  83.37   84.77      -140  
+#define2  etr10.00   3.95    4.09       -14  
+#define2  etr20.00   6.97    7.07       -10  
+#define2  etr40.00  15.19   14.12       107  
+#define2  etr60.00  25.03   24.05        98  
+#define2  etr70.00  32.01   31.14        87  
+#define2  etr80.00  41.78   40.75       103  
+#define2  etr90.00  57.42   55.45       197  
+#define2  etr95.00  70.98   68.15       283  
+#define2  etr99.00  96.81   92.40       441  
+
+#else1
+
+#define2  npo05.00   0.69    0.79       -10  
+#define2  npo10.00   0.96    1.21       -25  
+#define2  npo15.00   1.24    1.68       -44  
+#define2  npo20.00   1.51    2.27       -76  
+#define2  npo25.00   1.85    2.94      -109  
+#define2  npo30.00   2.19    3.62      -143  
+#define2  npo35.00   2.53    4.11      -158  
+#define2  npo40.00   2.96    4.63      -167  
+#define2  npo45.00   3.39    5.27      -188  
+#define2  npo50.00   3.89    6.02      -213  
+#define2  npo55.00   4.41    6.90      -249  
+#define2  npo60.00   5.01    7.96      -295  
+#define2  npo65.00   5.67    9.23      -356  
+#define2  npo70.00   6.46   10.77      -431  
+#define2  npo75.00   7.42   12.63      -521  
+#define2  npo80.00   8.60   14.93      -633  
+#define2  npo85.00  10.11   17.82      -771  
+#define2  npo90.00  12.11   21.63      -952  
+#define2  npo95.00  15.26   27.37     -1211  
+#define2  vza05.00   6.29    5.14       115  
+#define2  vza10.00  10.08    8.51       157  
+#define2  vza15.00  14.44   12.48       196  
+#define2  vza20.00  20.61   17.60       301  
+#define2  vza25.00  29.15   23.87       528  
+#define2  vza30.00  38.12   31.22       690  
+#define2  vza35.00  45.63   39.61       602  
+#define2  vza40.00  52.42   48.74       368  
+#define2  vza45.00  59.35   58.43        92  
+#define2  vza50.00  67.00   68.98      -198  
+#define2  vza55.00  75.57   80.72      -515  
+#define2  vza60.00  85.08   93.81      -873  
+#define2  vza65.00  95.74  108.70     -1296  
+#define2  vza70.00  107.9  126.40     -1849  
+#define2  vza75.00  121.9  147.60     -2566  
+#define2  vza80.00  138.2  172.20     -3397  
+#define2  vza85.00  158.0  201.60     -4363  
+#define2  vza90.00  183.7  238.70     -5497  
+#define2  vza95.00  222.8  291.90     -6910  
+#define2  etr10.00   5.91    5.41        50  
+#define2  etr20.00  12.48   11.44       104  
+#define2  etr40.00  33.70   32.94        76  
+#define2  etr60.00  54.46   63.73      -927  
+#define2  etr70.00  69.91   87.05     -1714  
+#define2  etr80.00  90.33  118.20     -2787  
+#define2  etr90.00  121.2  163.40     -4218  
+#define2  etr95.00  147.9  199.70     -5181  
+#define2  etr99.00  198.8  267.20     -6838  
+
+#fi1
+
+!from arXiv:1307.6796 pi, K, p, Lda, production :
+#define hei95  41 
+#define hei80 27
+#define hei60 20 
+#define hei40 13 
+#define hei20  8 
+
+CentralityLimit 0  0.
+CentralityLimit 5  npo05.00
+CentralityLimit 10 npo10.00
+CentralityLimit 15 npo15.00
+CentralityLimit 20 npo20.00
+CentralityLimit 25 npo25.00
+CentralityLimit 30 npo30.00
+CentralityLimit 35 npo35.00
+CentralityLimit 40 npo40.00
+CentralityLimit 45 npo45.00
+CentralityLimit 50 npo50.00
+CentralityLimit 55 npo55.00
+CentralityLimit 60 npo60.00
+CentralityLimit 65 npo65.00
+CentralityLimit 70 npo70.00
+CentralityLimit 75 npo75.00
+CentralityLimit 80 npo80.00
+CentralityLimit 85 npo85.00
+CentralityLimit 90 npo90.00
+CentralityLimit 95 npo95.00
+CentralityLimit 100 npo100.00
+
+
+#define  bimrange0to5   "::bim00::bim05::"
+#define  bimrange5to10  "::bim05::bim10::"
+#define  bimrange10to20 "::bim10::bim20::"
+#define  bimrange20to30 "::bim20::bim30::"
+#define  bimrange30to40 "::bim30::bim40::"
+#define  bimrange40to50 "::bim40::bim50::"
+#define  bimrange50to60 "::bim50::bim60::"
+#define  bimrange60to70 "::bim60::bim70::"
+#define  bimrange70to80 "::bim70::bim80::"
+#define  bimrange80to90 "::bim80::bim90::"
+#define  bimrange90to100 "::bim90::bi100::"
+
+#define  bimrange20to40 "::bim20::bim40::"
+#define  bimrange0to10  "::bim00::bim10::"
+#define  bimrange0to1   "::bim00::bim01::"
+#define  bimrange60to80 "::bim60::bim80::"
+#define  bimrange80to100 "::bim80::bi100::"
+
+
+#define  nporange0to5    "::npo95.00::npo100.00::"
+#define  nporange5to10   "::npo90.00::npo95.00::"
+#define  nporange10to20  "::npo80.00::npo90.00::"
+#define  nporange20to30  "::npo70.00::npo80.00::"
+#define  nporange30to40  "::npo60.00::npo70.00::"
+#define  nporange40to50  "::npo50.00::npo60.00::"
+#define  nporange50to60  "::npo40.00::npo50.00::"
+#define  nporange60to70  "::npo30.00::npo40.00::"
+#define  nporange70to80  "::npo20.00::npo30.00::"
+#define  nporange80to90  "::npo10.00::npo20.00::"
+#define  nporange90to100 "::npo00.00::npo10.00::"
+
+#define  nporange20to40  "::npo60.00::npo80.00::"
+#define  nporange40to60  "::npo40.00::npo60.00::"
+#define  nporange60to80  "::npo20.00::npo40.00::"
+#define  nporange80to100 "::npo00.00::npo20.00::"
+#define  nporange0to20   "::npo80.00::npo100.00::"
+#define  nporange0to10   "::npo90.00::npo100.00::"
+
+#define  vzarange0to5    "::vza95.00::vza100.00::"
+#define  vzarange5to10   "::vza90.00::vza95.00::"
+#define  vzarange10to20  "::vza80.00::vza90.00::"
+#define  vzarange20to40  "::vza60.00::vza80.00::"
+#define  vzarange40to60  "::vza40.00::vza60.00::"
+#define  vzarange60to80  "::vza20.00::vza40.00::"
+#define  vzarange80to100 "::vza00.00::vza20.00::"
+#define  vzarange0to20   "::vza80.00::vza100.00::"
+
+#define  vzairange10to20 "::vza10.00::vza20.00::"
+#define  vzairange30to40 "::vza30.00::vza40.00::"
+#define  vzairange50to60 "::vza50.00::vza60.00::"
+#define  vzairange70to80 "::vza70.00::vza80.00::"
+#define  vzairange90to100 "::vza90.00::vza100.00::"
+
+#define  etrange00to05  "::etr95.00::etr100.00::"
+#define  etrange5to10   "::etr90.00::etr95.00::"
+#define  etrange10to20  "::etr80.00::etr90.00::"
+#define  etrange20to40  "::etr60.00::etr80.00::"
+#define  etrange40to60  "::etr40.00::etr60.00::"
+#define  etrange60to80  "::etr20.00::etr40.00::"
+#define  etrange80to100 "::etr00.00::etr20.00::"
+
+#define  etrange0to10   "::etr90.00::etr100.00::"
+#define  etrange0to20   "::etr80.00::etr100.00::"
+#define  etrange00to01  "::etr99.00::etr100.00::"
+#define  etrange01to05  "::etr95.00::etr99.00::"
+#define  etrange20to30  "::etr70.00::etr80.00::"
+#define  etrange30to40  "::etr60.00::etr70.00::"
+#define  etrange60to90  "::etr10.00::etr40.00::"
+
+#define  heirange0to5    "::hei95::heiXX::"
+#define  heirange20to40  "::hei60::hei80::"
+#define  heirange40to60  "::hei40::hei60::"
+#define  heirange60to80  "::hei20::hei40::"
+#define  heirange80to100 "::hei00::hei20::"
+#define  heirange0to20   "::hei80::hei100::"
+
+echo on

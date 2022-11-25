@@ -1,0 +1,39 @@
+!  
+!  This file is part of EPOS4
+!  Copyright (C) 2022 research institutions and authors (See CREDITS file)
+!  This file is distributed under the terms of the GNU General Public License version 3 or later
+!  (See COPYING file for the text of the licence)
+!  
+
+!-----------------------------------------------------------------------
+!      status list (ist)
+!-----------------------------------------------------------------------
+
+        0       particle last generation
+        1       particle not last generation
+        2       invalid particle
+        3       particles going into hadronic cascade
+        5       particles going into core (intermediate)
+        7       particles going into core (final)
+!-----------------------------------------------------------------------
+!               As a "special service", in case of a full simulation
+!               (namely EPOS with hydro and hadronic cascade (hacas)) 
+!               in addition to the list of particles with ist 0 and 1
+!               we provide another list, which corresponds to EPOS
+!               with hydro but without hacas, with the following ist:         
+!                 8 and 6 ... without hacas (8 = last generation), 
+!-----------------------------------------------------------------------
+        8       particle last generation without hadronic cascade  
+        6       particle not last generation without hadronic cascade
+!-----------------------------------------------------------------------
+!               Since some procedures cannot guarantee strict energy 
+!               conservation, we provide an additional list of particles 
+!               where a correction procedure has been employed to 
+!               enforce energy conservation, with the following ist:
+!-----------------------------------------------------------------------
+
+       20       partons last generation
+       21       partons not last generation
+       25       intermediate out-Born partons
+       29       string
+

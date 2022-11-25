@@ -1,0 +1,139 @@
+echo off
+set izmode 2 
+CentralityClass  1   1  1   1  0.50 3.50
+CentralityClass  2   2  2   1  0.35 2.50
+CentralityClass  3   3  3   1  0.20 1.50
+CentralityClass  4   4  4   1  0.15 1.30 
+CentralityClass  5   5  5   1  0.10 1.10 
+CentralityClass  6   6  6   1  0.05 0.90 
+CentralityClass  7   7  7   1   0   0.70
+CentralityClass  8   8  8   1   0   0.64
+CentralityClass  9   9  9   1   0   0.57
+CentralityClass 10  10 10   1   0   0.50
+CentralityClass 11  11 11   1   0   0.42
+CentralityClass 12  12 12   1   0   0.34
+CentralityClass 13  13 13   1   0   0.27
+CentralityClass 14  14 14   1   0   0.20
+CentralityClass 15  15 15   1   0   0.16
+CentralityClass 16  16 16   1   0   0.12
+CentralityClass 17  17 17   1   0   0.08
+CentralityClass 18  18 18   1   0   0.05
+
+#define  vzac100.00 1000
+#define  vzac00.00  0
+
+#if1 #8 mx my mz hu m2 m3 mya myb
+
+#define2  vzac05.00   4.10    3.93        17  
+#define2  vzac10.00   7.21    6.85        36  
+#define2  vzac15.00   9.90    9.22        68  
+#define2  vzac20.00  12.04   11.20        84  
+#define2  vzac25.00  13.89   13.00        89  
+#define2  vzac30.00  15.62   14.75        87  
+#define2  vzac35.00  17.34   16.54        80  
+#define2  vzac40.00  19.14   18.45        69  
+#define2  vzac45.00  21.11   20.60        51  
+#define2  vzac50.00  23.31   23.03        28  
+#define2  vzac55.00  25.80   25.76         4  
+#define2  vzac60.00  28.55   28.69       -14  
+#define2  vzac65.00  31.50   31.75       -25  
+#define2  vzac70.00  34.62   34.94       -32  
+#define2  vzac75.00  38.01   38.38       -37  
+#define2  vzac80.00  41.75   42.18       -43  
+#define2  vzac85.00  46.16   46.60       -44  
+#define2  vzac90.00  51.77   52.23       -46  
+#define2  vzac95.00  60.24   60.51       -27  
+#define2  vzac99.00  76.57   76.72       -15  
+#define2  vzac99.90  95.89   97.00      -111  
+#define2  vzac32.00  16.30   15.45        85  
+#define2  vzac52.00  24.27   24.09        18  
+#define2  vzac62.00  29.71   29.89       -18  
+#define2  vzac72.00  35.95   36.27       -32  
+#define2  vzac81.00  42.57   43.00       -43  
+#define2  vzac86.00  47.15   47.62       -47  
+#define2  vzac90.50  52.44   52.89       -45  
+#define2  vzac95.30  60.93   61.21       -28  
+#define2  vzac99.05  77.05   77.21       -16  
+
+#else1
+
+#define2  vzac05.00   5.18    4.17       101  
+#define2  vzac10.00   8.99    7.69       130  
+#define2  vzac15.00  12.53   11.32       121  
+#define2  vzac20.00  15.48   14.37       111  
+#define2  vzac25.00  18.13   17.00       113  
+#define2  vzac30.00  20.70   19.46       124  
+#define2  vzac35.00  23.32   21.88       144  
+#define2  vzac40.00  26.07   24.35       172  
+#define2  vzac45.00  29.07   26.99       208  
+#define2  vzac50.00  32.54   29.94       260  
+#define2  vzac55.00  36.74   33.43       331  
+#define2  vzac60.00  41.71   37.86       385  
+#define2  vzac65.00  47.26   43.48       378  
+#define2  vzac70.00  53.32   50.08       324  
+#define2  vzac75.00  60.19   57.57       262  
+#define2  vzac80.00  68.29   66.52       177  
+#define2  vzac85.00  78.22   77.93        29  
+#define2  vzac90.00  91.25   93.55      -230  
+#define2  vzac95.00  111.5  118.20      -671  
+#define2  vzac99.00  152.9  166.30     -1342  
+#define2  vzac99.90  202.5  217.80     -1531  
+#define2  vzac32.00  21.74   20.42       132  
+#define2  vzac52.00  34.13   31.25       288  
+#define2  vzac62.00  43.88   39.97       391  
+#define2  vzac72.00  55.95   52.95       300  
+#define2  vzac81.00  70.11   68.57       154  
+#define2  vzac86.00  80.51   80.64       -13  
+#define2  vzac90.50  92.83   95.47      -264  
+#define2  vzac95.30  113.2  120.30      -709  
+#define2  vzac99.05  154.1  167.70     -1360  
+
+#fi1
+
+#define  vzacrange0to01   "::vzac99.90::vzac100.00::"
+#define  vzacrange01to1   "::vzac99.00::vzac99.90::"
+#define  vzacrange1to5    "::vzac95.00::vzac99.00::"
+#define  vzacrange5to10   "::vzac90.00::vzac95.00::"
+#define  vzacrange10to15  "::vzac85.00::vzac90.00::"
+#define  vzacrange15to20  "::vzac80.00::vzac85.00::"
+#define  vzacrange20to30  "::vzac70.00::vzac80.00::"
+#define  vzacrange30to40  "::vzac60.00::vzac70.00::"
+#define  vzacrange40to50  "::vzac50.00::vzac60.00::"
+#define  vzacrange50to70  "::vzac30.00::vzac50.00::"
+#define  vzacrange70to100 "::vzac00.00::vzac30.00::"
+#define  vzacrange0to1    "::vzac99.00::vzac100.00::"
+#define  vzacrange0to5    "::vzac95.00::vzac100.00::"
+#define  vzacrange5to15   "::vzac85.00::vzac95.00::"
+#define  vzacrange10to20  "::vzac80.00::vzac90.00::"
+#define  vzacrange15to30  "::vzac70.00::vzac85.00::"
+#define  vzacrange30to50  "::vzac50.00::vzac70.00::"
+#define  vzacrange50to100 "::vzac00.00::vzac50.00::"
+
+#define  vzacrange0to0.95   "::vzac99.05::vzac100.00::"
+#define  vzacrange0.95to4.7 "::vzac95.30::vzac99.05::"
+#define  vzacrange4.7to9.5  "::vzac90.50::vzac95.30::"
+#define  vzacrange9.5to14   "::vzac86.00::vzac90.50::"
+#define  vzacrange14to19    "::vzac81.00::vzac86.00::"
+#define  vzacrange19to28    "::vzac72.00::vzac81.00::"
+#define  vzacrange28to38    "::vzac62.00::vzac72.00::"
+#define  vzacrange38to48    "::vzac52.00::vzac62.00::"
+#define  vzacrange48to68    "::vzac32.00::vzac52.00::"
+#define  vzacrange68to100   "::vzac00.00::vzac32.00::"
+
+#define  vzacrange0to4.7    "::vzac95.30::vzac100.00::"
+#define  vzacrange4.7to14   "::vzac86.00::vzac95.30::"
+#define  vzacrange14to28    "::vzac72.00::vzac86.00::"
+#define  vzacrange28to48    "::vzac52.00::vzac72.00::"
+#define  vzacrange48to100   "::vzac00.00::vzac52.00::"
+#define  vzacrange9.5to19   "::vzac81.00::vzac90.50::"
+
+#define  nporange1to1    "::1::1::"
+#define  nporange2to4    "::2::4::"
+#define  nporange5to9    "::5::9::"
+#define  nporange10to15  "::10::15::"
+#define  nporange16to20  "::16::20::"
+#define  nporange21to25  "::21::25::"
+#define  nporange31to40  "::31::40::"
+#define  nporange51to60  "::51::60::"
+
+echo on

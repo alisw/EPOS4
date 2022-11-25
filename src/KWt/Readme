@@ -1,0 +1,17 @@
+Cleanup KWt/ 3453o
+
+rm -v deform.dt.2
+rm -v deform.dt.3
+rm -v f2.optns
+rm -v f2t.optns
+rm -v idresi.dt_TMP
+rm -v idresi.dt_TST
+rm -v idresi.dt_TST2
+rm -v idresi.dt_extd
+rm -v idresi.dt_ori2
+rm -v idresi.dt_orig
+rm -v mass_width_2008.csv
+rm -v mass_width_2018.mcd
+
+
+

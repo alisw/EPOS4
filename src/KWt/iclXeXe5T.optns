@@ -1,0 +1,202 @@
+echo off
+
+#define  bi100  20.00
+#define  bimXX  20.00
+#define  bim00   0.00 
+
+#define  npo100  50000
+#define  npoXX  50000
+#define  npo100.00  50000
+#define  npo00  0
+
+!========> After copy/paste, remove manually '.00' <=========
+#define2  bim01   1.33    1.50       -17  
+#define2  bim02   1.89    2.0        -11  
+#define2  bim025  2.12    2.13        -1  
+#define2  bim03   2.32    2.32         0  
+#define2  bim05   2.99    2.99         0  
+#define2  bim06   3.27    3.27         0  
+#define2  bim075  3.66    3.66         0  
+#define2  bim10   4.22    4.23        -1  
+#define2  bim12   4.62    4.64        -2  
+#define2  bim15   5.16    5.18        -2  
+#define2  bim20   5.97    5.98        -1  
+#define2  bim25   6.68    6.69        -1  
+#define2  bim30   7.31    7.33        -2  
+#define2  bim35   7.90    7.92        -2  
+#define2  bim40   8.45    8.46        -1  
+#define2  bim45   8.96    8.98        -2  
+#define2  bim50   9.44    9.46        -2  
+#define2  bim55   9.91    9.92        -1  
+#define2  bim60  10.35   10.36        -1  
+#define2  bim65  10.77   10.78        -1  
+#define2  bim70  11.18   11.19        -1  
+#define2  bim75  11.58   11.59        -1  
+#define2  bim80  11.98   12.0         -2  
+#define2  bim85  12.41   12.43        -2  
+#define2  bim90  12.91   12.94        -3  
+#define2  bim92  13.15   13.19        -4  
+#define2  bim95  13.61   13.67        -6  
+
+!https://arxiv.org/pdf/1805.04432.pdf
+!Centr <dN/deta>
+!0-1     1302
+!1-2     1223
+!2-3     1166
+!3-4     1113
+!4-5     1069
+!0.0-2.5 1238
+!2.5-5.0 1096
+!5.0-7.5 986
+!7.5-10. 891
+!00-05   1167
+!05-10   939
+!10-20   706
+!20-30   478
+!30-40   315
+!40-50   198
+!50-60   118
+!60-70   64.7
+!70-80   32.0
+!80-90   13.3
+
+
+
+#define hei100 1330.
+#define hei99  1262.
+#define hei98  1194.
+#define hei97  1139.
+#define hei96  1091.
+#define hei95  1041.
+
+#define hei975 1167.
+#define hei925 938.5
+
+#define hei90  822.5
+#define hei80  592.0
+#define hei70  396.5
+#define hei60  256.5
+#define hei50  158.0
+#define hei40  91.35
+#define hei30  48.35
+#define hei20  22.65
+#define hei10  7.50    !~hei20/3 see ibb5
+#define hei05  3.75    !~hei10/2
+#define hei0   0
+
+CentralityLimit 0  0
+CentralityLimit 5  bim05
+CentralityLimit 10 bim10
+CentralityLimit 15 bim15
+CentralityLimit 20 bim20
+CentralityLimit 25 bim25
+CentralityLimit 30 bim30
+CentralityLimit 35 bim35
+CentralityLimit 40 bim40
+CentralityLimit 45 bim45
+CentralityLimit 50 bim50
+CentralityLimit 55 bim55
+CentralityLimit 60 bim60
+CentralityLimit 65 bim65
+CentralityLimit 70 bim70
+CentralityLimit 75 bim75
+CentralityLimit 80 bim80
+CentralityLimit 85 bim85
+CentralityLimit 90 bim90
+CentralityLimit 95 bim95
+CentralityLimit 100 bi100
+
+CentralityClass cc20
+CentralityClass 1    0     bim05  1
+CentralityClass 2    bim05 bim10  1
+CentralityClass 3    bim10 bim15  2
+CentralityClass 4    bim15 bim20  2
+CentralityClass 5    bim20 bim25  2
+CentralityClass 6    bim25 bim30  2
+CentralityClass 7    bim30 bim35  4
+CentralityClass 8    bim35 bim40  4
+CentralityClass 9    bim40 bim45  4
+CentralityClass 10   bim45 bim50  4
+CentralityClass 11   bim50 bim55  4
+CentralityClass 12   bim55 bim60  8
+CentralityClass 13   bim60 bim65  8
+CentralityClass 14   bim65 bim70  16
+CentralityClass 15   bim70 bim75  16
+CentralityClass 16   bim75 bim80  16
+CentralityClass 17   bim80 bim85  16
+CentralityClass 18   bim85 bim90  16
+CentralityClass 19   bim90 bim95  16
+CentralityClass 20   bim95 bi100  16
+
+#define  bimrange0to10  "::bim00::bim10::"
+#define  bimrange0to20  "::bim00::bim20::"
+#define  bimrange20to40 "::bim20::bim40::"
+#define  bimrange40to60 "::bim40::bim60::"
+#define  bimrange60to80 "::bim60::bim80::"
+#define  bimrange60to90 "::bim60::bim90::"
+#define  bimrange95to100 "::bim95::bi100::"
+#define  bimrange80to100 "::bim80::bi100::"
+
+#define  bimrange0to1   "::bim00::bim01::"
+#define  bimrange0to5   "::bim00::bim05::"
+#define  bimrange5to10  "::bim05::bim10::"
+#define  bimrange10to20 "::bim10::bim20::"
+#define  bimrange20to30 "::bim20::bim30::"
+#define  bimrange30to40 "::bim30::bim40::"
+#define  bimrange40to50 "::bim40::bim50::"
+#define  bimrange50to60 "::bim50::bim60::"
+#define  bimrange60to70 "::bim60::bim70::"
+#define  bimrange70to80 "::bim70::bim80::"
+#define  bimrange80to90 "::bim80::bim90::"
+#define  bimrange90to100 "::bim90::bi100::"
+
+! use: xparas 8 0 0.5 0 100 1 1 1 0. trigger muxevt heirange0to5 
+#define  heirange0to5    "::hei95::heiXX::"
+#define  heirange20to40  "::hei60::hei80::"
+#define  heirange40to60  "::hei40::hei60::"
+#define  heirange60to80  "::hei20::hei40::"
+#define  heirange80to100 "::hei00::hei20::"
+#define  heirange0to20   "::hei80::hei100::"
+
+#define2  npo05.00   2.46    2.49        -3  
+#define2  npo10.00   4.92    4.97        -5  
+#define2  npo15.00   7.37    7.46        -9  
+#define2  npo20.00   9.83    9.94       -11  
+#define2  npo25.00  15.53   15.58        -5  
+#define2  npo30.00  22.30   22.15        15  
+#define2  npo35.00  32.19   32.19         0  
+#define2  npo40.00  45.90   45.90         0  
+#define2  npo45.00  63.67   62.36       131  
+#define2  npo50.00  86.53   84.87       166  
+#define2  npo55.00  116.4  114.60       184  
+#define2  npo60.00  150.6  150.90       -33  
+#define2  npo65.00  192.3  191.60        66  
+#define2  npo70.00  244.4  242.70       168  
+#define2  npo75.00  302.7  299.50       316  
+#define2  npo80.00  376.4  375.30       114  
+#define2  npo85.00  465.9  457.20       871  
+#define2  npo90.00  568.2  560.00       817  
+#define2  npo95.00  690.7  701.40     -1068  
+
+#define  nporange0to5    "::npo95.00::npo100.00::"
+#define  nporange5to10   "::npo90.00::npo95.00::"
+#define  nporange10to20  "::npo80.00::npo90.00::"
+#define  nporange20to30  "::npo70.00::npo80.00::"
+#define  nporange30to40  "::npo60.00::npo70.00::"
+#define  nporange40to50  "::npo50.00::npo60.00::"
+#define  nporange50to60  "::npo40.00::npo50.00::"
+#define  nporange60to70  "::npo30.00::npo40.00::"
+#define  nporange70to80  "::npo20.00::npo30.00::"
+#define  nporange80to90  "::npo10.00::npo20.00::"
+#define  nporange90to100 "::npo00.00::npo10.00::"
+
+#define  nporange20to40  "::npo60.00::npo80.00::"
+#define  nporange40to60  "::npo40.00::npo60.00::"
+#define  nporange60to80  "::npo20.00::npo40.00::"
+#define  nporange60to90  "::npo10.00::npo40.00::"
+#define  nporange80to100 "::npo00.00::npo20.00::"
+#define  nporange0to20   "::npo80.00::npo100.00::"
+#define  nporange0to10   "::npo90.00::npo100.00::"
+
+
+echo on

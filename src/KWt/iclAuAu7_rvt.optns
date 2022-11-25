@@ -1,0 +1,41 @@
+
+#define2  STAmult05   0.35    0.48       -13  
+#define2  STAmult10   0.71    0.95       -24  
+#define2  STAmult15   1.06    1.43       -37  
+#define2  STAmult20   1.42    1.90       -48  
+#define2  STAmult25   1.77    2.84      -107  
+#define2  STAmult30   2.29    3.89      -160  
+#define2  STAmult35   3.13    5.39      -226  
+#define2  STAmult40   3.97    7.15      -318  
+#define2  STAmult45   5.33    9.20      -387  
+#define2  STAmult50   6.96   11.54      -458  
+#define2  STAmult55   8.98   14.24      -526  
+#define2  STAmult60  11.41   17.54      -613  
+#define2  STAmult65  14.37   21.51      -714  
+#define2  STAmult70  17.96   26.71      -875  
+#define2  STAmult75  22.50   33.58     -1108  
+#define2  STAmult80  28.17   42.70     -1453  
+#define2  STAmult85  35.62   54.20     -1858  
+#define2  STAmult90  45.63   68.96     -2333  
+#define2  STAmult95  60.80   87.75     -2695  
+
+#define2  STAimp05   3.37    3.32         5  
+#define2  STAimp10   4.72    4.71         1  
+#define2  STAimp15   5.75    5.77        -2  
+#define2  STAimp20   6.67    6.69        -2  
+#define2  STAimp25   7.47    7.40         7  
+#define2  STAimp30   8.20    8.16         4  
+#define2  STAimp35   8.85    8.78         7  
+#define2  STAimp40   9.45    9.43         2  
+#define2  STAimp45  10.03   10.02         1  
+#define2  STAimp50  10.57   10.54         3  
+#define2  STAimp55  11.12   11.04         8  
+#define2  STAimp60  11.58   11.51         7  
+#define2  STAimp65  12.04   11.98         6  
+#define2  STAimp70  12.48   12.46         2  
+#define2  STAimp75  12.92   12.92         0  
+#define2  STAimp80  13.37   13.39        -2  
+#define2  STAimp85  13.84   13.84         0  
+#define2  STAimp90  14.34   14.38        -4  
+#define2  STAimp95  15.08   15.09        -1  
+

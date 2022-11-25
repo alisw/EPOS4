@@ -1,0 +1,16 @@
+!  
+!  This file is part of EPOS4
+!  Copyright (C) 2022 research institutions and authors (See CREDITS file)
+!  This file is distributed under the terms of the GNU General Public License version 3 or later
+!  (See COPYING file for the text of the licence)
+!  
+
+   1    1    7000.0       2.0
+   1  208    5020.0      35.0
+ 129  129    5020.0     250.0
+!
+! Estimate (to be checked)
+! AuAu19=380 AuAu200=390 dN/dlogE=4.25 -> N=Nref+4.25*(log(E)-log(Eref))
+!
+ 197  197    200.0     390.0     
+ 208  208    2760.0    415.0

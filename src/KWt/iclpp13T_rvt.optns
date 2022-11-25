@@ -1,0 +1,21 @@
+!========> After copy/paste, remove manually '.00' <=========
+#define2  ALImult05   6.07    6.70       -63  
+#define2  ALImult10   9.22    9.43       -21  
+#define2  ALImult15  11.91   11.58        33  
+#define2  ALImult20  14.06   13.46        60  
+#define2  ALImult25  15.98   15.27        71  
+#define2  ALImult30  17.86   17.12        74  
+#define2  ALImult35  19.83   19.12        71  
+#define2  ALImult40  22.01   21.38        63  
+#define2  ALImult45  24.64   23.96        68  
+#define2  ALImult50  27.72   26.96        76  
+#define2  ALImult55  31.15   30.16        99  
+#define2  ALImult60  34.71   33.50       121  
+#define2  ALImult65  38.32   36.99       133  
+#define2  ALImult70  42.08   40.68       140  
+#define2  ALImult75  46.22   44.72       150  
+#define2  ALImult80  50.87   49.24       163  
+#define2  ALImult85  56.34   54.59       175  
+#define2  ALImult90  63.39   61.34       205  
+#define2  ALImult95  74.10   71.66       244  
+
