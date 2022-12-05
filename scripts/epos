@@ -170,7 +170,7 @@ rm -f ${CHK}z-${one}.copyDo1
 rm -f ${CHK}z-${one}.copyDo2 
 rm -f ${CHK}z-${one}.log 
 
-gunzip -c ${EPO}${SRC}KWt/eos4f.eos.gz > z-eos4f.eos
+gunzip -c ${EPO4}${SRC}KWt/eos4f.eos.gz > z-eos4f.eos
 
 seedj=111111111
 seedi=222222222    
@@ -190,32 +190,32 @@ clinput=z-${one}'.clinput'
  echo "!!!beginoptns spherio !No longer used." >> $clinput
  echo "!!!...                !See version < 3118  " >> $clinput
  echo "!!!endoptns spherio   !if needed again         " >> $clinput
- echo "fname pathep $EPO" >> $clinput
+ echo "fname pathep $EPO4" >> $clinput
  echo "!-------HQ--------" >> $clinput
- echo "fname user1  ${EPO}${SRCEXT}VOt/" >> $clinput
+ echo "fname user1  ${EPO4}${SRCEXT}VOt/" >> $clinput
  echo "fname user2  ${HTO}z-${one}.hq" >> $clinput
- echo "fname user3  ${EPO}${SRCEXT}URt/" >> $clinput
+ echo "fname user3  ${EPO4}${SRCEXT}URt/" >> $clinput
  echo "!-------HQ END--------" >> $clinput
- echo "fname pathpdf ${EPO}${SRC}TPt/" >> $clinput
+ echo "fname pathpdf ${EPO4}${SRC}TPt/" >> $clinput
  echo "fname histo  ${HTO}z-${one}.histo" >> $clinput
  echo "fname check  ${CHK}z-${one}.check" >> $clinput
  echo "fname copy   ${CHK}z-${one}.copy" >> $clinput
  echo "fname log    ${CHK}z-${one}.log" >> $clinput
  echo "fname data   ${CHK}z-${one}.data" >> $clinput
- echo "fname initl  ${EPO}${SRC}KWt/aa.i" >> $clinput
- echo "fname inidi  ${EPO}${SRC}TPt/di.i              " >> $clinput
- echo "fname inidr  ${EPO}${SRC}KWt/dr.i              " >> $clinput
- echo "fname iniev  ${EPO}${SRC}KWt/ev.i   " >> $clinput
- echo "fname inirj  ${EPO}${SRC}KWt/rj.i" >> $clinput
- echo "fname inics  ${EPO}${SRC}TPt/cs.i" >> $clinput
- echo "fname inigrv ${EPO}${SRC}grv.i" >> $clinput
- echo "fname partab ${EPO}${SRCEXT}YK/ptl6.data" >> $clinput
- echo "fname dectab ${EPO}${SRCEXT}YK/dky6.data" >> $clinput
+ echo "fname initl  ${EPO4}${SRC}KWt/aa.i" >> $clinput
+ echo "fname inidi  ${EPO4}${SRC}TPt/di.i              " >> $clinput
+ echo "fname inidr  ${EPO4}${SRC}KWt/dr.i              " >> $clinput
+ echo "fname iniev  ${EPO4}${SRC}KWt/ev.i   " >> $clinput
+ echo "fname inirj  ${EPO4}${SRC}KWt/rj.i" >> $clinput
+ echo "fname inics  ${EPO4}${SRC}TPt/cs.i" >> $clinput
+ echo "fname inigrv ${EPO4}${SRC}grv.i" >> $clinput
+ echo "fname partab ${EPO4}${SRCEXT}YK/ptl6.data" >> $clinput
+ echo "fname dectab ${EPO4}${SRCEXT}YK/dky6.data" >> $clinput
  echo "fname hpf srcext/UR/tables.dat " >> $clinput
- echo "fqgsjet dat   ${EPO}${SRC}qgsjet/qgsjet.dat" >> $clinput
- echo "fqgsjet ncs   ${EPO}${SRC}qgsjet/qgsjet.ncs" >> $clinput
- echo "fqgsjetII dat   ${EPO}${SRC}qgsjetII/qgsdat-II-03" >> $clinput
- echo "fqgsjetII ncs   ${EPO}${SRC}qgsjetII/sectnu-II-03" >> $clinput
+ echo "fqgsjet dat   ${EPO4}${SRC}qgsjet/qgsjet.dat" >> $clinput
+ echo "fqgsjet ncs   ${EPO4}${SRC}qgsjet/qgsjet.ncs" >> $clinput
+ echo "fqgsjetII dat   ${EPO4}${SRC}qgsjetII/qgsdat-II-03" >> $clinput
+ echo "fqgsjetII ncs   ${EPO4}${SRC}qgsjetII/sectnu-II-03" >> $clinput
  echo "nodecay 1220" >> $clinput
  echo "nodecay -1220" >> $clinput
  echo "nodecay 120" >> $clinput
@@ -228,10 +228,10 @@ clinput=z-${one}'.clinput'
  echo "nodecay 16" >> $clinput
  echo "nodecay -16" >> $clinput
  echo "echo on" >> $clinput
- echo "input  ${EPO}${CONF}parbf.i" >> $clinput
+ echo "input  ${EPO4}${CONF}parbf.i" >> $clinput
  echo "input ${OPX}z-${one}.optns" >> $clinput
- echo "input  ${EPO}${SRC}KWn/paraf.i" >> $clinput
- echo "input  ${EPO}${CONF}partx.i" >> $clinput
+ echo "input  ${EPO4}${SRC}KWn/paraf.i" >> $clinput
+ echo "input  ${EPO4}${CONF}partx.i" >> $clinput
  echo "runprogram" >> $clinput
  echo "stopprogram" >> $clinput
 # to use gdb, type "epos ..." as usually, then in gdb type "run", then "z-clinput"  

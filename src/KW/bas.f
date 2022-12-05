@@ -7159,7 +7159,7 @@ c-----------------------------------------------------------------------
       if(ii.eq.6)jj=6
       writeUnit = jj
 
-      call get_environment_variable("EPO", eposdir)
+      call get_environment_variable("EPO4", eposdir)
 
 c     Read the file VERSION.txt
       versionFile = trim(eposdir)//'VERSION.txt'
