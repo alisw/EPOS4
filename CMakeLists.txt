@@ -152,6 +152,13 @@ if(WITH_FASTJET)
     )
 endif()
 
+list(APPEND LINK_LIBRARY_LIST
+    $ENV{GMP_ROOT}/lib/libgmp.a
+    )
+list(APPEND LINK_LIBRARY_LIST
+    $ENV{CGAL_ROOT}/lib/libCGAL.so
+    )    
+
 target_link_libraries(Xepos ${LINK_LIBRARY_LIST})
 
 ####################################################################################
