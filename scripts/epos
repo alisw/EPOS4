@@ -154,7 +154,7 @@ echo cp $filei.optns $file.optns
      cp $filei.optns $file.optns
      tmp=$file.optns
 fi
- 
+
 if [ ! -f ${OPX}${file}.optns ]; then
 echo ${OPX}${file}.optns "does not exist"
 exit
@@ -170,7 +170,6 @@ cp ${OPX}${file}.optns ${OPX}z-${one}.optns
 
 rm -f ${CHK}z-${one}.check 
 rm -f ${CHK}z-${one}.data
-rm -f ${hepfile}.hepmc 
 rm -f ${CHK}z-${one}.copy 
 rm -f ${CHK}z-${one}.copyDo1 
 rm -f ${CHK}z-${one}.copyDo2 
