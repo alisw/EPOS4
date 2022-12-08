@@ -128,7 +128,7 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
       subroutine setCentralityClass(line,i,j,nopen)
 c-----------------------------------------------------------------------
-      common/files/ifop,ifmt,ifch,ifcx,ifhi,ifdt,ifcp,ifdr,ifio
+      common/files/ifop,ifmt,ifch,ifcx,ifhi,ifdt,ifhm,ifcp,ifdr,ifio
       common/hydr4/zclass(5,100),izmode,maxsurf,iofrout,jzmode(7)
       common/ccc20/icc20
       character line*1000

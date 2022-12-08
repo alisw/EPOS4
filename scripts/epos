@@ -1,7 +1,7 @@
 #!/bin/sh 
 if [ $# -le 0 ]; then
     echo 
-    echo  " syntax:  epos [-hepmc] [-root] [-cproot] [-q|-c] "
+    echo  " syntax:  epos [-hepmc \$hepfile] [-root] [-cproot] [-q|-c] "
     echo  "            [-eee[e] \$e1 \$e2 \$e3] [-n \$n] \$filen [\$n]"
     echo 
     exit 1
@@ -18,6 +18,7 @@ else
 fi
 
 hepmc='no'
+hepfile='z-HepMC'
 root='no'
 cproot='no'
 scr='no'
@@ -88,8 +89,12 @@ do
          ;;
    -hepmc)  shift 
          hepmc="yes"
+         if [ ! -z "$1" ]; then 
+            hepfile="$1"
+            shift
+         fi   
          end=0
-         ;;
+         ;;   
    -root)  shift 
          root="yes"
          end=0
@@ -164,7 +169,8 @@ fi
 cp ${OPX}${file}.optns ${OPX}z-${one}.optns
 
 rm -f ${CHK}z-${one}.check 
-rm -f ${CHK}z-${one}.data 
+rm -f ${CHK}z-${one}.data
+rm -f ${hepfile}.hepmc 
 rm -f ${CHK}z-${one}.copy 
 rm -f ${CHK}z-${one}.copyDo1 
 rm -f ${CHK}z-${one}.copyDo2 
@@ -202,6 +208,7 @@ clinput=z-${one}'.clinput'
  echo "fname copy   ${CHK}z-${one}.copy" >> $clinput
  echo "fname log    ${CHK}z-${one}.log" >> $clinput
  echo "fname data   ${CHK}z-${one}.data" >> $clinput
+ echo "fname hepfile ${hepfile}" >> $clinput
  echo "fname initl  ${EPO4}${SRC}KWt/aa.i" >> $clinput
  echo "fname inidi  ${EPO4}${SRC}TPt/di.i              " >> $clinput
  echo "fname inidr  ${EPO4}${SRC}KWt/dr.i              " >> $clinput
@@ -260,12 +267,12 @@ fi
 if [ ! -s ${HTO}z-${one}.hq ]; then
   rm -f ${HTO}z-${one}.hq
 fi
-if [ ! -s ${CHK}z-${one}.hepmc ]; then
-  rm -f ${CHK}z-${one}.hepmc
+if [ ! -s ${hepfile}.hepmc ]; then
+  rm -f ${hepfile}.hepmc
 fi
-if [ -s ${CHK}z-${one}.hepmc ]; then
+if [ -s ${hepfile}.hepmc ]; then
  if [ "$hepmc" = "no" ]; then 
-  rm -f ${CHK}z-${one}.hepmc
+  rm -f ${hepfile}.hepmc
  fi
 fi
 

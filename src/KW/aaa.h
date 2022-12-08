@@ -181,22 +181,22 @@ c------------------------------------------------------------------------
 c  Parameters set in sr aaset and variables to communicate between moduls
 c------------------------------------------------------------------------
 
-      integer      mxho,ifop,ifmt,ifch,ifcx,ifhi,ifdt,ifcp,ifdr,ifio
+      integer mxho,ifop,ifmt,ifch,ifcx,ifhi,ifdt,ifhm,ifcp,ifdr,ifio
       parameter(mxho=10)
-      common/files/ifop,ifmt,ifch,ifcx,ifhi,ifdt,ifcp,ifdr,ifio
+      common/files/ifop,ifmt,ifch,ifcx,ifhi,ifdt,ifhm,ifcp,ifdr,ifio
       integer       ifin,ifnus1,ifnus2,ifnus3,ifnus4
       common/files2/ifin,ifnus1,ifnus2,ifnus3,ifnus4
-      character*500 fnch,fnhi,fndt,fnii,fnid,fnie,fnrj,fnmt
+      character*500 fnch,fnhi,fndt,fnhm,fnii,fnid,fnie,fnrj,fnmt
      *,fngrv,fncp,fnnx,fncs,fndr,fnio,fnho,fn3g,fn3p,fn3d
      *,fn3f,fn3f1,fn3f2,fn3f3,fn3f4,fn3f5,fnhpf
-      common/fname/  fnch, fnhi, fndt, fnii, fnid, fnie, fnrj, fnmt
+      common/fname/  fnch,fnhi,fndt,fnhm,fnii,fnid,fnie,fnrj,fnmt
      *,fngrv,fncp,fnnx,fncs,fndr,fnio,fnho(mxho),fn3g,fn3p,fn3d
      *,fn3f,fn3f1,fn3f2,fn3f3,fn3f4,fn3f5,fnhpf
-      integer       nfnch,nfnhi,nfndt,nfnii,nfnid,nfnie,nfnrj,nfnmt
+      integer nfnch,nfnhi,nfndt,nfnhm,nfnii,nfnid,nfnie,nfnrj,nfnmt
      *,nfngrv,nfncp,nfnnx,nfncs,nfndr,nfnio,nfnho,nfn3g
      *,nfn3p,nfn3d,nfn3f,nfn3f1,nfn3f2,nfn3f3,nfn3f4,nfn3f5,nfnhpf
       common/nfname/nfnch,nfnhi,nfndt,nfnii,nfnid,nfnie,nfnrj,nfnmt
-     *,nfngrv,nfncp,nfnnx,nfncs,nfndr,nfnio,nfnho(mxho),nfn3g
+     *,nfngrv,nfncp,nfnnx,nfncs,nfndr,nfnio,nfnho(mxho),nfn3g,nfnhm
      *,nfn3p,nfn3d,nfn3f,nfn3f1,nfn3f2,nfn3f3,nfn3f4,nfn3f5,nfnhpf
       character*500  fnin,fnus1,fnus2,fnus3,fnus4
       common/fname2/ fnin,fnus1,fnus2,fnus3,fnus4

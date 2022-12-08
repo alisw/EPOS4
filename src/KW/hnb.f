@@ -1508,7 +1508,7 @@ c----------------------------------------------------------------------
       integer      iprmpt,ish,ishsub,irandm,irewch,iecho,modsho,idensi
       common/prnt1/iprmpt,ish,ishsub,irandm,irewch,iecho,modsho,idensi
       integer      ifop,ifmt,ifch,ifcx,ifhi,ifdt,ifcp,ifdr,ifio
-      common/files/ifop,ifmt,ifch,ifcx,ifhi,ifdt,ifcp,ifdr,ifio
+      common/files/ifop,ifmt,ifch,ifcx,ifhi,ifdt,ifhm,ifcp,ifdr,ifio
       parameter(maxp=600)
       common/chnbin/nump,ihadro(maxp)
       parameter (mspecs=400)

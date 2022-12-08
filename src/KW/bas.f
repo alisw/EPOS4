@@ -535,6 +535,7 @@ c  file names and units
       fnch='z.check '         !check-file name
       fnhi='z.histo '         !histo-file name
       fndt='z.data '          !data-file name
+      fnhm='z.hepmc '      !hepmc-file name
       fncp='z.copy '          !copy-file name
       fnii='aa '       !initl-file name
       fnid='di '       !inidi-file name
@@ -550,6 +551,7 @@ c  file names and units
       nfnch=index(fnch,' ')-1   !length of check-file name
       nfnhi=index(fnhi,' ')-1   !length of histo-file name
       nfndt=index(fndt,' ')-1   !length of data-file name
+      nfnhm=index(fnhm,' ')-1   !length of hepmc-file name
       nfncp=index(fncp,' ')-1   !length of copy-file name
       nfnii=index(fnii,' ')-1   !length of initl-file name
       nfnid=index(fnid,' ')-1   !length of inidi-file name
@@ -582,6 +584,7 @@ c  file names and units
       ifdt=51    !data-file unit
       ifcp=52    !copy-file unit
       ifin=53    !input-file unit
+      ifhm=54    !hepmc-file unit
       ifnus1=41
       ifnus2=42
       ifnus3=43
@@ -1754,6 +1757,7 @@ c initializations
       kchopen=0
       khiopen=0
       kdtopen=0
+      khepmcopen=0
       klgopen=0
       ifdat=0
       ifncs=0
@@ -4224,6 +4228,7 @@ c     if(line(i:j).eq.'xjdis' )call xjdis(2,0,0)
       if(linex(ix:jx).eq.'mtr')fnmt(1:j-i+1)=line(i:j)
       if(linex(ix:jx).eq.'histo')fnhi(1:j-i+1)=line(i:j)
       if(linex(ix:jx).eq.'data') fndt(1:j-i+1)=line(i:j)
+      if(linex(ix:jx).eq.'hepfile') fnhm(1:j-i+1)=line(i:j)
       if(linex(ix:jx).eq.'input')fnin(1:j-i+1)=line(i:j)
       if(linex(ix:jx).eq.'user1')fnus1(1:j-i+1+1)=line(i:j)//' '
       if(linex(ix:jx).eq.'user2')fnus2(1:j-i+1+1)=line(i:j)//' '
@@ -4252,6 +4257,7 @@ c     if(line(i:j).eq.'xjdis' )call xjdis(2,0,0)
       if(linex(ix:jx).eq.'mtr')nfnmt=j-i+1
       if(linex(ix:jx).eq.'histo')nfnhi=j-i+1
       if(linex(ix:jx).eq.'data') nfndt=j-i+1
+      if(linex(ix:jx).eq.'hepfile') nfnhm=j-i+1
       if(linex(ix:jx).eq.'input')nfnin=j-i+1
       if(linex(ix:jx).eq.'user1')nfnus1=j-i+1
       if(linex(ix:jx).eq.'user2')nfnus2=j-i+1
@@ -4299,6 +4305,9 @@ c     if(line(i:j).eq.'xjdis' )call xjdis(2,0,0)
       elseif(linex(ix:jx).eq.'data'.and.fndt(1:nfndt).ne.'none')then
         open(unit=ifdt,file=fndt(1:nfndt),status='unknown')
         kdtopen=1
+      elseif(linex(ix:jx).eq.'hepfile'.and.fnhm(1:nfnhm).ne.'none')then
+        open(unit=ifhm,file=fnhm(1:nfnhm),status='unknown')
+        khepmcopen=1  
       elseif(linex(ix:jx).eq.'copy'.and.fncp(1:nfncp).ne.'none')then
         open(unit=ifcp,file=fncp(1:nfncp),status='unknown')
         kcpopen=1
@@ -7145,7 +7154,7 @@ c-----------------------------------------------------------------------
       integer, intent(in) :: ii
       integer :: ios, jj, writeUnit
       integer, parameter :: readUnit = 99
-      integer, parameter :: maxLineSize = 70
+      integer, parameter :: maxLineSize = 80
       character(len=80) :: lines(30)
       character(len=15) :: version
       character(len=22) :: title

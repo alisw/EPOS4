@@ -1628,7 +1628,7 @@ c     kebx: net b quark number
 c     ketx: net t quark number
 c     modus: 4=two lowest multiplets; 5=lowest multiplet
 c----------------------------------------------------------------------
-      common/files/ifop,ifmt,ifch,ifcx,ifhi,ifdt,ifcp,ifdr,ifio
+      common/files/ifop,ifmt,ifch,ifcx,ifhi,ifdt,ifhm,ifcp,ifdr,ifio
       common/csjcga/amnull,asuha(7)
       common/drop4/asuhax(7),asuhay(7)
 

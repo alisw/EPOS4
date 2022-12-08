@@ -41,7 +41,7 @@ C
             call opentree(1,iextree,fndt(1:ii)//'.root'//CHAR(0))
           endif
           if(ihepmc.eq.1)
-     .    call open_hepmc(fndt(1:ii)//'.hepmc'//CHAR(0))
+     .    call open_hepmc(fnhm(1:nfnhm)//'.hepmc'//CHAR(0))
           izm=ifillTree
           nfullt(1)=nfull
         else !-----orderTree case using Poms or similar-----
@@ -52,7 +52,7 @@ C
             call opentree(numpom,iextree,fn(1:nfn)//CHAR(0))
           endif
           if(ihepmc.eq.1)
-     .    call open_hepmc(fn(1:nfn)//'.hepmc'//CHAR(0))
+     .    call open_hepmc(fnhm(1:nfnhm)//'.hepmc'//CHAR(0))
           izm=izmode
         endif
         iversnx=iversn
@@ -564,7 +564,7 @@ c###############################################################################
       if(i4.eq.-1)call checkRootFiles(2,i1,i3,i4)
       write(ifmt,'(2(a,i8))')'getCevtCptl: loop',i3,'  to',i4
       if(ihepmc.eq.1)
-     .  call open_hepmc(fndt(1:(nfndt-5))//'.hepmc'//CHAR(0))
+     .  call open_hepmc(fnhm(1:(nfnhm))//'.hepmc'//CHAR(0))
       do i=i3,i4
         call clop(3)
         call updateName(i)
