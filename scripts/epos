@@ -89,7 +89,7 @@ do
          ;;
    -hepmc)  shift 
          hepmc="yes"
-         if [ ! -z "$1" ]; then 
+         if [ ! -z "$1" ] && [ $# -gt 1 ]; then 
             hepfile="$1"
             shift
          fi   
@@ -269,6 +269,9 @@ fi
 if [ ! -s ${hepfile}.hepmc ]; then
   rm -f ${hepfile}.hepmc
 fi
+if [ ! -s $hepfile ]; then
+  rm -f ${hepfile}
+fi  
 if [ -s ${hepfile}.hepmc ]; then
  if [ "$hepmc" = "no" ]; then 
   rm -f ${hepfile}.hepmc
