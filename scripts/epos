@@ -217,7 +217,7 @@ clinput=z-${one}'.clinput'
  echo "fname inigrv ${EPO4}${SRC}grv.i" >> $clinput
  echo "fname partab ${EPO4}${SRCEXT}YK/ptl6.data" >> $clinput
  echo "fname dectab ${EPO4}${SRCEXT}YK/dky6.data" >> $clinput
- echo "fname hpf    tables.dat" >> $clinput
+ echo "fname hpf    srcext/UR/tables.dat" >> $clinput
  echo "fqgsjet dat   ${EPO4}${SRC}qgsjet/qgsjet.dat" >> $clinput
  echo "fqgsjet ncs   ${EPO4}${SRC}qgsjet/qgsjet.ncs" >> $clinput
  echo "fqgsjetII dat   ${EPO4}${SRC}qgsjetII/qgsdat-II-03" >> $clinput
