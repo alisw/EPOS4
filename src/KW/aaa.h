@@ -189,11 +189,11 @@ c------------------------------------------------------------------------
       character*500 fnch,fnhi,fndt,fnhm,fnii,fnid,fnie,fnrj,fnmt
      *,fngrv,fncp,fnnx,fncs,fndr,fnio,fnho,fn3g,fn3p,fn3d
      *,fn3f,fn3f1,fn3f2,fn3f3,fn3f4,fn3f5,fnhpf
-      common/fname/  fnch,fnhi,fndt,fnhm,fnii,fnid,fnie,fnrj,fnmt
+      common/fname/ fnch,fnhi,fndt,fnhm,fnii,fnid,fnie,fnrj,fnmt
      *,fngrv,fncp,fnnx,fncs,fndr,fnio,fnho(mxho),fn3g,fn3p,fn3d
      *,fn3f,fn3f1,fn3f2,fn3f3,fn3f4,fn3f5,fnhpf
-      integer nfnch,nfnhi,nfndt,nfnhm,nfnii,nfnid,nfnie,nfnrj,nfnmt
-     *,nfngrv,nfncp,nfnnx,nfncs,nfndr,nfnio,nfnho,nfn3g
+      integer nfnch,nfnhi,nfndt,nfnii,nfnid,nfnie,nfnrj,nfnmt
+     *,nfngrv,nfncp,nfnnx,nfncs,nfndr,nfnio,nfnho,nfn3g,nfnhm
      *,nfn3p,nfn3d,nfn3f,nfn3f1,nfn3f2,nfn3f3,nfn3f4,nfn3f5,nfnhpf
       common/nfname/nfnch,nfnhi,nfndt,nfnii,nfnid,nfnie,nfnrj,nfnmt
      *,nfngrv,nfncp,nfnnx,nfncs,nfndr,nfnio,nfnho(mxho),nfn3g,nfnhm

@@ -3600,25 +3600,25 @@ c----------------------------------------------------------
 
       integer mxho
       integer       nfnch,nfnhi,nfndt,nfnii,nfnid,nfnie,nfnrj,nfnmt
-     *,nfngrv,nfncp,nfnnx,nfncs,nfndr,nfnio,nfnho,nfn3g
+     *,nfngrv,nfncp,nfnnx,nfncs,nfndr,nfnio,nfnho,nfn3g,nfnhm
      *,nfn3p,nfn3d,nfn3f,nfn3f1,nfn3f2,nfn3f3,nfn3f4,nfn3f5,nfnhpf
 
       parameter(mxho=10)
-      character*500 fnch,fnhi,fndt,fnii,fnid,fnie,fnrj,fnmt
+      character*500 fnch,fnhi,fndt,fnhm,fnii,fnid,fnie,fnrj,fnmt
      *,fngrv,fncp,fnnx,fncs,fndr,fnio,fnho,fn3g,fn3p,fn3d
      *,fn3f,fn3f1,fn3f2,fn3f3,fn3f4,fn3f5,fnhpf
-      common/fname/  fnch, fnhi, fndt, fnii, fnid, fnie, fnrj, fnmt
+      common/fname/  fnch,fnhi,fndt,fnhm,fnii,fnid,fnie,fnrj,fnmt
      *,fngrv,fncp,fnnx,fncs,fndr,fnio,fnho(mxho),fn3g,fn3p,fn3d
      *,fn3f,fn3f1,fn3f2,fn3f3,fn3f4,fn3f5,fnhpf
       common/nfname/nfnch,nfnhi,nfndt,nfnii,nfnid,nfnie,nfnrj,nfnmt
-     *,nfngrv,nfncp,nfnnx,nfncs,nfndr,nfnio,nfnho(mxho),nfn3g
+     *,nfngrv,nfncp,nfnnx,nfncs,nfndr,nfnio,nfnho(mxho),nfn3g,nfnhm
      *,nfn3p,nfn3d,nfn3f,nfn3f1,nfn3f2,nfn3f3,nfn3f4,nfn3f5,nfnhpf
 
 
 
 c      integer ios, nsp, i, io, ver
       character*40 pwdcmd
-      character*50 deftab
+      character*150 deftab
       character*8 defexe
       logical b
       integer ios, nsp,i, io, ver
@@ -3632,6 +3632,7 @@ c      logical b
       parameter (defexe='uqmd.exe')
 
       deftab(1:nfnhpf+1)=fnhpf(1:nfnhpf)//' '  !tables.dat including path
+      write(6,*)"deftab is ", deftab
 
       b=io.eq.1
 
@@ -3679,6 +3680,8 @@ c      open (unit=75,iostat=ios,file=tabname,form='unformatted',
 c     .      status='old')
 c if it fails ...
       if (ios.ne.0) then
+         write(6,*)"Tables file is ", deftab(1:index(deftab,' '))
+         write(6,*)"IOS is", ios
          write(6,*)"error 1 in reading tables.dat"
          stop
 c     close the file handle
