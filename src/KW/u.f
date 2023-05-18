@@ -3632,8 +3632,6 @@ c      logical b
       parameter (defexe='uqmd.exe')
 
       deftab(1:nfnhpf+1)=fnhpf(1:nfnhpf)//' '  !tables.dat including path
-      write(6,*)"deftab is ", deftab
-
       b=io.eq.1
 
 c set the name of the table
