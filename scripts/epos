@@ -3,6 +3,7 @@ if [ $# -le 0 ]; then
     echo 
     echo  " syntax:  epos [-hepmc \$hepfile] [-root] [-cproot] [-q|-c] "
     echo  "            [-eee[e] \$e1 \$e2 \$e3] [-n \$n] \$filen [\$n]"
+    echo  "            [-si \$n] [-sj \$n]"
     echo 
     exit 1
 fi
@@ -35,6 +36,8 @@ ext4='-'
 tmp='-'
 end=0
 gefac=1
+seed_j=`date  '+%N'`
+seed_i=`date  '+%N'`
 
 while [ $end -eq 0 ];
 do
@@ -46,6 +49,16 @@ do
          shift
          end=0
          ;;
+   -si) shift
+	seed_i=$1
+	shift
+	end=0
+	;;
+   -sj) shift
+        seed_j=$1
+        shift
+        end=0
+        ;;
    -e1) shift 
          ext1="$1"
          shift
@@ -177,9 +190,8 @@ rm -f ${CHK}z-${one}.log
 
 gunzip -c ${EPO4}${SRC}KWt/eos4f.eos.gz > z-eos4f.eos
 
-seedj=111111111
-seedi=222222222    
-seedspo=`date  '+%N'`
+seedj=$seed_j
+seedi=$seed_i    
 
 #---------------------------------------------------------------------
 clinput=z-${one}'.clinput'
@@ -242,6 +254,7 @@ clinput=z-${one}'.clinput'
  echo "stopprogram" >> $clinput
 # to use gdb, type "epos ..." as usually, then in gdb type "run", then "z-clinput"  
 #gdb ${OBJ}epos$EPOVSN/Xepos 
+
 time ${LIBDIR}/Xepos -n <<EOF
 $clinput
 EOF
@@ -304,4 +317,3 @@ fi
 rm -f gmon.out
 date
 exit
-
