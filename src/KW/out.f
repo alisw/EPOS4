@@ -40,8 +40,11 @@ C
             write(ifmt,'(a)')'opentree '//fndt(1:ii)//'.root'
             call opentree(1,iextree,fndt(1:ii)//'.root'//CHAR(0))
           endif
-          if(ihepmc.eq.1)
-     .    call open_hepmc(fnhm(1:nfnhm)//'.hepmc'//CHAR(0))
+          if(ihepmc.eq.1)then
+            call open_hepmc(fnhm(1:nfnhm)//'.hepmc'//CHAR(0))
+          else if(ihepmc.eq.2)then
+            call open_hepmc('/dev/stdout'//CHAR(0))
+          endif
           izm=ifillTree
           nfullt(1)=nfull
         else !-----orderTree case using Poms or similar-----
@@ -51,8 +54,11 @@ C
      .     ,numpom,nfullt(numpom)
             call opentree(numpom,iextree,fn(1:nfn)//CHAR(0))
           endif
-          if(ihepmc.eq.1)
-     .    call open_hepmc(fnhm(1:nfnhm)//'.hepmc'//CHAR(0))
+          if(ihepmc.eq.1)then
+            call open_hepmc(fnhm(1:nfnhm)//'.hepmc'//CHAR(0))
+          else if(ihepmc.eq.2)then
+            call open_hepmc('/dev/stdout'//CHAR(0))
+          endif
           izm=izmode
         endif
         iversnx=iversn
@@ -196,7 +202,7 @@ c*JJ      nhard=ikoevt
      .  , id, ist, ity, ior, jor, zus, px, py, pz, eam 
      .  , x, y, z, t, iret)
       endif 
-      if(ihepmc.eq.1)then
+      if(ihepmc.eq.1 .or. ihepmc.eq.2)then
         if(ish.ge.2)call alist('Fill HepMC direct&',0,0)
         call getReaction(iprojZ,iprojA,itargZ,itargA,fegyevt)
         dy=0
@@ -340,7 +346,7 @@ c*JJ      nhard=ikoevt
           call tfname(npom,fn,nfn)          
           call closetree(npom,fn(1:nfn)//CHAR(0))
         endif
-        if(ihepmc.eq.1)then
+        if(ihepmc.eq.1 .or. ihepmc.eq.2)then
           call closehepmc()
         endif
        endif
@@ -563,8 +569,11 @@ c###############################################################################
       call checkRootFiles(1,i1,i3,i4)
       if(i4.eq.-1)call checkRootFiles(2,i1,i3,i4)
       write(ifmt,'(2(a,i8))')'getCevtCptl: loop',i3,'  to',i4
-      if(ihepmc.eq.1)
-     .  call open_hepmc(fnhm(1:(nfnhm))//'.hepmc'//CHAR(0))
+      if(ihepmc.eq.1)then
+        call open_hepmc(fnhm(1:(nfnhm))//'.hepmc'//CHAR(0))
+      else if(ihepmc.eq.2)then
+        call open_hepmc('/dev/stdout'//CHAR(0))
+      endif
       do i=i3,i4
         call clop(3)
         call updateName(i)
@@ -668,7 +677,7 @@ c###############################################################################
            if(mod(nrevt,modsho).eq.0)
      .     write(ifmt,'(a,i7,a,a,a)')'event',
      .     nrevt,' from ',fnamein(1:index(fnamein,' ')-1),'  '
-           if(ihepmc.eq.1)then
+           if(ihepmc.eq.1 .or. ihepmc.eq.2)then
              if(ish.ge.2)call alist('Fill HepMC from Root&',0,0)
              dy=0
              if(ihepframe.eq.1) dy=-rapcms
@@ -680,7 +689,7 @@ c###############################################################################
          call etreeclose()
         endif
       enddo
-      if(ihepmc.eq.1) call closehepmc()
+      if(ihepmc.eq.1 .or. ihepmc.eq.2) call closehepmc()
       nevent=nrevt
       call wrxx
       call swopen

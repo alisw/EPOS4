@@ -133,7 +133,7 @@ c---------------------------------------------------------------------
               call decayall(1,99) !to do all weak decays
               call xana  !Analysis for one event
 #if           __ROOT__
-              if(ifillTree.gt.0.or.ihepmc.eq.1)call treestore(1)
+              if(ifillTree.gt.0.or.ihepmc.eq.1.or.ihepmc.eq.2)call treestore(1)
 #endif
             enddo
           endif
@@ -243,7 +243,7 @@ c      if(isys.le.2)call findHeavyQuarkPairs(100)
       call afinal
       iposi=2
       call xxxSource
-      if(ifillTree.gt.0.or.ihepmc.eq.1)call treestore(1)
+      if(ifillTree.gt.0.or.ihepmc.eq.1.or.ihepmc.eq.2)call treestore(1)
       if(ifillH2.eq.1)call d2hstore(nev,nfr)
       if(istore.ge.1.and.istore.le.4) call bstore
       if(istore.eq.5) call ustore

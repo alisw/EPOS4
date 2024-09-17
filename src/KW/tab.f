@@ -594,7 +594,7 @@ c-----------------------------------------------------------------------
         if(ncount.eq.1.or.ncount.eq.10.or.ncount.eq.100
      .    .or.ncount.eq.1000)then
           lcount=log10(1.*ncount)+1
-          write(*,'(a,i1,2a,i2)')'WARNING ',lcount
+          write(ifmtx,'(a,i1,2a,i2)')'WARNING ',lcount
      .    ,' tab Negative sTYP(4)'
      .    ,'  (tabulation?)  iDebug =',iDebug
         endif

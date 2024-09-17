@@ -20,13 +20,16 @@
 #include "fill_hep.h"
 
 HepMC::IO_GenEvent* writer;
+bool is_std = false;
 
 /// ***** Function creating the HepMC event object ***** ///
 void open_hepmc_(char* filename){
-    writer = new HepMC::IO_GenEvent(filename);
+    if (filename == "/dev/stdout")
+        is_std = true;
+	writer = new HepMC::IO_GenEvent(filename);
     if(!writer){std::cout << " FAILED!!!! "<< std::endl; }
     std::cout << "*** HepMC 2.06.09 ***" << std::endl;  
-    std::cout << "*** " << filename << " open***" << std::endl;  
+    std::cout << "*** " << filename << " open***" << std::endl; 
 }
 
 /// *** Function assigning the mass to the colliding ions *** ///
@@ -559,6 +562,7 @@ void fillhepmc_(int *_iextree, int *_nevt, float *_eng, float *_dyframe, int *_i
 
 /// ***** Function deleting the HepMC event object ***** ///
 void closehepmc_(){
+	if (is_std == false)
 	 std::cout << "***hepmc close***" << std::endl;  
    delete writer;
 }
