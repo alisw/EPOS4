@@ -3,7 +3,7 @@ if [ $# -le 0 ]; then
     echo 
     echo  " syntax:  epos [-hepmc \$hepfile] [-root] [-cproot] [-q|-c] "
     echo  "            [-eee[e] \$e1 \$e2 \$e3] [-n \$n] \$filen [\$n]"
-    echo  "            [-si \$n] [-sj \$n]"
+    echo  "            [-hepstd] [-s \$n] [-si \$n] [-sj \$n]"
     echo 
     exit 1
 fi
@@ -38,6 +38,7 @@ end=0
 gefac=1
 seed_j=`date  '+%N'`
 seed_i=`date  '+%N'`
+MTR="!"
 
 while [ $end -eq 0 ];
 do
@@ -49,6 +50,16 @@ do
          shift
          end=0
          ;;
+   -hepstd) shift
+	MTR=""
+	end=0
+	;;      
+   -s) shift
+	seed_i=$1
+      seed_j=$1
+	shift
+	end=0
+	;;
    -si) shift
 	seed_i=$1
 	shift
@@ -195,7 +206,7 @@ seedi=$seed_i
 
 #---------------------------------------------------------------------
 clinput=z-${one}'.clinput'
- echo "!fname mtr ${CHK}z-${one}.mtr" > $clinput
+ echo "${MTR}fname mtr ${CHK}z-${one}.mtr" > $clinput
  echo "set seedj $seedj  set seedi $seedi" >> $clinput
  echo "echo off" >> $clinput
  echo "rootcproot $rootcproot" >> $clinput
