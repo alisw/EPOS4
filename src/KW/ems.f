@@ -2599,7 +2599,7 @@ c----------------------------------------------------------------------
 c----------------------------------------------------------------------
       function piDeform(M,z,maproj,matarg,engy) !polynomial interpolation (linear)
 c----------------------------------------------------------------------
-      parameter (KDIM=8,NSYSDIM=30,MDIM=5)  
+      parameter (KDIM=8,NSYSDIM=75,MDIM=5)  
       real zar(KDIM),war(KDIM)
       real zx(NSYSDIM,KDIM),wx(NSYSDIM,KDIM,MDIM),engyx(NSYSDIM)
       integer maprojx(NSYSDIM),matargx(NSYSDIM)
