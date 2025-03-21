@@ -9,8 +9,8 @@ C
       parameter (mmrys=10)   !memory saving factor
       integer klasmax
       parameter(klasmax=12)
-      real coekaf
-      common/ccoekaf/coekaf
+      real coekaf,coelaf
+      common/ccoekaf/coekaf,coelaf
       integer ibin1mx,ibin2mx
       parameter (ibin1mx=20/mmrys,ibin2mx=40/mmrys)
       integer icdp,icdt

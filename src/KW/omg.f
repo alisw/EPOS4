@@ -6587,3 +6587,195 @@ c-----------------------------------------------------------------------
       return
       end
 
+c----------------------------------------------------------------------
+      subroutine xPhi  ! W^11 ! copied from xParPhi1
+c----------------------------------------------------------------------
+c     plot W^11 (=Phi in EPOS<4) 
+c       PhiExact and PhiExpo 
+c         with arguments (0.,0.,1.,dsqrt(x),dsqrt(x),smaxDf,b=xpar2)
+c----------------------------------------------------------------------
+
+#include "aaa.h"
+#include "ems.h"
+#include "sem.h"
+#include "par.h"
+      double precision x,xminr,y
+      double precision PhiExpo
+      double precision PhiExact
+      character chb*3
+
+      nptg=30                  !number of point for the graphs
+      biniDf=xpar2              !value of biniDf (impact parameter)
+      xminr=100.d0/dble(engy**2)  !value of xminr for plotting the function
+      zz=0
+      smaxDf=engy**2
+      chb='000'
+      ib100=nint(biniDf*100)
+      if(ib100.lt.10)then
+        write(chb(3:3),'(i1)')ib100
+      elseif(ib100.lt.100)then
+        write(chb(2:3),'(i2)')ib100
+      else
+        write(chb(1:3),'(i3)')ib100
+      endif
+
+c************************* red = PhiMExact ***************************
+
+      write(ifhi,'(a)')       'openhisto name Phi1Exact'//chb
+      write(ifhi,'(a)')       'htyp lru'
+      write(ifhi,'(a)')      'xmod log ymod lin'
+      write(ifhi,'(a,2e11.3)')'xrange',xminr,xmaxDf
+      write(ifhi,'(a)')       'yrange auto auto'
+      write(ifhi,'(a)')    'text 0 0 "xaxis x"'
+      write(ifhi,'(a)')'txt "yaxisW^11!(x^1/2!,x^1/2!) / x^[a]!?remn!"'
+      write(ifhi,'(a,i6,a,f4.1,a)')
+     * 'txt  "title E = ',nint(engy),' GeV      b = ',biniDf,' fm"'
+      write(ifhi,'(a)')       'array 2'
+
+      do i=0,nptg
+        x=xminr
+        if (i.ne.0) x=x*(xmaxDf/xminr)**(dble(i)/dble(nptg))
+c        x=xminr+(xmaxDf-xminr)*(dble(i)/dble(nptg))
+        y=0.d0
+        if(engy**2..lt.5.e10)
+     &  y=Phiexact(zz,zz,1.,dsqrt(x),dsqrt(x),smaxDf,biniDf)
+     &       *dsqrt(x)**dble(-alplea(iclpro))
+     &       *dsqrt(x)**dble(-alplea(icltar))
+        write(ifhi,*)x,max(-1d0,y)
+      enddo
+
+      write(ifhi,'(a)')    '  endarray'
+      write(ifhi,'(a)')    'closehisto plot 0-'
+
+c********************** blue = PhiMExpo ******************************
+
+      write(ifhi,'(a)')       'openhisto name Phi1Expo'//chb
+      write(ifhi,'(a)')       'htyp lba'
+      write(ifhi,'(a)')       'xmod log ymod lin'
+      write(ifhi,'(a)')       'array 2'
+
+      do i=0,nptg
+        x=xminr
+        if (i.ne.0) x=x*(xmaxDf/xminr)**(dble(i)/dble(nptg))
+c        x=xminr+(xmaxDf-xminr)*(dble(i)/dble(nptg))
+        y=Phiexpo(zz,zz,1.,dsqrt(x),dsqrt(x),smaxDf,biniDf)
+     &       *dsqrt(x)**dble(-alplea(iclpro))
+     &       *dsqrt(x)**dble(-alplea(icltar))
+        write(ifhi,*) x,y
+      enddo
+
+      write(ifhi,'(a)')    '  endarray'
+      write(ifhi,'(a)')    'closehisto plot 0'
+
+      end
+
+c----------------------------------------------------------------------
+      subroutine xPhiBimp  ! W^11(1,1,b)  !copied from xParPro1
+c----------------------------------------------------------------------
+#include "aaa.h"
+#include "sem.h"
+#include "par.h"
+      double precision PhiExact,PhiExpo,y
+      common/geom/rmproj,rmtarg,bmax,bkmx
+      parameter(nbib=30)
+
+      b1=0
+      b2=max(abs(bkmx),3.)*1.2
+      db=(b2-b1)/nbib
+      zz=0
+
+c********************* full-red = 1-PhiExact **************************
+
+      write(ifhi,'(a)')       'openhisto name PhiExactB'
+      write(ifhi,'(a)')       'htyp lru xmod lin ymod lin'
+      write(ifhi,'(a)')       'xrange 0 3.5 yrange 0 1.4'
+      write(ifhi,'(a)')       'yrange auto auto'
+      write(ifhi,'(a)')    'text 0 0 "xaxis  impact parameter b (fm)"'
+      write(ifhi,'(a)')    'text 0 0 "yaxis  1-[F]?pp!(0.5,1,1) "'
+      write(ifhi,'(a,i6,a,f4.1,a)')
+     * 'txt  "title E = ',nint(engy),' GeV  "'
+      write(ifhi,'(a)')       'array 2'
+      do k=1,nbib
+        b=b1+(k-0.5)*db
+        y=1.d0-Phiexact(zz,zz,1.,1.d0,1.d0,smaxDf,b)
+        write(ifhi,*)b,y
+      enddo
+      write(ifhi,'(a)')    '  endarray'
+      write(ifhi,'(a)')    'closehisto plot 0-'
+
+      write(ifhi,'(a)')    'oh htyp fyp xmod lin ymod lin'
+      write(ifhi,'(a)')    'xrange 0 3.5 yrange 0 1.4'
+      write(ifhi,'(a)')    'function  1 ch plot 0-'
+
+c************************** blue-dashed = 1-PhiExpo *******************
+
+      write(ifhi,'(a)')       'openhisto name PhiExpoB'
+      write(ifhi,'(a)')       'htyp lba xmod lin ymod lin'
+      write(ifhi,'(a)')       'array 2'
+      do k=1,nbib
+        b=b1+(k-0.5)*db
+        y=1.d0-Phiexpo(zz,zz,1.,1.d0,1.d0,smaxDf,b)
+        write(ifhi,*)b,y
+      enddo
+      write(ifhi,'(a)')    '  endarray'
+      write(ifhi,'(a)')    'closehisto plot 0'
+
+      nbibb=200 
+      db=(b2-b1)/nbibb
+      sum1=0
+      sum2=0
+      do k=1,nbibb
+        b=b1+(k-0.5)*db
+        y=1.d0-Phiexact(zz,zz,1.,1.d0,1.d0,smaxDf,b)
+        sum1=sum1+2*3.14159*b*db*y
+        y=1.d0-Phiexpo(zz,zz,1.,1.d0,1.d0,smaxDf,b)
+        sum2=sum2+2*3.14159*b*db*y
+      enddo
+      call xPhiBimpInt(1,sig_inel_pp_exact)
+      call xPhiBimpInt(2,sig_inel_pp_expo)
+      write(*,'(a,2f7.2)')'sig_inel_pp_exact',sig_inel_pp_exact,sum1*10
+      write(*,'(a,2f7.2)')'sig_inel_pp_expo',sig_inel_pp_expo,sum2*10
+
+      end
+
+c-----------------------------------------------------------------------
+      subroutine xPhiBimpInt(iii,sig_inel_pp) !  \int d2b 1-W^11(1,1,b)  ! copied from sigmaint
+c-----------------------------------------------------------------------
+      common /ar3/  x1(7),a1(7)
+#include "aaa.h"
+#include "par.h"
+#include "sem.h"
+#include "ems.h"
+      double precision PhiExpo,PhiExact
+      sy=engy**2
+      rs=r2had(iclpro)+r2had(icltar)+slopom*log(sy)
+        rpom=4.*.0389*rs  !((hbar*c)**2=0.0389 GeV^2.fm^2, and r2had in GeV^-2)
+        rpom=rpom*facmc
+        e1=exp(-1.)
+        sig_inel_pp=0
+        do i1=1,7
+        do m=1,2
+          z=.5+x1(i1)*(m-1.5)
+          zv1=exp(-z)
+          zv2=(e1*z)
+          b1=sqrt(-rpom*log(zv1)) ! b^2 / R^2 = z         ... b from 0 ro R 
+          b2=sqrt(-rpom*log(zv2)) ! e*exp(-b^2 / R^2) = z ... b from R to \infty
+          zz=0.!znurho
+          if(iii.eq.1)then
+            vvv21=max(0.d0,PhiExact(zz,zz,1.,1.d0,1.d0,sy,b1))
+            vvv22=max(0.d0,PhiExact(zz,zz,1.,1.d0,1.d0,sy,b2))
+          else!iii.eq.2
+            vvv21=max(0.d0,PhiExpo(zz,zz,1.,1.d0,1.d0,sy,b1))
+            vvv22=max(0.d0,PhiExpo(zz,zz,1.,1.d0,1.d0,sy,b2))
+          endif
+          ww21=1.d0-vvv21
+          ww22=1.d0-vvv22
+          sig_inel_pp = sig_inel_pp + a1(i1)*(ww21+ww22/z)
+        enddo
+        enddo
+        g0=pi*rpom*10./2.  !factor (pi*rpom because of b->z, 10 to have mbarn and /2. because z is from -1 to 1 but we need 0 to 1.
+        sig_inel_pp = sig_inel_pp * g0 
+      return
+      end
+
+

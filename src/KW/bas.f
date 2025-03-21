@@ -45,35 +45,49 @@ c---------------------------------------------------------------------
 #include "aaa.h"
 #include "ho.h"
 #include "ems.h"
+      integer nxicomax,nyicomax,nzicomax
+      parameter (nxicomax=161,nyicomax=161,nzicomax=45) !nb of bins (uneven!!!)
+
       common/photrans/phoele(4),ebeam,noevt /credonoco/kredonoco
-      common/cchkengy/ichkengy  /cgbyjmax/gbyjmax
+      common/cgbyjmax/gbyjmax
       common/cnfrx/nfrx
       common/cmxpom/mxpom
+      common/ifhq/ihq
+      common/events2/nskippedevents
+      integer createIco
+
 #if __EB__
       double precision pphsd(5),xphsd(4)
 #else
       double precision iutime(5),tiu3,tiu4,tidi
-#endif
-      common/ifhq/ihq
-      !call TestThermal2
-
       iutime=(/0.0d0, 0.0d0, 0.0d0, 0.0d0, 0.0d0/)
       tiu3=0.0d0
       tiu4=0.0d0
       tidi=0.0d0
+#endif
+      !call TestThermal2
+
+      createIco = 0
+
+      nfr=mod(n-1,nfreeze)
+      nev=1+(n-1)/nfreeze
+      nfrx=nfr
+
+      if((ptrmin.gt.0..or.ihlle.eq.1.or.ispherio.eq.1.or.icocore.eq.1)
+     .   .and.nfr.eq.0
+     .   .and..not.(iorsdf.eq.5.and.ispherio+ihlle.eq.0))
+     .    write(ifmt,'(80a)')('#',i=1,80)
 
       call eventStart(n,ihlle,npommx,kollmx)
 
       mxpom=0
       iposi=1
-      ichkengy=0
+      call setIcoIchkengy(0)
       gbyjmax=0
       if(irewch.eq.1)rewind(ifch)
       if(nevent.eq.0)goto 11
-      nfr=mod(n-1,nfreeze)
-      nev=1+(n-1)/nfreeze
-      nfrx=nfr
-      if(nrevt.eq.nevent-nfreeze)call wrxx
+      !if(nrevt.eq.nevent-nfreeze)call wrxx
+      if(n.eq.1)call wrxx
       if(nrevt.eq.0)call wrxxx
       if(nrevt.eq.0.and.ifrade.gt.0)call hnbcreate 
       do nin=1,iabs(ninicon)
@@ -81,11 +95,12 @@ c---------------------------------------------------------------------
         icou=0
    3    icou=icou+1
         if((ptrmin.gt.0..or.ihlle.eq.1.or.ispherio.eq.1.or.icocore.eq.1)
-     .   .and.nin.eq.1.and.nfr.eq.0
+     .   .and.nin.eq.1.and.nfr.eq.0.and.icou.gt.1
      .   .and..not.(iorsdf.eq.5.and.ispherio+ihlle.eq.0))
      .    write(ifmt,'(80a)')('#',i=1,80)
         if((icotabr.eq.0.and.ireadhyt.eq.0.or.jcorona.ne.0)
-     .    .and. (nfr.eq.0.or.nin.eq.1) )then !also needed for iphsd=9 for bim
+     .    .and. (nfr.eq.0.or.nin.eq.1) 
+     .    .and.iphsd.ne.9 )then !no longer needed for iphsd=9 for bim
           call aepos(isign(1,-ninicon)*nin,nfr,icou)
         endif
         iexit=0
@@ -102,14 +117,24 @@ c---------------------------------------------------------------------
             nu=nfr+1
           endif
           nrevt=nrevt+1 
-          write(ifmt,'(a,2i5,i9)')'Epos->Phsd ',nu,num,nptl
-          if (iphsd.eq.1 .or. iphsd.eq.2) call eposphsd(nu,num)    !mj,  call EPOS+PHSD
-          if (iphsd.eq.9 .and. nu.eq.num) call eposphsd9()  ! call pure PHSD, ignore EPOS - not optimal
+          if (iphsd.eq.1 .or. iphsd.eq.2)then
+            write(ifmt,'(a,2i5,i9,i5)')'Epos->Phsd ',nu,num,nptl,iphsd
+            call eposphsd(nu,num)    !mj,  call EPOS+PHSD
+          endif  
+          if (iphsd.eq.9 .and. nu.eq.num)then
+            !this 'nu.eq.num' is needed since we only want to call eposphsd9() once,
+            !because for each call of eposphsd9 NUM subevents are done, 
+            !see in phsd/collis.f 'LOOP OVER ALL PARALLEL RUNS'
+            !NUM is equal to abs(ninicon)
+            call generateBim  !bminim and bmaxim should be set
+            write(ifmt,'(a,3i5,f8.2)')'Epos->Phsd ',nu,num,iphsd,bimevt
+            call eposphsd9()  ! call pure PHSD
+          endif
           if(nu.eq.num)then
             nptlpt=0
             do i=1,num
               call getFromPhsdNptl(i,NrOfParticles)
-              write(ifmt,'(a,2i5,i9)')'Epos<-Phsd ',i,NrOfParticles
+              write(ifmt,'(a,i5,i9)')'Epos<-Phsd ',i,NrOfParticles
               do k=1,NrOfParticles
                 call  getFromPhsdPtl(i,k,ipdg,
      &          pphsd(1),pphsd(2),pphsd(3),pphsd(4),pphsd(5),
@@ -130,10 +155,30 @@ c---------------------------------------------------------------------
                 jorptl(k)=0
               enddo
               nptl=NrOfParticles
-              call decayall(1,99) !to do all weak decays
+              call decayall(1,99)
+              !From PHSD we do not only get long-lived particles like Ks, Lambda,
+              !Sigma+-,Xi+-, Omaga, but also short-lived ones like eta, Sigma0,
+              !K0, representing 5% of all particles. In the EPOS analysis, the
+              !latter always decay, as it should be. The option 'noweak' in the EPOS
+              !analysis only suppresses the decays of long-lived particles (weak
+              !decays). Depending on the experimental conditions, we do or not
+              !require 'noweak', in order to do the same as in experiment. PHSD
+              !analysis counts particles before decayall. Based on all this, we
+              !understand that PHSD analysis gives different results compared to
+              !EPOS analysis, for noweak of the order of 5%, without noweak 15%. 
+              NrFinal=0
+              do k=1,nptl
+                ihad=0
+                call idflav(idptl(k),i1,i2,i3,j4,j5)
+                if(i1.eq.0.and.i2.ne.0.and.i3.ne.0)ihad=1
+                if(i1.ne.0.and.i2.ne.0.and.i3.ne.0)ihad=1 
+                if(abs(idptl(k)).eq.20)ihad=1
+                if(istptl(k).eq.0.and.ihad.eq.1)NrFinal=NrFinal+1
+              enddo
+              write(ifmt,'(a,i5,i9)')'After decay ',i,NrFinal
               call xana  !Analysis for one event
 #if           __ROOT__
-              if(ifillTree.gt.0.or.ihepmc.eq.1.or.ihepmc.eq.2)call treestore(1)
+              if(ifillTree.gt.0.or.hepmc.eq.1)call treestore(1)
 #endif
             enddo
           endif
@@ -142,11 +187,19 @@ c---------------------------------------------------------------------
         if(iphsd.ge.1)stop'ERROR: make XBS needed' 
 #endif
         if(ihq.eq.1)then
+          noCquarks=0
           call exiteposevent(iexit,n,ifevent())
           if(ninicon.eq.1.and.iexit.eq.1)then
-            write(ifmt,*)'No c quarks, event skipped'
-            ireturn=1
-            goto 11
+            if(igetHeavyquarksKeep().eq.0)then
+              if(ihlle.eq.1)write(ifmt,'(11x,a)')
+     .        'No c quarks, event skipped'
+              ireturn=1
+              goto 11
+            else
+              if(ihlle.eq.1)write(ifmt,'(11x,a)')
+     .        'No c quarks, but event kept'
+              noCquarks=1
+            endif
           endif
         endif
 
@@ -154,6 +207,12 @@ c---------------------------------------------------------------------
      .  .and..not.(iorsdf.eq.5.and.ispherio+ihlle.eq.0))then
           if(nfr.eq.0)then
             itrigg=1
+            call createIcoIcoT(4, 4, nxicomax, nyicomax, nzicomax)
+            call createIcoIcoC(3, 4, nxicomax, nyicomax, nzicomax)
+            call createIcoIcoE(   nxicomax, nyicomax, nzicomax)
+            call createIcoIcoV(3, nxicomax, nyicomax, nzicomax)
+            call createIcoIcoF(3, nxicomax, nyicomax, nzicomax)
+            createIco=1
             call IniCon(nin,nev,ierrico)
             if(ierrico.eq.1)goto 3
             if(itrigg.ne.1)write(ifmt,'(a)')' REDO aepos'
@@ -173,22 +232,37 @@ c---------------------------------------------------------------------
  11   continue
 
       call eventEndPrimary(n,ihlle)
-      if(ireturn.eq.1)return
+      if(ireturn.eq.1)then
+        nskippedevents=nskippedevents+1
+        return
+      endif
 
 #ifndef __BS__
       if(nevent.eq.0)goto 10
       call setCounters
-c      call getSystemType(isys)
+c      call  getSystemType(isys,amassMax,amassAsy)
 c      if(isys.le.2)call findHeavyQuarkPairs(100)
       if(noevt.ne.1)nrevt=nrevt+1
       if(ihlle.ne.99)then
 #if __ROOT__
-        call rhytabx(nfr)
-        if(noevt.eq.1)return    !fake DIS
-        call hllex(nfr)
-        call eosx
-        if(nptlpt.eq.0)nptlbd=nptl
-        call xfro
+         if(ihlle.eq.1.and.nfr.eq.0)then
+            call memo(1,'create hoco objects;')
+            call createHydyn()
+            call createHydynTauhy(ntauhxx)
+            call createHydynRatioeex(ntauhxx)
+            call createHydynEpsc(netahxx,ntauhxx,nxhxx,nyhxx)
+            call createHydynSigc(netahxx,ntauhxx,nxhxx,nyhxx)
+            call createHydynVelc(3,netahxx,ntauhxx,nxhxx,nyhxx)
+            call createHydynBarc(3,netahxx,ntauhxx,nxhxx,nyhxx)
+            call memo(2,';')
+         end if 
+
+         call rhytabx(nfr)
+         if(noevt.eq.1)return   !fake DIS
+         call hllex(nfr)
+         call eosx
+         if(nptlpt.eq.0)nptlbd=nptl
+         call xfro
 #else
         stop "ROOT needed for full hydro"
 #endif
@@ -197,21 +271,37 @@ c      if(isys.le.2)call findHeavyQuarkPairs(100)
       endif
       call aafinal
 #if !__BS__ && !__TP__
-      if(ihq.eq.1)then
+      if(ihq.eq.1.and.noCquarks.eq.0)then
         call timer(iutime)
         tiu3=iutime(3)
         tiu4=iutime(4)
+        call getnptl(nptlBeforeHQ)
         call aacharm
+        call getnptl(nptlAfterHQ)
         call timer(iutime)
         tidi=iutime(3)-tiu3 + (iutime(4)-tiu4)*1d-3
         write(ifmt,'(a,f8.0)')'time for aacharm [sec] : ',tidi 
+        write(ifmt,'(a,2i9)')'particle indices from HQ:'
+     .  ,nptlBeforeHQ+1,nptlAfterHQ
+        if(ish.ge.2)call aalist('list after HQ&',1,nptlAfterHQ)
+      endif
+      if(ihlle.eq.1.and.nfr+1.eq.nfreeze)then
+         call memo(1,'destroy hoco objects;')
+         call destroyHydynBarc()
+         call destroyHydynVelc()
+         call destroyHydynSigc()
+         call destroyHydynEpsc()
+         call destroyHydynRatioeex()
+         call destroyHydynTauhy()
+         call destroyHydyn()
+         call memo(2,';')
       endif
 #endif
       if(ihacas.eq.1.and.nptl.gt.nptlpt.or.ihacas.ge.2)then
         call hacas(n)
       endif
 #if !__BS__ && !__TP__
-      if(ihq.eq.1)then
+      if(ihq.eq.1.and.noCquarks.eq.0)then
         call timer(iutime)
         tiu3=iutime(3)
         tiu4=iutime(4)
@@ -243,50 +333,78 @@ c      if(isys.le.2)call findHeavyQuarkPairs(100)
       call afinal
       iposi=2
       call xxxSource
-      if(ifillTree.gt.0.or.ihepmc.eq.1.or.ihepmc.eq.2)call treestore(1)
+      if(ifillTree.gt.0.or.hepmc.eq.1)call treestore(1)
       if(ifillH2.eq.1)call d2hstore(nev,nfr)
       if(istore.ge.1.and.istore.le.4) call bstore
       if(istore.eq.5) call ustore
-      if(istore.eq.6) call hepmcstore(0)
-      if(istore.eq.7) call lhestore(n)
-      if(istore.eq.-1) call estore
-      call or999
+      !if(istore.eq.6) call hepmcstore(0) REMOVED in 4.0.2.t1
+      !if(istore.eq.7) call lhestore(n)   REMOVED in 4.0.2.t1
+      !if(istore.eq.-1) call estore       REMOVED in 4.0.2.t1
+      !call or999                         REMOVED in 4.0.2.t1
  10   continue
-      if(icotabm.ne.2)call xana
+      if(icotabm.ne.2.and.iphsd.eq.0)call xana
       call aseed(1)
 #if __ROOT__
-      if(nevent.ne.0)call closeEos(nfrx)
+      if(nevent.ne.0)call closeEos(nfrx) !destroy eos
 #endif
-      call closecccptl
+      !call closecccptl still needed for analysis --> generateEposEvent(...)
+      call eventEnd
       !call memo(0,'exit eposevent;')
 #else
       if(noevt.ne.1)nrevt=nrevt+1
       call aafinal
-      if(ihacas.eq.1.and.nptl.gt.nptlpt.or.ihacas.ge.2)then
-        call hacas(n)
-      endif
+c      if(ihacas.eq.1.and.nptl.gt.nptlpt.or.ihacas.ge.2)then
+c        call hacas(n)
+c      endif
       call afinal
       iposi=2
       if(istore.ge.1.and.istore.le.4) call bstore
       if(istore.eq.5) call ustore
-      if(istore.eq.6) call hepmcstore(0)
-      if(istore.eq.7) call lhestore(n)
-      if(istore.eq.-1) call estore
-      if(icotabm.ne.2)call xana
+      !if(istore.eq.6) call hepmcstore(0) REMOVED in 4.0.2.t1
+      !if(istore.eq.7) call lhestore(n)   REMOVED in 4.0.2.t1
+      !if(istore.eq.-1) call estore       REMOVED in 4.0.2.t1
+      if(icotabm.ne.2.and.iphsd.eq.0)call xana
       call aseed(1)
 #endif
+      if(createIco==1) then
+         call destroyIcoIcoT();
+         call destroyIcoIcoC();
+         call destroyIcoIcoE();
+         call destroyIcoIcoV();
+         call destroyIcoIcoF();
+      end if
+
+      if(ihlle.eq.1)write(ifmt,'(a)')
+     *'------- exit eposevent -------'
       end
 
 c---------------------------------------------------------------------
       subroutine eposStart
 c---------------------------------------------------------------------
 #include "aaa.h"
+#include "ho.h"
       character*1000 line,fnjob
       common/jobfname/  fnjob,nfnjob
       double precision iutime(5)
+
+      integer mycoti, mxcoti
+      parameter (mycoti=5,mxcoti=20)
+
+      integer,parameter::mxjerr=30
+
+      call createIco()
+      call createCcoti()
+      call createCcotiCoti(mycoti, mxcoti)
+      call createAccum()
+      call createAccumJerr(mxjerr)
+      call createFiles()
+      call createFilesFnio(500)
+      call createOutlist()
+      call createOutlistThename(500)
+
 c dimensions
       call maxsize_create(2)
-      call maxsize_set(1, 6 ) !1=mxsplit
+      call maxsize_set(1, 8 ) !1=mxsplit
       call maxsize_set(2, 150000 ) !2=mx2ptl  ===> CHECK also mx3ptl
 c creations
       call deformoptcreate(1)
@@ -299,7 +417,7 @@ c creations
       call pdfparamcreate(4) !1=facpdf4,3=facpdf5 
       call saturparamcreate(2) 
       call core1paramcreate(7) !ficoscale
-      call core2paramcreate(6) !feloss
+      call felosscreate(6)
       call eventvaricreate(19) 
 c aaset
       call aaset(0)
@@ -313,6 +431,7 @@ c     to read input from different file name given as argument
       call utword(line,i,j,0)
       fnjob=line(i:j)
       nfnjob=j-i+1
+
 c added 2/9/2022 PBG
       call hqinitransfer
       end
@@ -331,6 +450,7 @@ c---------------------------------------------------------------------
       call idbor_create(2,mxsplit,npommx,kollmx)
       call memo(2,';')
       endif
+
       end
 
 c---------------------------------------------------------------------
@@ -346,6 +466,23 @@ c---------------------------------------------------------------------
       call idbor_destroy()
       call memo(2,';')
       endif
+      end
+
+c---------------------------------------------------------------------
+!> @brief
+!> memory deallocation end event
+c---------------------------------------------------------------------
+      subroutine eventEnd !end of epos event
+c---------------------------------------------------------------------
+      common/ciemuc/iemuc
+
+      if(iemuc.eq.1)then
+       call memo(1,'destroy emuc object;')
+       call destroyemuc()
+       call memo(2,';')
+       iemuc=0
+      endif
+
       end
 
 c---------------------------------------------------------------------
@@ -373,8 +510,21 @@ c---------------------------------------------------------------------
       call pdfparamdestroy() 
       call saturparamdestroy() 
       call core1paramdestroy() 
-      call core2paramdestroy() 
+      call felossdestroy() 
       call eventvaridestroy()
+
+      call destroyFilesFnio()
+      call destroyFiles()
+      call destroyOutlistThename()
+      call destroyOutlist()
+      call destroyAccumJerr()
+      call destroyAccum()
+      call destroyCcotiCoti()
+      call destroyCcoti()
+      call destroyIco()
+
+      call destroyAnalysisVector()
+      
       end
 
 c---------------------------------------------------------------------
@@ -433,7 +583,6 @@ c-----------------------------------------------------------------------
 #include "ho.h"
 #include "par.h"
 #include "sem.h"
-#include "ico.h"
 #include "so.h"
 #include "sf.h"
 #include "tab.h"
@@ -468,6 +617,7 @@ c-----------------------------------------------------------------------
       common/cnparticip/jproj(2,mamx),jtarg(2,mamx),efluct(6,mamx)
       common/cmodshox/modshox
       common/ifhq/ihq
+      common/ciemuc/iemuc
       common/civirtual/ivirtual
       parameter(maxit=500000)
       common/count/nacc,nrej,naccit(maxit),nptot,npit(maxit)
@@ -489,6 +639,7 @@ c-----------------------------------------------------------------------
       common /ciffsigiEfficiency/ iffsigiEfficiency
       integer ioicoplot
       common /cioicoplot/ioicoplot
+      common/events2/nskippedevents
       !gauss weights
       data (tgss(2,i),i=1,7)/ .3399810436,.8611363116    ,5*0.     /
       data (wgss(2,i),i=1,7)/ .6521451549,.3478548451    ,5*0.     /
@@ -503,13 +654,19 @@ c-----------------------------------------------------------------------
       data (wgss(7,i),i=1,7)/ .03511946,.08015809,.1215186,.1572032
      *                       ,.1855384,.2051985,.2152639           /
 
+      integer nxico,nyico,nzico
+      real xminico,xmaxico,yminico,ymaxico,zminico,zmaxico
+      integer,parameter::mxjerr=30
+
+      integer getFilesNfnio
+
       if(iop.eq.1)write(ifmt,'(a)')'default settings ...'
       if(iop.eq.1)goto 1001
       if(iop.eq.2)goto 1002
 
 c  version
 
-                  iversn=3451    !version number
+                  iversn=4004    !version number
                   iverso=0
 
 c  application
@@ -520,6 +677,7 @@ c hq stuff
 
       ihq=0        !1 = HQ stuff activated, otherwise not
       ivirtual=0   !1 = virtual scattering is active, otherwise not
+      call setHeavyquarksKeep(0)
 
 c  model
 
@@ -535,7 +693,6 @@ c  file names and units
       fnch='z.check '         !check-file name
       fnhi='z.histo '         !histo-file name
       fndt='z.data '          !data-file name
-      fnhm='z.hepmc '      !hepmc-file name
       fncp='z.copy '          !copy-file name
       fnii='aa '       !initl-file name
       fnid='di '       !inidi-file name
@@ -551,7 +708,6 @@ c  file names and units
       nfnch=index(fnch,' ')-1   !length of check-file name
       nfnhi=index(fnhi,' ')-1   !length of histo-file name
       nfndt=index(fndt,' ')-1   !length of data-file name
-      nfnhm=index(fnhm,' ')-1   !length of hepmc-file name
       nfncp=index(fncp,' ')-1   !length of copy-file name
       nfnii=index(fnii,' ')-1   !length of initl-file name
       nfnid=index(fnid,' ')-1   !length of inidi-file name
@@ -565,6 +721,10 @@ c  file names and units
       nfn3g=index(fn3g,' ')-1
       nfnio=3
       fnio(1:3)='---'
+      do i=1,getFilesNfnio()
+         call setFilesFnio(i,fnio(i:i))
+      end do
+      
       fnus1='none '
       fnus2='none '
       fnus3='none '
@@ -584,7 +744,6 @@ c  file names and units
       ifdt=51    !data-file unit
       ifcp=52    !copy-file unit
       ifin=53    !input-file unit
-      ifhm=54    !hepmc-file unit
       ifnus1=41
       ifnus2=42
       ifnus3=43
@@ -625,7 +784,7 @@ c  some basic things
       ecms=-1      !energy centre of mass
       ekin=-1      !energy kinetic
       pnll=-1      !momentum
-      rapcms=0     !rap of cms (used in xan for pPb)
+      rapcms=0.0   !rap of cms (used in xan for pPb)
       ebeam=-1     !beam energy for proton in fake DIS (pi0-proton collision)
       s0min=0.03  !absolute minimum energy square (reference s0) for reggeon (for Pomeron it is implicitely 1 GeV**2)
       egymin=1.    !minimum energy
@@ -651,8 +810,22 @@ c  printout options
       iwseed=1   !print out seed (1) or not
       jwseed=1   !print out seed in see file (1) or not
       jprint=0   !print out to ifmt
-      ihepmc=0
-      ihepframe=0 !determine in which frame the collision is defined for the .hepmc output (0:cms, 1:lab)
+      call setOutlistToscreen(0)   !do not print particle list to screen
+      call setOutlistTofile(0)   !do not print particle list to file
+      hepmc=0    !hepmc is disabled
+      hepmc_record_mode=2 !which particle selection is applied 
+c     0 : full
+c     1 : only FS particles
+c     2 : FS particles + parents & vertex for weak & EM decayed particles
+c     3 : whithout_hacas
+      hepmc_tau_decay=1e-19 !limit lifetime to distinguish strong from weak/EM decay
+c     initialization of the number of hepmc record EPOS identifiers
+      hepmc_record_id_nb=0
+c     initialization of the list of hepmc record EPOS identifiers
+      do n=1,hepmc_record_id_nb_max
+         hepmc_record_id_list(n)=0
+      enddo
+      hepmc_rapcms=0.
 
 c  fragmentation and decay parameters
 
@@ -843,7 +1016,7 @@ c  hadron-hadron options
       alpsat=1.0 !sat qq dependence exponent
       ptphot=9.999     !bg
       fInitialHF=0  !unused remove from sem.h
-      disize=0.0 !dipole size
+      disize=999. !dipole size                   ===> will be overwritten in key.f 
       call pdfparamset(1, 0.2 )!facpdf4
       call pdfparamset(2, 1.0 )!facpdf4sat
       call pdfparamset(3, 0.2 )!facpdf5
@@ -869,6 +1042,7 @@ c  hadron-hadron parameters +++
       ptdiff=    0.32   !pt for diffraction
       ioangord= 0  !angle ordering in space-like cascade (1) or not (0)
       coekaf=   1.0 !coefficient kappa_F for factorization scale
+      coelaf=   0.0 !coefficient lambda_F for factorization scale
       q2nmin=    4.     !minimum used q2
 
       q2zmin=    1.   !absolute minimum for tables used for binning
@@ -994,10 +1168,10 @@ c      rexres(4)=1.    !relative width for diffractive Pomeron in charm
       alpdro(1)=2.   !factor for minimum mass of leading droplet (not less than 1.5 for kinematic reasons)
       alpdro(2)=0.3   !pt of leading droplet
       alpdro(3)=1.6  !alpha mass of leading droplet (iept=3)
-      ptipom=1.5   !intrinsic pt of semi-hard Pomerons
-      ptipomi= 1.  !increase of intrinsic pt with q2s
-      ptipos=999.   !intrinsic pt of sat Pomerons                   ===> will be overwritten in key.f 
-      ptiposi=999.  !increase of intrinsic pt with q2s for sat pom  ===>   unless both are zero
+      ptipom=999.   !intrinsic pt of semi-hard Pomerons              ===> will be overwritten in key.f 
+      ptipomi=999.  !increase of intrinsic pt with q2s               ===> will be overwritten in key.f 
+      ptipos=999.   !intrinsic pt of sat Pomerons                    ===> will be overwritten in key.f 
+      ptiposi=999.  !increase of intrinsic pt with q2s for sat pom   ===> will be overwritten in key.f 
       facq2tim=1.  !factor for Q2 arguments of timsh2 
 
 c  hadron-hadron parameters
@@ -1175,9 +1349,15 @@ c multiple scattering
 
 c trigger
 
-      ptrmin=-1.0
       ioecc=0      !1,2,3,4 triggers on quadrant in ecc2-ecc3 plane
       valecc=0.0   !defines quadrants
+
+c jet stuff
+
+      ptrmin=-1.0
+      call setJetEmin(1e30)
+      call setJetJet(0)
+      call setJetCheck(0)
 
 c rescattering parameters +++
 
@@ -1217,15 +1397,20 @@ c rescattering parameters +++
 
 c core relevant
 
-      call core2paramset6(0.,0.,0.,0.,0.,0.) !feloss
+      call felossset6(999.,999.,999.,999.,999.,999.)                !===> will be overwritten in key.f 
       radeft1=0.05 !radius of elementary flux tube (->max(radeft,cell size)
       radeft2=0.05 
       facposz=      0.33 !factor for Z dependence in setfacpos
       facposf=      1.0  !factor in setfacpos
-      tauzer1=    0.70 !core formation ftime pp
-      tauzer2=    1.00 !core formation ftime AA 
       nsegmincore=  1e7 !min number of segments for core
       ratiomaxcore= 0  !max ratio of eloss / core
+      tfrout=.166
+      kfrout=22  !1 = GC(T), 2 = GC(eps), 22 = MiC(eps), 3+4+12 = Test  
+      nfrout=10000 !number of eta bins for building subclusters for MiC
+      !tauzer1 = core formation ftime pp
+      !tauzer2 = core formation ftime AA 
+      !efrout  = FO epsilon
+      call setHY(999.,999.,999.)!tauzer1 , tauzer2 , efrout          ===> will be overwritten in key.f 
 
 c rescattering parameters
 
@@ -1268,12 +1453,19 @@ c core (initial conditions for whatever, on hyperbola)
       nxico=0
       nyico=0
       nzico=0
+      call setIcoDim(nxico,nyico,nzico)
       xminico=0.  !xrange for initial condition calculation
-      xmaxico=8.     !.ne.0 to be able to run "core effective" (default)
+      xmaxico=8.  !.ne.0 to be able to run "core effective" (default)
       yminico=0.  !yrange for initial condition calculation
       ymaxico=0.
       zminico=0.  !eta range for initial condition calculation
       zmaxico=0.
+      call setIcoBound(
+     .     xminico,xmaxico,
+     .     yminico,ymaxico,
+     .     zminico,zmaxico
+     .     )
+
       ioicoplot=0 !call xIcoPlot
 
 c phsd 
@@ -1297,10 +1489,6 @@ c  spherio
 c  hlle
 
       ihlle=99       !"effective" by default
-      tfrout=.166
-      kfrout=22  !1 = GC(T), 2 = GC(eps), 22 = MiC(eps), 3+4+12 = Test  
-      efrout=0.0    ! FO epsilon
-      nfrout=10000 !number of eta bins for building subclusters for MiC
       fofac=1.0
       fofai=.0
       ntaumx=1e9
@@ -1569,6 +1757,7 @@ c root
       ifillH2=0 !fill 2d histo
       igrTree=0
       muTree=0
+      ihepmc3=1 !use HepMC3 event format (0 for HepMC2 format)
 
 c  other
 
@@ -1636,6 +1825,7 @@ c air
 
 c initializations
 
+      iemuc=0
       jselect=0  
       fxsplit=1.
       idooptns=0
@@ -1647,6 +1837,7 @@ c initializations
       facpos(2)=1
       iSwitchSides=0
       nacc=0
+      call setNskipNpassWomTy(0,0)
       nrej=0
       ktnbod=-1
       do i=1,mamx
@@ -1715,23 +1906,26 @@ c initializations
       nemsi=0
       facmss=1.
       nstmax=0
-      do 6 i=1,99
-      prob(i)=0
-      do 6 j=1,2
-      icbac(i,j)=0
-6     icfor(i,j)=0
+      do i=1,99
+       prob(i)=0
+       do j=1,2
+        icbac(i,j)=0
+        icfor(i,j)=0
+       enddo
+      enddo
       imsg=0
       do j=1,mxjerr
-       jerr(j)=0
+       call setAccumJerr(j,0)
       enddo
       do j=1,mxcoti
       do i=1,mycoti
-       coti(i,j)=0
+       call setCcotiCoti(i,j,0.0)
       enddo
       enddo
       ntevt=0
       nrevt=0
       naevt=0
+      nskippedevents=0
       nrstr=0
       nrptl=0
       nptlu=0
@@ -1757,7 +1951,6 @@ c initializations
       kchopen=0
       khiopen=0
       kdtopen=0
-      khepmcopen=0
       klgopen=0
       ifdat=0
       ifncs=0
@@ -2798,6 +2991,11 @@ c boost in lab frame
         elseif(model.eq.6)then
           lclean=.true.
           istptl(i)=99
+        elseif(pptl(5,i).le.ainfin)then !correct zero mass
+          if(pptl(4,i).le.0.)then
+            write(ifmt,'(a)')'WARNING zero energy particle, corrected'
+            pptl(4,i)=pptl(5,i)
+          endif
         else
           call alist('list before stop in afinal&',1,nptl)
           write(ifmt,'(a,$)')'ERROR afinal: Negative energy, see check;'
@@ -2897,6 +3095,7 @@ c cross-section calculation (to be done before xana)
           anintsdif=anintine*sigsd/sigine
         endif
         sigineex=anintine/float(ntevt)*a*10
+        !print*,'sig_inel',anintine,float(ntevt),a*10,sigineex
         sigdifex=anintdiff/float(ntevt)*a*10
         sigsdex=anintsdif/float(ntevt)*a*10
         sigddex=anintddif/float(ntevt)*a*10
@@ -2924,8 +3123,11 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
 #include "aaa.h"
       common/ciexhd/iexhd
+      integer,parameter::mxjerr=30
       character*56 cj(mxjerr)
 
+      real getCcotiCoti
+      integer getAccumJerr
       !-----------------------------------------------------------------
       cj(1) ='ems.f - sr ProSeF -  > 9 quarks per flavor attempted    '
       cj(3) ='ind.f - sr jintpo - finish cluster storage - p52.lt.0d0 '
@@ -2960,11 +3162,11 @@ c-----------------------------------------------------------------------
       do i=1,mxjerr
         yref=nevent
         if(i.eq.2.or.i.eq.4.or.i.eq.19.or.i.eq.21)yref=0.
-        if(i.eq.3.or.i.eq.5.or.i.eq.20.or.i.eq.22)yref=jerr(i-1)
+        if(i.eq.3.or.i.eq.5.or.i.eq.20.or.i.eq.22)yref=getAccumJerr(i-1)
         if(i.eq.9.or.i.eq.10)yref=nptl
         if(i.eq.18)yref=nfull
         y=0
-        if(yref.gt.0.)y=jerr(i)/yref
+        if(yref.gt.0.)y=getAccumJerr(i)/yref
         write(ifhi,'(2e11.3)')1.*i, min(y,1.0)
         if(y.gt.0.01)write(ifmt,'(a,i2,3a,f5.2)')'WARNING(jerr:',i
      .       ,'): ',cj(i),' --> y = ',y
@@ -2990,14 +3192,14 @@ c-----------------------------------------------------------------------
         if(j.eq.jj)wgt=1
         W=1
         if(zclass(3,j).gt.1e-5)W=zclass(3,j)
-        if(kk.eq.1)z=coti(1,j) !hydro events
+        if(kk.eq.1)z=getCcotiCoti(1,j) !hydro events
         if(kk.eq.2)z=1 !coti(4,j) !all events
         if(kk.eq.3)z=1 !coti(4,j) !all events
         y=0
         if(z.gt.0.)then
-          if(kk.eq.1)y=coti(2,j)/z /60.
-          if(kk.eq.2)y=coti(2,j)/z /60.
-          if(kk.eq.3)y=coti(3,j)/z /60.
+          if(kk.eq.1)y=getCcotiCoti(2,j)/z /60.
+          if(kk.eq.2)y=getCcotiCoti(2,j)/z /60.
+          if(kk.eq.3)y=getCcotiCoti(3,j)/z /60.
         endif
         yav=yav+y/20
         write(ifhi,'(3e11.3)')1.*j, y , wgt 
@@ -3035,9 +3237,10 @@ c-----------------------------------------------------------------------
       common/ifhq/ihq
       parameter(maxit=500000)
       common/count/nacc,nrej,naccit(maxit),nptot,npit(maxit)
+      real getCcotiCoti
 
       call d2hclose
-      call treeclose
+      call treeclose !closetree closehepmc
       call clop(3)
       if(noebin.lt.0)call phoGPHERAepo(2)  !statistic for fake DIS
       if(igrTree.gt.0.and.muTree.gt.0)then
@@ -3049,8 +3252,8 @@ c-----------------------------------------------------------------------
         call timer(iutime)
         y=iutime(3)-cotid(1) + (iutime(4)-cotid(2))*1d-3
         j= 1+mod(iopcnt-1,20)
-        coti(3,j)= coti(3,j) + y
-        coti(4,j)= coti(4,j) + 1
+        call setCcotiCoti(3,j,getCcotiCoti(3,j)+y)
+        call setCcotiCoti(4,j,getCcotiCoti(4,j)+1.0)
       endif
 
 #if !__BS__ && !__TP__
@@ -3059,6 +3262,11 @@ c-----------------------------------------------------------------------
       if(nacc+nrej.gt.0)
      .write(ifmt,'(a,e9.3)')
      .'acceptance rate = ',float(nacc)/float(nacc+nrej)
+      call getNskipNpassWomTy(nskipwomty,npasswomty)
+      if(nskipwomty+npasswomty.gt.0)
+     .write(ifmt,'(a,e9.3)')
+     .'skipWomTy rate = '
+     .,float(nskipwomty)/float(nskipwomty+npasswomty)     
       write(ifmt,'(a,5i8)')'nPomSoft nPomSat nPomHard All'
      .   ,nint(vparam(80))
      .,nint(vparam(81)),nint(vparam(84))
@@ -3083,7 +3291,6 @@ c-----------------------------------------------------------------------
 #include "aaa.h"
 #include "ems.h"
 #include "ho.h"
-#include "ico.h"
 #include "sem.h"
 #include "par.h"
 #include "tab.h"
@@ -3362,6 +3569,7 @@ c-----------------------------------------------------------------------
 
       !call setParamEdep !moved to KW/tab.f
       call setParams()
+      call setParamsPtintr() !intrinsic pt
 
       detap=(ypjtl-yhaha)*etafac
       detat=-yhaha*etafac
@@ -3495,7 +3703,7 @@ c$$$      call testconex(1)
       call utprix('ainit ',ish,ishini,4)
       call clop(3)
       return
-      end
+      end subroutine ainit
 
 c---------------------------------------------------------------------
       subroutine wrxx
@@ -3507,7 +3715,7 @@ c---------------------------------------------------------------------
       do n=1,nwritexx
       write(ifhi,'(a)')twritexx(n)
       enddo
-      end
+      end subroutine wrxx
 
 c---------------------------------------------------------------------
       subroutine wrxxx
@@ -3519,7 +3727,7 @@ c---------------------------------------------------------------------
       do n=1,nwritexxx
       write(ifhi,'(a)')twritexxx(n)
       enddo
-      end
+      end subroutine wrxxx
 
 c---------------------------------------------------------------------
       subroutine aread
@@ -3528,7 +3736,6 @@ c  reads and interprets input commands
 c---------------------------------------------------------------------
 
 #include "aaa.h"
-#include "ico.h"
 #include "ho.h"
 #include "par.h"
 #include "ems.h"
@@ -3609,6 +3816,22 @@ c---------------------------------------------------------------------
       real psum(4)
       !--------
       save itit,ishxxx,nskip,iskkey
+
+      integer getFilesNfnio
+
+!------------------------------------------
+! variables for analysis part
+      integer analysisIdx, subAnalysisIdx, rowIdx, idx
+      double precision gethistoweight
+      logical namedAnalysis
+      integer getNumberOfRows
+      real,allocatable :: values(:,:)
+!-----------------------------------------
+      
+      analysisIdx=-1
+      namedAnalysis=.false.
+      subAnalysisIdx=1
+      
       do i=1,9
       ihifcount(i)=ihifcounti(i)
       ifhix(i)=0
@@ -3646,7 +3869,6 @@ c---------------------------------------------------------------------
       j=-1
 
     1 call utword(line,i,j,1)
-
           if(line(i:j).eq.'#define')then
 
       call setDefine(line,i,j,1)
@@ -3654,6 +3876,10 @@ c---------------------------------------------------------------------
           elseif(line(i:j).eq.'#define2')then
 
       call setDefine(line,i,j,2)
+
+          elseif(line(i:j).eq.'#define3')then
+
+      call setDefine(line,i,j,3)
 
           elseif(line(i:j).eq.'not')then
 
@@ -3690,6 +3916,24 @@ c---------------------------------------------------------------------
       endif
 
           elseif(line(i:j).eq.'#fiCentralityZero')then
+
+      continue
+
+          elseif(line(i:j).eq.'#ifBigSystem')then
+
+      call setIfBigSystem(line,i,j,igo1)
+      if(igo1.eq.1)goto 1
+      
+          elseif(line(i:j).eq.'#fiBigSystem')then
+
+      continue
+
+          elseif(line(i:j).eq.'#ifSmallSystem')then
+
+      call setIfSmallSystem(line,i,j,igo1)
+      if(igo1.eq.1)goto 1
+      
+          elseif(line(i:j).eq.'#fiSmallSystem')then
 
       continue
 
@@ -3826,6 +4070,8 @@ c$$$      if(line(i:j).eq.'xmParD2')call xmParD2
 c$$$      if(line(i:j).eq.'xyParD2')call xyParD2
       if(line(i:j).eq.'xParPhi1')call xParPhi1
       if(line(i:j).eq.'xParPhi')call xParPhi
+      if(line(i:j).eq.'xPhi')call xPhi
+      if(line(i:j).eq.'xPhiBimp')call xPhiBimp
       if(line(i:j).eq.'xParH')call xParH
       if(line(i:j).eq.'xParHPhiInt')call xParHPhiInt
       if(line(i:j).eq.'xParZ')call xParZ
@@ -4109,6 +4355,9 @@ c     if(line(i:j).eq.'xjdis' )call xjdis(2,0,0)
       if(linex(ix:jx).eq.'ico'.or.linex(ix:jx).eq.'IcoTable')then
         nfnio=nfnnx+j-i+1
         fnio(1:nfnio)=fnnx(1:nfnnx)//line(i:j)
+        do i=1,getFilesNfnio()
+           call setFilesFnio(i,fnio(i:i))
+        end do
       elseif(linex(ix:jx).eq.'out'.or.linex(ix:jx).eq.'HydroTable')then
         nfnho(ireadhyt)=nfnnx+j-i+1
         fnho(ireadhyt)(1:nfnho(ireadhyt))=fnnx(1:nfnnx)//line(i:j)
@@ -4228,7 +4477,6 @@ c     if(line(i:j).eq.'xjdis' )call xjdis(2,0,0)
       if(linex(ix:jx).eq.'mtr')fnmt(1:j-i+1)=line(i:j)
       if(linex(ix:jx).eq.'histo')fnhi(1:j-i+1)=line(i:j)
       if(linex(ix:jx).eq.'data') fndt(1:j-i+1)=line(i:j)
-      if(linex(ix:jx).eq.'hepfile') fnhm(1:j-i+1)=line(i:j)
       if(linex(ix:jx).eq.'input')fnin(1:j-i+1)=line(i:j)
       if(linex(ix:jx).eq.'user1')fnus1(1:j-i+1+1)=line(i:j)//' '
       if(linex(ix:jx).eq.'user2')fnus2(1:j-i+1+1)=line(i:j)//' '
@@ -4257,7 +4505,6 @@ c     if(line(i:j).eq.'xjdis' )call xjdis(2,0,0)
       if(linex(ix:jx).eq.'mtr')nfnmt=j-i+1
       if(linex(ix:jx).eq.'histo')nfnhi=j-i+1
       if(linex(ix:jx).eq.'data') nfndt=j-i+1
-      if(linex(ix:jx).eq.'hepfile') nfnhm=j-i+1
       if(linex(ix:jx).eq.'input')nfnin=j-i+1
       if(linex(ix:jx).eq.'user1')nfnus1=j-i+1
       if(linex(ix:jx).eq.'user2')nfnus2=j-i+1
@@ -4282,6 +4529,9 @@ c     if(line(i:j).eq.'xjdis' )call xjdis(2,0,0)
       if(linex(ix:jx).eq.'ico'.or.linex(ix:jx).eq.'IcoTable')then
       nfnio=j-i+1
       fnio(1:nfnio)=line(i:j)
+      do i=1,getFilesNfnio()
+         call setFilesFnio(i,fnio(i:i))
+      end do
       elseif(linex(ix:jx).eq.'out'.or.linex(ix:jx).eq.'HydroTable')then
       nfnho(ireadhyt)=j-i+1
       fnho(ireadhyt)(1:nfnho(ireadhyt))=line(i:j)
@@ -4305,9 +4555,6 @@ c     if(line(i:j).eq.'xjdis' )call xjdis(2,0,0)
       elseif(linex(ix:jx).eq.'data'.and.fndt(1:nfndt).ne.'none')then
         open(unit=ifdt,file=fndt(1:nfndt),status='unknown')
         kdtopen=1
-      elseif(linex(ix:jx).eq.'hepfile'.and.fnhm(1:nfnhm).ne.'none')then
-        open(unit=ifhm,file=fnhm(1:nfnhm),status='unknown')
-        khepmcopen=1  
       elseif(linex(ix:jx).eq.'copy'.and.fncp(1:nfncp).ne.'none')then
         open(unit=ifcp,file=fncp(1:nfncp),status='unknown')
         kcpopen=1
@@ -4411,13 +4658,13 @@ c     if(line(i:j).eq.'xjdis' )call xjdis(2,0,0)
 
            elseif(line(i:j).eq.'beginhisto'  !  | bh | beginanalysis
      .           .or.line(i:j).eq.'bh'
-     .           .or.line(i:j).eq.'beginanalysis')then
-
+     .     .or.line(i:j).eq.'beginanalysis')then
+              namedAnalysis=.false.
       if(nopen.ne.-1)then !first read
         jjj=j
         cline=line
         call setCounters
-        call xini
+        call xini()
         j=jjj
         line=cline
       endif
@@ -4425,10 +4672,9 @@ c     if(line(i:j).eq.'xjdis' )call xjdis(2,0,0)
 
            elseif(line(i:j).eq.'endhisto' ! | eh | endanalysis
      .            .or.line(i:j).eq.'endanalysis'
-     .            .or.line(i:j).eq.'eh')then
-
+     .     .or.line(i:j).eq.'eh')then
       if(nopen.eq.-1)then !second read
-        nhsto=nhsto+1
+         nhsto=nhsto+1
         call xhis(nhsto)
       endif
 
@@ -4462,6 +4708,15 @@ c     if(line(i:j).eq.'xjdis' )call xjdis(2,0,0)
       call utword(line,i,j,0)
       call utword(line,i,j,0)
 
+           elseif(line(i:j).eq.'name')then
+c     new type of beginanalysis / end analysis... name is specified
+c     these instructions are executed during the second read             
+            namedAnalysis=.true.
+            analysisIdx=analysisIdx+1  
+            do while (line(i:j).ne.'endanalysis')
+               call utword(line,i,j,0)
+            end do
+            histoweight=getHistoWeight(analysisIdx)
            elseif(line(i:j).eq.'plot')then
 
       call utword(line,i,j,0)
@@ -4883,6 +5138,22 @@ c     if(line(i:j).eq.'xjdis' )call xjdis(2,0,0)
       call utword(line,i,j,0)
       enddo
 
+           elseif(line(i:j).eq.'hepmc_record_id')then
+
+c     read hepmc record EPOS identifiers
+      call utword(line,i,j,0)
+      do while (line(i:j).ne.'end')
+       if(hepmc_record_id_nb.ge.hepmc_record_id_nb_max)then
+        write(ifmt,'(a)')'too many hepmc_record_id; command ignored'
+       else
+        hepmc_record_id_nb=hepmc_record_id_nb+1
+        read(line(i:j),*)val
+        hepmc_record_id_list(hepmc_record_id_nb)=nint(val)
+       endif
+      call utword(line,i,j,0)
+      enddo
+
+
            elseif(line(i:j).eq.'nodecay')then
 
       call utword(line,i,j,0)
@@ -4928,7 +5199,17 @@ c     if(line(i:j).eq.'xjdis' )call xjdis(2,0,0)
 
       call utworn(line,j,ne)
       call utword(line,i,j,0)
-      if(line(i:j).eq.'monitor')then
+      if(line(i:j).eq.'to')then
+        call utword(line,i,j,0)
+        if(line(i:j).ne.'screen')stop'ERROR 02102024 `screen` expected'
+        call setOutlistToscreen(1)   !print particle list to screen
+      elseif(line(i:j).eq.'into')then
+        call utword(line,i,j,0)
+        call setOutlistTofile(j-i+1)   !print particle list into file
+        do ij=i,j
+          call setOutlistThename(ij-i+1,line(ij:ij))
+        enddo         
+      elseif(line(i:j).eq.'monitor')then
         call utword(line,i,j,0)
         read(line(i:j),*)val
         jprint=nint(val)
@@ -5149,8 +5430,9 @@ c       printout options
       if(linex(ix:jx).eq.'ishevt')ishevt=nint(val)
       if(linex(ix:jx).eq.'iwseed')iwseed=nint(val)
       if(linex(ix:jx).eq.'jwseed')jwseed=nint(val)
-      if(linex(ix:jx).eq.'ihepmc')ihepmc=nint(val)
-      if(linex(ix:jx).eq.'ihepframe')ihepframe=nint(val)
+      if(linex(ix:jx).eq.'ihepmc')hepmc=nint(val)
+      if(linex(ix:jx).eq.'ihepmc3')ihepmc3=nint(val)
+      if(linex(ix:jx).eq.'hepmc_tau_decay')hepmc_tau_decay=sngl(val)
 c       fragmentation and decay
       if(linex(ix:jx).eq.'pdiqua')pdiqua=sngl(val)
       if(linex(ix:jx).eq.'pud'   )pud   =sngl(val)
@@ -5441,6 +5723,7 @@ c      if(linex(ix:jx).eq.'alplea(4)')alplea(4)=sngl(val)
 c       hard pomeron parameters
       if(linex(ix:jx).eq.'ioangord')ioangord=nint(val)
       if(linex(ix:jx).eq.'coekaf')coekaf=sngl(val)
+      if(linex(ix:jx).eq.'coelaf')coelaf=sngl(val)
       if(linex(ix:jx).eq.'q2nmin')q2nmin=sngl(val)
       if(linex(ix:jx).eq.'q2ini' )q2ini=sngl(val)
       if(linex(ix:jx).eq.'q2fin' )q2fin=sngl(val)
@@ -5544,15 +5827,15 @@ c       ico
       if(linex(ix:jx).eq.'icostrg')icostrg=int(val)
       if(linex(ix:jx).eq.'icotabm')icotabm=int(val)
       if(linex(ix:jx).eq.'icotabr')icotabr=int(val)
-      if(linex(ix:jx).eq.'nxico')nxico=nint(val)
-      if(linex(ix:jx).eq.'nyico')nyico=nint(val)
-      if(linex(ix:jx).eq.'nzico')nzico=nint(val)
-      if(linex(ix:jx).eq.'xminico')xminico=sngl(val)
-      if(linex(ix:jx).eq.'xmaxico')xmaxico=sngl(val)
-      if(linex(ix:jx).eq.'yminico')yminico=sngl(val)
-      if(linex(ix:jx).eq.'ymaxico')ymaxico=sngl(val)
-      if(linex(ix:jx).eq.'zminico')zminico=sngl(val)
-      if(linex(ix:jx).eq.'zmaxico')zmaxico=sngl(val)
+      if(linex(ix:jx).eq.'nxico')  call setIcoNx(nint(val))
+      if(linex(ix:jx).eq.'nyico')  call setIcoNy(nint(val))
+      if(linex(ix:jx).eq.'nzico')  call setIcoNz(nint(val))
+      if(linex(ix:jx).eq.'xminico')call setIcoXmin(sngl(val))
+      if(linex(ix:jx).eq.'xmaxico')call setIcoXmax(sngl(val))
+      if(linex(ix:jx).eq.'yminico')call setIcoYmin(sngl(val))
+      if(linex(ix:jx).eq.'ymaxico')call setIcoYmax(sngl(val))
+      if(linex(ix:jx).eq.'zminico')call setIcoZmin(sngl(val))
+      if(linex(ix:jx).eq.'zmaxico')call setIcoZmax(sngl(val))
       if(linex(ix:jx).eq.'ioicoplot')ioicoplot=nint(val)
 c       phsd
       if(linex(ix:jx).eq.'iphsd')iphsd=nint(val)
@@ -5566,7 +5849,7 @@ c       hlle
       if(linex(ix:jx).eq.'tfrout')tfrout=sngl(val)
       if(linex(ix:jx).eq.'kfrout')kfrout=nint(val)
       if(linex(ix:jx).eq.'nfrout')nfrout=nint(val)
-      if(linex(ix:jx).eq.'efrout')efrout=sngl(val)
+      if(linex(ix:jx).eq.'efrout')efrout=sngl(val)*(-1.0)  !must be negative to be considered as abs(val)
       if(linex(ix:jx).eq.'fofac') fofac=sngl(val)
       if(linex(ix:jx).eq.'fofai') fofai=sngl(val)
       if(linex(ix:jx).eq.'ntaumx')ntaumx=nint(val)
@@ -5718,16 +6001,16 @@ c       analysis: intermittency, space-time, droplets, formation time
       if(linex(ix:jx).eq.'wtimei')wtimei=sngl(val)
       if(linex(ix:jx).eq.'wtimea')wtimea=sngl(val)
 c       core
-      if(linex(ix:jx).eq.'feloss1')call core2paramset(1, sngl(val) )
-      if(linex(ix:jx).eq.'feloss2')call core2paramset(2, sngl(val) )
-      if(linex(ix:jx).eq.'feloss3')call core2paramset(3, sngl(val) )
-      if(linex(ix:jx).eq.'feloss4')call core2paramset(4, sngl(val) )
-      if(linex(ix:jx).eq.'feloss5')call core2paramset(5, sngl(val) )
-      if(linex(ix:jx).eq.'feloss6')call core2paramset(6, sngl(val) )
+      if(linex(ix:jx).eq.'feloss1')call felossset(1, sngl(val) )
+      if(linex(ix:jx).eq.'feloss2')call felossset(2, sngl(val) )
+      if(linex(ix:jx).eq.'feloss3')call felossset(3, sngl(val) )
+      if(linex(ix:jx).eq.'feloss4')call felossset(4, sngl(val) )
+      if(linex(ix:jx).eq.'feloss5')call felossset(5, sngl(val) )
+      if(linex(ix:jx).eq.'feloss6')call felossset(6, sngl(val) )
       if(linex(ix:jx).eq.'facposz')facposz=sngl(val)
       if(linex(ix:jx).eq.'facposf')facposf=sngl(val)
-      if(linex(ix:jx).eq.'tauzer1')tauzer1=sngl(val)
-      if(linex(ix:jx).eq.'tauzer2')tauzer2=sngl(val)
+      if(linex(ix:jx).eq.'tauzer1')tauzer1=sngl(val)*(-1.0)  !must be negative to be considered as abs(val)
+      if(linex(ix:jx).eq.'tauzer2')tauzer2=sngl(val)*(-1.0)  !must be negative to be considered as abs(val)
       if(linex(ix:jx).eq.'nsegmincore')nsegmincore=nint(val)
       if(linex(ix:jx).eq.'ratiomaxcore')ratiomaxcore=sngl(val)
       if(linex(ix:jx).eq.'corcor(4)')
@@ -5762,6 +6045,10 @@ c       other
       if(linex(ix:jx).eq.'nglmin')nglmin=nint(val)
       if(linex(ix:jx).eq.'nglmax')nglmax=nint(val)
       if(linex(ix:jx).eq.'ptrmin')ptrmin=val
+      if(linex(ix:jx).eq.'jetemin') call setJetEmin(sngl(val))
+      if(linex(ix:jx).eq.'jet')     call setJetJet(nint(val))
+      if(linex(ix:jx).eq.'jetcheck')call setJetCheck(nint(val))
+      if(linex(ix:jx).eq.'hqkeep')call setHeavyquarksKeep(nint(val))
       if(linex(ix:jx).eq.'ioecc')ioecc=nint(val)
       if(linex(ix:jx).eq.'valecc')valecc=sngl(val)
       if(linex(ix:jx).eq.'xvaria')xvaria='      '
@@ -6220,6 +6507,8 @@ c     *     write(6,'(a)')'<kinks-data (px-py-pz)>? (End=endkinks)'
         ioeos=22
       elseif(line(i:j).eq.'best')then   !Nucl.Phys.A 982 (2019) 183-185
         ioeos=6
+      elseif(line(i:j).eq.'best2')then  !another BEST choice
+        ioeos=8
       elseif(line(i:j).eq.'chiral')then !Yuirii’s one
         ioeos=30
       elseif(line(i:j).eq.'cem')then    !Phys. Rev. D 97, 114030 (2018)
@@ -6341,6 +6630,34 @@ c     *     write(6,'(a)')'<kinks-data (px-py-pz)>? (End=endkinks)'
           stop'\n\n STOP: invalid core option \n\n   '
         endif
 
+           elseif(line(i:j).eq.'hepmc')then
+c     read hepmc record mode
+      hepmc=1
+      call utword(line,i,j,0)
+        if(line(i:j).eq.'full'.or.
+     .     line(i:j).eq.'FULL')then
+      hepmc_record_mode=0
+        elseif(line(i:j).eq.'final_state'.or.
+     .         line(i:j).eq.'FINAL_STATE')then
+      hepmc_record_mode=1
+        elseif(line(i:j).eq.'decays'.or.
+     .         line(i:j).eq.'DECAYS')then
+      hepmc_record_mode=2
+        elseif(line(i:j).eq.'before_hacas'.or.
+     .         line(i:j).eq.'BEFORE_HACAS')then
+      hepmc_record_mode=3
+        elseif(line(i:j).eq.'without_hacas'.or.
+     .         line(i:j).eq.'WITHOUT_HACAS')then
+      hepmc_record_mode=4
+        else
+          stop'\n\n STOP: invalid hepmc option\n\n  '
+        endif
+
+           elseif(line(i:j).eq.'hepmc_rapcms')then
+c     read hepmc_rapcms value
+      call utword(line,i,j,0)
+      read(line(i:j),*)val
+      hepmc_rapcms=sngl(val)
            elseif(line(i:j).eq.'satpom')then
 
       call utword(line,i,j,0)
@@ -6388,6 +6705,9 @@ c     *     write(6,'(a)')'<kinks-data (px-py-pz)>? (End=endkinks)'
           call utword(line,i,j,0)
           nfnio=nfnnx+j-i+1
           fnio(1:nfnio)=fnnx(1:nfnnx)//line(i:j)
+          do i=1,getFilesNfnio()
+             call setFilesFnio(i,fnio(i:i))
+          end do
         elseif(line(i:j).eq.'-')then
           continue
         else
@@ -6402,6 +6722,9 @@ c     *     write(6,'(a)')'<kinks-data (px-py-pz)>? (End=endkinks)'
           nfnio=jjn+iin
           write(fnio(jjn-3:jjn-4+iin),fmt4)icentrality
           fnio(jjn-3+iin:jjn+iin)='.ico'
+          do i=1,getFilesNfnio()
+             call setFilesFnio(i,fnio(i:i))
+          end do
           write(ifmt,'(a/2x,a)')'IcoTable set to ',fnio(1:jjn+iin)
          endif
         endif
@@ -6797,12 +7120,20 @@ c     *     write(6,'(a)')'<kinks-data (px-py-pz)>? (End=endkinks)'
 
             elseif(line(i:j).eq.'writearray'.or.line(i:j).eq.'wa'
      $     .or.line(i:j).eq.'writehisto')then
-
       if(nopen.eq.-1)then !second run
        ih=0
        isinglebin=0
        if(line(i:j).eq.'writearray'.or.line(i:j).eq.'wa') ih=1
        call utword(line,i,j,0)
+
+       ! writearray -subanalysis subAnalysisIdx numberOfColumns
+       if(line(i:j).eq.'-subanalysis')then
+        call utword(line,i,j,0)
+        read(line(i:j),*)subAnalysisIdx
+        ! read next command
+        call utword(line,i,j,0)
+       endif
+       
        if(line(i:j).eq.'s')then
         call utword(line,i,j,0)
         linex=line
@@ -6859,8 +7190,36 @@ c     *     write(6,'(a)')'<kinks-data (px-py-pz)>? (End=endkinks)'
         endif
         read(line(i:j),*)val
         nco=nint(val)
+
         if(isinglebin.eq.1.and.nco.ne.2)
-     .   stop'\n\n nco.ne.2 not possible for singlebin\n\n'
+     .       stop'\n\n nco.ne.2 not possible for singlebin\n\n'
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c       write histo for analysis        
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+        if(namedAnalysis)then
+           ! get analysis index in C++ vector from analysis name
+           ! get number of rows for this analysis (equals to the  number of bins)
+           numberOfRows=getNumberOfRows(analysisIdx)
+           ! allocate array of real values : nco columns x numberOfRows rows
+           allocate(values(1:nco,1:numberOfRows))
+           ! write output for the subanalysis subAnalysisIdx of the analysis
+           if(ih.eq.1)write(ifhi,'(a,i3)')'array',nco
+              ! get array of values for each subanalysis
+              numberOfValues = nco
+              call getBinCountsValues(analysisIdx,subAnalysisIdx-1,
+     &             numberOfRows, values, numberOfValues)
+              ! print out the values line by line
+              do rowIdx=1,numberOfRows
+                 write(ifhi,'(3e12.4)')
+     &                (values(idx,rowIdx),idx=1,numberOfValues)
+              end do   
+              if(ih.eq.1)write(ifhi,'(a)')'endarray'
+           ! deallocate memory
+           if (allocated(values)) deallocate(values)
+        else
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+ccccc    write array for histogram
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc           
         if(ih.eq.1)write(ifhi,'(a,i3)')'array',nco
         if(ioint.eq.0)then
          sum=0
@@ -6948,9 +7307,17 @@ c     *     write(6,'(a)')'<kinks-data (px-py-pz)>? (End=endkinks)'
          enddo
         endif
         if(ih.eq.1)write(ifhi,'(a)')'endarray'
+        endif
        endif
       else !nopen .ge. 0 -- first run
         call utword(line,i,j,0)
+        ! in case of named analysis
+        if(line(i:j).eq.'-subanalysis')then
+           ! read subAnalysisIdx
+           call utword(line,i,j,0)
+           ! read number of columns
+           call utword(line,i,j,0)           
+        endif
         if(line(i:j).eq.'s')then
           call utword(line,i,j,0)
           call utword(line,i,j,0)
@@ -7010,7 +7377,7 @@ c     *     write(6,'(a)')'<kinks-data (px-py-pz)>? (End=endkinks)'
       i=j+1
       goto 1
 
-      end
+      end subroutine aread
 
 c-----------------------------------------------------------------------
       subroutine aseed(modus)
@@ -7044,7 +7411,7 @@ c-----------------------------------------------------------------------
 
       call utprix('aseed ',ish,ishini,3)
       return
-      end
+      end subroutine aseed
 
 c-----------------------------------------------------------------------
       subroutine aseedi
@@ -7057,7 +7424,7 @@ c-----------------------------------------------------------------------
 
       call utprix('aseedi',ish,ishini,3)
       return
-      end
+      end subroutine aseedi
 
 c$$$c-----------------------------------------------------------------------
 c$$$        subroutine aseed(modus)        !Flush ????
@@ -7091,8 +7458,8 @@ c-----------------------------------------------------------------------
       common/geom/rmproj,rmtarg,bmax,bkmx
       common/ghecsquel/anquasiel,iquasiel
 
-      call utpri('astati',ish,ishini,1)
-      if(ish.ge.1.and.iappl.eq.1.)then
+      call utpri('astati',ish,ishini,3)
+      if(ish.ge.3.and.iappl.eq.1.)then
         if(abs(accept+reject).gt.1.e-5)write(ifch,'(a,f9.5)')
      *' EMS acc.rate:',accept/(accept+reject)
         if(antot.ne.0.)write(ifch,*)'initial soft,hard(%)'
@@ -7131,11 +7498,11 @@ c$$$      call testconex(3)
       write(ifch,'(77a1)')('-',i=1,77)
 
 1000  continue
-      call utprix('astati',ish,ishini,1)
+      call utprix('astati',ish,ishini,3)
 
       call clop(3)
       return
-      end
+      end subroutine astati
 
 
 c-----------------------------------------------------------------------
@@ -7154,12 +7521,13 @@ c-----------------------------------------------------------------------
       integer, intent(in) :: ii
       integer :: ios, jj, writeUnit
       integer, parameter :: readUnit = 99
-      integer, parameter :: maxLineSize = 80
-      character(len=80) :: lines(30)
+      integer, parameter :: maxLineSize = 70
+      character(len=80) :: line
+      character(len=80) :: lines(30)      
       character(len=15) :: version
       character(len=22) :: title
       character(len=20) :: formatString
-      character(len=255) :: eposdir, readmeFile, versionFile
+      character(len=255) :: dataDir, readmeFile, versionFile, bannerFile
       integer :: n, i, nMax, lenMax, offset
 
 #include "aaa.h"
@@ -7168,101 +7536,116 @@ c-----------------------------------------------------------------------
       if(ii.eq.6)jj=6
       writeUnit = jj
 
-      call get_environment_variable("EPO4", eposdir)
+      call get_environment_variable("DAT", dataDir)
 
-c     Read the file VERSION.txt
-      versionFile = trim(eposdir)//'VERSION.txt'
-      open(unit=readUnit, file=versionFile, 
+c     Read the file banner.txt
+      bannerFile = trim(dataDir)//'banner.txt'
+      open(unit=readUnit, file=bannerFile, 
      .     iostat=ios, status='old')
-      if ( ios /= 0 ) stop "Error opening file VERSION.txt"
+      if ( ios == 0 ) then
+c     Read only the file
+         do 
+            read(readUnit, '(a)', iostat=ios) line
+            if (ios /= 0) exit
+            write(unit=writeUnit, fmt='(a)') line
+         end do
+         close(readUnit)
+      else
 
-      do
+
+         
+c     Read the file VERSION.txt
+         versionFile = trim(dataDir)//'VERSION.txt'
+         open(unit=readUnit, file=versionFile, 
+     .        iostat=ios, status='old')
+         if ( ios /= 0 ) stop "Error opening file VERSION.txt"
+c     Read only the first line
          read(unit=readUnit, fmt='(a)', iostat=ios) version
-         if (ios /= 0) exit
-      end do
-
-      close(readUnit)
+         if (ios /= 0) stop "Error reading file VERSION.txt"
+         close(readUnit)
 
 c     Read the file README.md
-      readmeFile = trim(eposdir)//'README.md'
-      open(unit=readUnit, file=readmeFile, 
-     .     iostat=ios, status='old')
-      if ( ios /= 0 ) stop "Error opening file README.md"
+         readmeFile = trim(dataDir)//'README.md'
+         open(unit=readUnit, file=readmeFile, 
+     .        iostat=ios, status='old')
+         if ( ios /= 0 ) stop "Error opening file README.md"
 
 c     n : line number
-      n = 0     
+         n = 0     
 c     lenMax : maximal line length
-      lenMax = 0
-      do 
-         n = n + 1
-         read(readUnit, '(a)', iostat=ios) lines(n)
-         lines(n) = trim(lines(n))
-         if (ios /= 0) exit
-c        read until a horizontal rule line
-         if (lines(n).eq.'----') then
-            exit
-         endif 
-         lenMax = max(lenMax, len(trim(lines(n))))
-      end do
+         lenMax = 0
+         do 
+            n = n + 1
+            read(readUnit, '(a)', iostat=ios) lines(n)
+            lines(n) = trim(lines(n))
+            if (ios /= 0) exit
+c     read until a horizontal rule line
+            if (lines(n).eq.'----') then
+               exit
+            endif 
+            lenMax = max(lenMax, len(trim(lines(n))))
+         end do
 c     nMax : number of lines to print
-      nMax = n-1    
-      close(readUnit)
+         nMax = n-1    
+         close(readUnit)
 
 c     Print the header
 c     print a line of maxLineSize characters "#"
-      write(formatString, '("(a",i2,")")') maxLineSize
-      write(unit=writeUnit, fmt=formatString) 
-     .     repeat("#", maxLineSize)
+         write(formatString, '("(a",i2,")")') maxLineSize
+         write(unit=writeUnit, fmt=formatString) 
+     .        repeat("#", maxLineSize)
 c     print a line of maxLineSize-2 blank characters beginning and ending with "#"
-      write(formatString, '("(a, a",i2,", a)")') maxLineSize-2
-      write(unit=writeUnit, fmt=formatString)
-     .     "#", repeat(" ", maxLineSize-2), "#"
+         write(formatString, '("(a, a",i2,", a)")') maxLineSize-2
+         write(unit=writeUnit, fmt=formatString)
+     .        "#", repeat(" ", maxLineSize-2), "#"
 
 c     print the EPOS version
-      write(formatString, '("(a",i2,",a",i2,")")') 
-     .         len("EPOS "), len(version)
-      write(title,formatString) "EPOS ", version
+         write(formatString, '("(a",i2,",a",i2,")")') 
+     .        len("EPOS "), len(version)
+         write(title,formatString) "EPOS ", version
 c     print a centered line with title
 c     compute the beginning offset
-      offset = (maxLineSize - len(trim(title))) / 2      
-      write(formatString, '("(a,a",i2,",a",i2,",a",i2,",a)")') 
-     .         offset,
-     .         len(trim(title)),
-     .         maxLineSize-offset-len(trim(title))-2
-      write(unit=writeUnit, fmt=formatString)
-     .         "#", 
-     .         repeat(" ", offset),
-     .         title,
-     .         repeat(" ", maxLineSize-offset-len(trim(title))-2),
-     .         "#"
+         offset = (maxLineSize - len(trim(title))) / 2      
+         write(formatString, '("(a,a",i2,",a",i2,",a",i2,",a)")') 
+     .        offset,
+     .        len(trim(title)),
+     .        maxLineSize-offset-len(trim(title))-2
+         write(unit=writeUnit, fmt=formatString)
+     .        "#", 
+     .        repeat(" ", offset),
+     .        title,
+     .        repeat(" ", maxLineSize-offset-len(trim(title))-2),
+     .        "#"
 
 c     print the centered lines from README informations
 c     compute the beginning offset
-      offset = (maxLineSize - lenMax) / 2
-      do i=2, nMax
-         if (len(trim(lines(i))).gt.0) then
-            write (formatString, '("(a, a",i2,",a",i2,",a",i2,",a)")') 
-     .         offset,
-     .         len(trim(lines(i))),
-     .         maxLineSize-offset-len(trim(lines(i)))-2
-            write(unit=writeUnit, fmt=formatString, advance='no')
-     .         "#", 
-     .         repeat(" ", offset),
-     .         lines(i),
-     .         repeat(" ", maxLineSize-offset-len(trim(lines(i)))-2),
-     .         "#"
-            write(unit=writeUnit,fmt='(a)') ''
-         else
-c           print a line of maxLineSize-2 blank characters beginning and ending with "#"
-            write (formatString, '("(a, a",i2,", a)")') maxLineSize-2
-            write(unit=writeUnit, fmt=formatString)
-     .           "#", repeat(" ", maxLineSize-2), "#"
-         end if
-      end do
-      write (formatString, '("(a",i2,")")') maxLineSize
-      write(unit=writeUnit, fmt=formatString) 
-     .     repeat("#", maxLineSize)
+         offset = (maxLineSize - lenMax) / 2
+         do i=2, nMax
+            if (len(trim(lines(i))).gt.0) then
+               write (formatString,'("(a, a",i2,",a",i2,",a",i2,",a)")') 
+     .              offset,
+     .              len(trim(lines(i))),
+     .              maxLineSize-offset-len(trim(lines(i)))-2
+               write(unit=writeUnit, fmt=formatString, advance='no')
+     .              "#", 
+     .              repeat(" ", offset),
+     .              lines(i),
+     .              repeat(" ",
+     .              maxLineSize-offset-len(trim(lines(i)))-2),
+     .              "#"
+               write(unit=writeUnit,fmt='(a)') ''
+            else
+c     print a line of maxLineSize-2 blank characters beginning and ending with "#"
+               write (formatString, '("(a, a",i2,", a)")') maxLineSize-2
+               write(unit=writeUnit, fmt=formatString)
+     .              "#", repeat(" ", maxLineSize-2), "#"
+            end if
+         end do
+         write (formatString, '("(a",i2,")")') maxLineSize
+         write(unit=writeUnit, fmt=formatString) 
+     .        repeat("#", maxLineSize)
 
+      endif
       return
       end
 
@@ -7304,6 +7687,8 @@ c-----------------------------------------------------------------------
       tidisu=0
       tidisu0=0
 
+      ntrymax=1000
+
       ninx=iabs(nin)
       nfrx=nfr
 
@@ -7312,7 +7697,7 @@ c-----------------------------------------------------------------------
       if(ish.ge.2.and.noevt.eq.0)then
           ccc='start event number     '
           write(ccc(19:23),'(i5)')nrevt+1
-          call alist(ccc//'&',0,0)
+          call aalist(ccc//'&',0,0)
       endif
 
 c if random sign for projectile, set it here
@@ -7434,6 +7819,7 @@ c save statistic at last inelastic event
       icccptl=0
       nptl=0
       maxfra=0
+      call setJetNdijet(0)
       if(iappl.ne.5)then ! NOT kinky
         do i=1,40
           idptl(i)=0
@@ -7448,7 +7834,7 @@ c save statistic at last inelastic event
 
       if(iappl.eq.1.or.iappl.eq.2)then !---hadron---geometry---
 
-      if(ntry.lt.1000
+      if(ntry.lt.ntrymax
      ..and.engy.ge.egymin
      ..or.izmode.ge.2
      ..or.ikolmn.gt.10)then
@@ -7482,12 +7868,10 @@ c save statistic at last inelastic event
         elseif(iret.gt.0)then
           goto 3                !error
         endif
-      else
-        if(ish.ge.2)
-     &  write(ifch,*)'Nothing done after ',ntry,' ntry ... continue'
-        if(ish.ge.1)
-     &  write(ifmt,*)'Nothing done after ',ntry,' ntry ... continue'
-        ntevt=ntevt0+100
+      else !ntry=ntrymax
+        write(ifmt,'(a,i5,a)')'WARNING No interaction after'
+     &  ,ntry,' attemps'
+        !ntevt=ntevt0+100  !?????????????
         iret=0
         nevt=1
         call conre     !define projectile and target (elastic scattering)
@@ -7537,20 +7921,39 @@ c save statistic at last inelastic event
 
       !call etotcheck
 
-      if(ish.ge.2)call alist('list before fragmentation&',1,nptl)
+      if(ish.ge.2)call aalist('list before fragmentation&',1,nptl)
+
+#ifndef __EB__
+      if(igetJetJet().eq.1)then
+        call removeTLCfromBorn(1,igetJetCheck()) !dry run, produces list in check file, without removing anything
+        call removeTLCfromBorn(2,igetJetCheck()) !real one
+        if(igetJetCheck().eq.1)then
+          if(ish.ge.2)
+     .    call aalist('list before fragmentation (2)&',1,nptl)
+          !print indices of high pt 25 partons
+          ! (shows how to access the indices for the 25 partons. The two fuctions
+          !  igetParticleHighpt25Max() and igetParticleHighpt25Value(n25) do the job)
+          do n25=1,igetParticleHighpt25Max()
+            write(ifmt,'(a,i4)')'Highpt25 parton index: ',
+     .      igetParticleHighpt25Value(n25)
+          enddo
+        endif
+      endif
+#endif
+
       nptlx=nptl+1
       if(iappl.ne.2.and.iappl.ne.7.and.nevt.eq.1.and.ifrade.ne.0)then
         call gakfra(iret)
         if(iret.gt.0)goto 3
         !call alist3('After gak:&',30) 
         !cbg   call redefineMassPartons
-        if(iappl.eq.1)then
-          call utrescxx(iret,0) !because of off-shell correction in gakfra
+        if(iappl.eq.1.and.ntry.lt.ntrymax)then
+          call utrescxx(iret,0,101) !because of off-shell correction in gakfra
           if(iret.gt.0)goto 3
         endif
         maxfra=nptl   !after fragmentation
         if(ish.ge.2.and.model.eq.1)
-     &              call alist('list after fragmentation&',nptlx,nptl)
+     &     call aalist('list after fragmentation&',nptlx,nptl)
         !~~~~~~~~~~~~~~~~~~~
         !do n=1,nptl
         !igo=0
@@ -7593,7 +7996,7 @@ c save statistic at last inelastic event
         call Segments(nfr,ntry,iret)
         if(iret.eq.-2)goto 3
         if(iappl.eq.1.and.irescl.eq.1)then
-          call utrescxx(iret,0)  !after bjinta if irescl=1
+          call utrescxx(iret,0,102)  !after bjinta if irescl=1
           !call  utresc(iret,1.02)  !after bjinta if irescl=1
           if(iret.gt.0)goto 3
         endif
@@ -7630,7 +8033,7 @@ c save statistic at last inelastic event
 
           endif
           if(ish.ge.2.and.ifrade.ne.0)
-     *    call alist('list after bjinta&',1,nptl)
+     *    call aalist('list after EPOS primary IA&',1,nptl)
         endif
       endif
 
@@ -7893,13 +8296,23 @@ c      dimension ZpartPro(0:2),ZpartTar(0:2)
         if(izp.lt.i1.or.izp.gt.i2)iret=-2
       endif
       ptrevt=0
+      !etotevt=0
       do i=maproj+matarg+1,minfra
       if(istptl(i).eq.25)then
         pt=sqrt(pptl(1,i)**2+pptl(2,i)**2)
         ptrevt=max(ptrevt,pt)
+        !etotevt=max(etotevt,pptl(4,i))
       endif
       enddo
-      if(ptrevt.lt.ptrmin)then
+      if(igetJetJet().eq.0)then
+        if(ptrevt.lt.ptrmin)then
+         !if(igetJetNdijet().gt.0)print*,'TEST-Jet',ptrevt,etotevt
+         iret=-2
+         goto1000
+        endif
+      endif
+      !if(igetJetNdijet().gt.0)print*,'TEST-Jet',ptrevt,etotevt
+      if(igetJetJet().eq.1.and.igetJetNdijet().eq.0)then
         iret=-2
         goto1000
       endif
@@ -7909,13 +8322,13 @@ c      dimension ZpartPro(0:2),ZpartTar(0:2)
       if(iret.eq.0.or.iret.eq.55)call emsaaFin
       if(mod(ntry,20000).eq.0)write(ifmt,*)ntry,'th iteration, ',
      .izp,' collisions,  iret=',iret,'  b=',bimevt
-      if(iret.eq.0.and.(ptrmin.gt.0..or.
+      if(iret.eq.0.and.(ptrmin.gt.0..or.igetJetJet().eq.1.or.
      .  ihlle.eq.1.or.ispherio.eq.1
      .  .or.ikolmn.gt.10))then
-        write(ifmt,'(a,i3,a,i7,a,i5,a,f6.2,a,f7.1)')
+        write(ifmt,'(a,i3,a,i7,a,i5,a,f6.2,a,f7.1,a,i3)')
      . 'ini',ninx,':',
-     .  ntry,' its to get',izp,' Poms,  b =',bimevt
-     .,' ,  ptrevt =',ptrevt
+     .  ntry,' its, ',izp,' Poms, b =',bimevt
+     .,' , ptrevt =',ptrevt,', Ndijet =',igetJetNdijet()
       endif
       if(izmode.eq.3.and.iret.eq.0.and.(nglmin.gt.0.or.nglmax.le.99999))
      .  write(ifmt,*)'ninx =',ninx,': ',
@@ -7993,6 +8406,16 @@ c----------------------------------------------------------------------
       close (17)
       if(modsho.eq.1)
      .write(ifmt,'(a)')'  done'
+      end
+
+c-----------------------------------------------------------------------
+      subroutine aalist(text,n1,n2)
+c-----------------------------------------------------------------------
+#include "aaa.h"
+      character  text*(*)
+      close(unit=ifcx)
+      call aaalist(text//CHAR(0),n1,n2,fnch(1:nfnch)//CHAR(0))
+      open(unit=ifcx,file=fnch(1:nfnch),access='append')
       end
 
 c----------------------------------------------------------------------
@@ -8634,19 +9057,22 @@ c-----------------------------------------------------------------------
       yminhyx  = yminhy
       ymaxhyx  = ymaxhy
       end
+      
       subroutine gethyval(neta,ntau,nx,ny,eps,tem,pss,v1,v2,v3)
+c      use ArrayModule, only: getd
+c      use hocoModule, only: epsc, velc, barc
+c      use hocoModule, only: velc, barc
+      
+      double precision getHydynEpsc, getHydynVelc
 #include "aaa.h"
 #include "ho.h"
       double precision temc
       common/ctemc/temc(netahxx,ntauhxx,nxhxx,nyhxx)
       common/cpssc/pssc(netahxx,ntauhxx,nxhxx,nyhxx)
-      eps= epsc(neta,ntau,nx,ny)
-      v1=velc(1,neta,ntau,nx,ny)
-      v2=velc(2,neta,ntau,nx,ny)
-      v3=velc(3,neta,ntau,nx,ny)
-      b1=barc(1,neta,ntau,nx,ny)
-      b2=barc(2,neta,ntau,nx,ny)
-      b3=barc(3,neta,ntau,nx,ny)
+      eps=getHydynEpsc(  neta,ntau,nx,ny)
+      v1= getHydynVelc(1,neta,ntau,nx,ny)
+      v2= getHydynVelc(2,neta,ntau,nx,ny)
+      v3= getHydynVelc(3,neta,ntau,nx,ny)
       tem=temc(neta,ntau,nx,ny)
       pss=pssc(neta,ntau,nx,ny)
       end
@@ -8767,5 +9193,4 @@ c-------------------------------VERY BASIC----------------------------------
       fmux=a
       end
 #endif
-
 

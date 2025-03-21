@@ -1,0 +1,118 @@
+echo off
+
+#define  bim00   0.0
+#define  bi100  20.0
+#define  bimXX  20.0
+
+#define2  bim01   0.79    0.65        14  
+#define2  bim02   1.11    0.69        42  
+#define2  bim025  1.25    0.91        34  
+#define2  bim03   1.37    0.94        43  
+#define2  bim05   1.77    1.33        44  
+#define2  bim06   1.94    1.37        57  
+#define2  bim075  2.17    1.54        63  
+#define2  bim10   2.51    1.65        86  
+#define2  bim12   2.75    2.04        71  
+#define2  bim15   3.07    2.17        90  
+#define2  bim20   3.55    3.10        45  
+#define2  bim25   3.97    3.53        44  
+#define2  bim30   4.35    3.67        68  
+#define2  bim35   4.69    3.97        72  
+#define2  bim40   5.02    4.80        22  
+#define2  bim45   5.33    5.46       -13  
+#define2  bim50   5.62    5.68        -6  
+#define2  bim55   5.90    5.87         3  
+#define2  bim60   6.17    6.20        -3  
+#define2  bim65   6.44    6.27        17  
+#define2  bim70   6.71    6.83       -12  
+#define2  bim75   7.0    7.07        -7  
+#define2  bim80   7.31    7.60       -29  
+#define2  bim85   7.66    8.16       -50  
+#define2  bim90   8.09    8.27       -18  
+#define2  bim92   8.31    8.34        -3  
+#define2  bim95   8.74    8.44        30  
+
+CentralityClass cc20
+CentralityClass 1    0     bim05  1 !1  new 3.124c
+CentralityClass 2    bim05 bim10  1 !1
+CentralityClass 3    bim10 bim15  1 !2
+CentralityClass 4    bim15 bim20  1 !2
+CentralityClass 5    bim20 bim25  1 !2
+CentralityClass 6    bim25 bim30  1 !2
+CentralityClass 7    bim30 bim35  2 !4
+CentralityClass 8    bim35 bim40  2 !4
+CentralityClass 9    bim40 bim45  2 !4
+CentralityClass 10   bim45 bim50  2 !4
+CentralityClass 11   bim50 bim55  2 !4
+CentralityClass 12   bim55 bim60  4 !4
+CentralityClass 13   bim60 bim65  4 !4
+CentralityClass 14   bim65 bim70  4 !4
+CentralityClass 15   bim70 bim75  8 !8
+CentralityClass 16   bim75 bim80  8 !8
+CentralityClass 17   bim80 bim85  8 !8
+CentralityClass 18   bim85 bim90  8 !8
+CentralityClass 19   bim90 bim95  8 !8
+CentralityClass 20   bim95 bi100  8 !8
+
+CentralityLimit 0  0
+CentralityLimit 5  bim05
+CentralityLimit 10 bim10
+CentralityLimit 15 bim15
+CentralityLimit 20 bim20
+CentralityLimit 25 bim25
+CentralityLimit 30 bim30
+CentralityLimit 35 bim35
+CentralityLimit 40 bim40
+CentralityLimit 45 bim45
+CentralityLimit 50 bim50
+CentralityLimit 55 bim55
+CentralityLimit 60 bim60
+CentralityLimit 65 bim65
+CentralityLimit 70 bim70
+CentralityLimit 75 bim75
+CentralityLimit 80 bim80
+CentralityLimit 85 bim85
+CentralityLimit 90 bim90
+CentralityLimit 95 bim95
+CentralityLimit 100 bi100
+
+
+set bref80 bim80
+
+#define  bimrange0to10  "::bim00::bim10::"
+#define  bimrange0to20  "::bim00::bim20::"
+#define  bimrange20to40 "::bim20::bim40::"
+#define  bimrange40to60 "::bim40::bim60::"
+#define  bimrange60to80 "::bim60::bim80::"
+
+#define  bimrange0to5   "::bim00::bim05::"
+#define  bimrange5to10  "::bim05::bim10::"
+#define  bimrange10to20 "::bim10::bim20::"
+#define  bimrange20to30 "::bim20::bim30::"
+#define  bimrange30to40 "::bim30::bim40::"
+#define  bimrange40to50 "::bim40::bim50::"
+#define  bimrange50to60 "::bim50::bim60::"
+#define  bimrange60to70 "::bim60::bim70::"
+#define  bimrange70to80 "::bim70::bim80::"
+#define  bimrange80to90 "::bim80::bim90::"
+#define  bimrange90to100 "::bim90::bi100::"
+
+#define  bim0to10  "::bim00::bim10::"
+#define  bim0to20  "::bim00::bim20::"
+#define  bim20to40 "::bim20::bim40::"
+#define  bim40to60 "::bim40::bim60::"
+#define  bim60to80 "::bim60::bim80::"
+
+#define  bim0to5   "::bim00::bim05::"
+#define  bim5to10  "::bim05::bim10::"
+#define  bim10to20 "::bim10::bim20::"
+#define  bim20to30 "::bim20::bim30::"
+#define  bim30to40 "::bim30::bim40::"
+#define  bim40to50 "::bim40::bim50::"
+#define  bim50to60 "::bim50::bim60::"
+#define  bim60to70 "::bim60::bim70::"
+#define  bim70to80 "::bim70::bim80::"
+#define  bim80to90 "::bim80::bim90::"
+#define  bim90to100 "::bim90::bi100::"
+
+echo on

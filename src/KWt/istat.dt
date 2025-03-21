@@ -26,14 +26,20 @@
         8       particle last generation without hadronic cascade  
         6       particle not last generation without hadronic cascade
 !-----------------------------------------------------------------------
-!               Since some procedures cannot guarantee strict energy 
-!               conservation, we provide an additional list of particles 
-!               where a correction procedure has been employed to 
-!               enforce energy conservation, with the following ist:
+!               Special cases 
 !-----------------------------------------------------------------------
-
+        9       special particles, with special id and ity codes,
+                  which are created in addition to the usual particle list
+                  (like for example resonances detected in the hadronic phase,
+                   in case of running EPOS4 with the hadronic cascade activated)  
+       10,11,12 droplets 
        20       partons last generation
        21       partons not last generation
        25       intermediate out-Born partons
+       26       special case, weighted prompt charmonium, to increase statistics
+                  get weight factor via 'grep factorJpsi src/KW/bor.f' or 'grep factorUps src/KW/bor.f'
+                  final yield needs to be devided by this factor
+                  does not decay
+                  non-prompt charmonium =  normal case (and decays)
        29       string
 

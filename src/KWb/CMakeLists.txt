@@ -5,31 +5,33 @@
 #  (See COPYING file for the text of the licence)
 #
 
-# find_package(ROOT)
 # Define this directory's flags:
-set(${PROJECT_NAME}_KWb_FORTRAN_FLAGS "-g -mcmodel=large -fPIC -cpp -fbacktrace -ffpe-trap=invalid,zero -Wall -fno-automatic -fcheck=bounds -O2 -Wtabs -Wno-conversion -Wuninitialized -fno-var-tracking-assignments" CACHE STRING "${PROJECT_NAME} KWb FORTRAN FLAGS")
-# Enable this directory's flags:
-set(CMAKE_Fortran_FLAGS "${${PROJECT_NAME}_KWb_FORTRAN_FLAGS}")
-
-# Define this directory's flags:
-if(WITH_ROOT)
-# set(${PROJECT_NAME}_KWb_CXX_FLAGS "-std=c++11 -O2 -g -Wall -fPIC -pthread -m64 -D__ROOT__" CACHE STRING "${PROJECT_NAME} KWb CXX FLAGS")
-
-list(APPEND CXX_FLAGS ${ROOT_CPPFLAGS})
-list(APPEND CXX_FLAGS "-O2 -g -Wall -fPIC -D__ROOT__")
-list(JOIN CXX_FLAGS " " ${PROJECT_NAME}_KWb_CXX_FLAGS)
-
+if (${CMAKE_C_COMPILER_ID} STREQUAL "GNU")
+  if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64|aarch64")    
+    list(APPEND C_COMPILE_FLAGS "-Wno-deprecated-declarations")
+    list(APPEND C_COMPILE_FLAGS "-Wno-unused-variable")
+    list(APPEND C_COMPILE_FLAGS "-Wno-unused-result")
+    list(JOIN C_COMPILE_FLAGS " " C_COMPILE_FLAGS)
+  else()
+    message(ERROR "EPOS: EPOS compilation only succeeds on x86_64 or aarch64 architecture")
+  endif()        
 else()
-set(${PROJECT_NAME}_KWb_CXX_FLAGS "-std=c++11 -O2 -g -Wall -fPIC -pthread -m64" CACHE STRING "${PROJECT_NAME} KWb CXX FLAGS")
+  message(ERROR "EPOS: Compilation with any compiler other than GCC has not yet been tested")
 endif()
-# Enable this directory's flags:
-set(CMAKE_CXX_FLAGS "${${PROJECT_NAME}_KWb_CXX_FLAGS}")
-message(STATUS "KWb CXX FLAGS: " ${CMAKE_CXX_FLAGS})
 
+list(APPEND CXX_COMPILE_FLAGS "-DHEPMC3_Z_SUPPORT")
+list(APPEND CXX_COMPILE_FLAGS "-DHEPMC3_USE_COMPRESSION")
+list(JOIN CXX_COMPILE_FLAGS " " CXX_COMPILE_FLAGS)
+
+if(WITH_ROOT)
+  list(APPEND CXX_COMPILE_FLAGS "-D__ROOT__")
+  list(JOIN CXX_COMPILE_FLAGS " " CXX_COMPILE_FLAGS)  
+endif()
 
 # Do the local stuff:
-set(KWb_SRC 
-  af.f 
+set(KWb_SRC
+  af.f
+  af.cpp  
   al.cpp
   time.c
   x_s.f
@@ -37,16 +39,24 @@ set(KWb_SRC
 
 if(WITH_ROOT)
   list(APPEND KWb_SRC 
-    etreef.cpp
     tre.cpp
-    etree.cpp
-    fill_hep.cpp)
+    etree.cpp)
 endif()
 
 add_library(KWb OBJECT ${KWb_SRC})
-target_include_directories(KWb PRIVATE ../KW/ PRIVATE)
+separate_arguments(C_COMPILE_FLAGS UNIX_COMMAND ${C_COMPILE_FLAGS})
+separate_arguments(CXX_COMPILE_FLAGS UNIX_COMMAND ${CXX_COMPILE_FLAGS})
+separate_arguments(FORTRAN_COMPILE_FLAGS UNIX_COMMAND ${FORTRAN_COMPILE_FLAGS})
+target_compile_options(KWb PUBLIC $<$<COMPILE_LANGUAGE:C>:${C_COMPILE_FLAGS}>)
+target_compile_options(KWb PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${CXX_COMPILE_FLAGS}>)
+target_compile_options(KWb PUBLIC $<$<COMPILE_LANGUAGE:Fortran>:${FORTRAN_COMPILE_FLAGS}>)
+
+target_include_directories(KWb PRIVATE
+  ${PROJECT_SOURCE_DIR}/src/KW/
+  ${HEPMC3_INCLUDE_DIR}
+)
 
 if(WITH_ROOT)
-  target_include_directories(KWb PRIVATE ${ROOT_INCLUDE_DIR})
+  target_include_directories(KWb PRIVATE ${ROOT_INCLUDE_DIRS})
 endif()
 

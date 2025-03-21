@@ -1508,7 +1508,7 @@ c----------------------------------------------------------------------
       integer      iprmpt,ish,ishsub,irandm,irewch,iecho,modsho,idensi
       common/prnt1/iprmpt,ish,ishsub,irandm,irewch,iecho,modsho,idensi
       integer      ifop,ifmt,ifch,ifcx,ifhi,ifdt,ifcp,ifdr,ifio
-      common/files/ifop,ifmt,ifch,ifcx,ifhi,ifdt,ifhm,ifcp,ifdr,ifio
+      common/files/ifop,ifmt,ifch,ifcx,ifhi,ifdt,ifcp,ifdr,ifio
       parameter(maxp=600)
       common/chnbin/nump,ihadro(maxp)
       parameter (mspecs=400)
@@ -3575,6 +3575,7 @@ c-------------------------------------------------------------
       common/cspecs/nspecs
      .,ispecs(mspecs+1),aspecs(mspecs+1),gspecs(mspecs+1)
       common/cspecs2/pspecs(0:mspecs+1),yie2volu,yiespecs
+      common/ctempGC/tempGC
       real aff(0:mspecs+1)
       parameter (nbins=500)
       real far(6,2,nbins/5)
@@ -3658,6 +3659,8 @@ c determine hadron yields / V acc to HG with temp T (muB=0)
       !.   ,p*1000
       !enddo
       
+      tempGC=T
+
       if(iappl.ne.9)return
 
 c-prepare plot and check for given volu and facmicro

@@ -1010,8 +1010,9 @@ c      write(ifch,*)'res:',id,idr,ami,am,wi,iadj
       if(iii.eq.1)then
         if(idi.eq.221)stop'\n\n     STOP in idres (1) \n\n'
         if(idr.eq.221)stop'\n\n     STOP in idres (2) \n\n'
+        pOmegaRho0=0.45
         if(idr.eq.111)then
-          if(rangen().le.0.5)idr=221
+          if(rangen().le.pOmegaRho0)idr=221
           call idmass(idr,am)
         endif
       endif
@@ -1936,6 +1937,15 @@ c-------------------------------------------------------------------------
 
       end
 
+c-------------------------------------------------------------------------
+      subroutine idepos2pdg(idepos,idpdg)
+c-------------------------------------------------------------------------
+c tranforms id from EPOS to PDG
+c using function idtrafo
+c-------------------------------------------------------------------------
+      idpdg=idtrafo('nxs','pdg',idepos)
+      end
+
 c-----------------------------------------------------------------------
       subroutine idwidth(id,wi)
 c     returns the width of the particle with ident code id.
@@ -2139,6 +2149,22 @@ c-----------------------------------------------------------------------
       length=index(nametbl(nl),' ')-1  !length of string
       if(length.gt.9-ii)idlabl(8:8)='$'  !symbol for truncated
 
+      end
+
+c-----------------------------------------------------------------------
+      subroutine getihadron(id,ihad)
+c-----------------------------------------------------------------------
+      ihad=0
+      call idflav(id,i1,i2,i3,j4,j5)
+      if(i1.eq.0.and.i2.ne.0.and.i3.ne.0)ihad=1 !meson
+      if(i1.ne.0.and.i2.ne.0.and.i3.ne.0)ihad=1 !baryon
+      if(abs(id).eq.20)ihad=1                   !Ks
+      end
+
+c-----------------------------------------------------------------------
+      subroutine getcharge(id,chrg)
+c-----------------------------------------------------------------------
+      call idchrg(30,id,chrg)
       end
 
 c-----------------------------------------------------------------------

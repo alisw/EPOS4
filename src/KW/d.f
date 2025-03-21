@@ -41,13 +41,49 @@ c-----------------------------------------------------------------------
       end
 
 c-----------------------------------------------------------------------
+      subroutine setIfBigSystem(line,i,j,igo1)
+c-----------------------------------------------------------------------
+#include "aaa.h"
+      character*1000 line
+      igo1=0
+      if(.not.(maproj*matarg.gt.5000))then 
+      iechox=iecho
+      iecho=0
+      call utword(line,i,j,ne)
+      do while(line(i:j).ne.'#fiBigSystem')
+      call utword(line,i,j,ne)
+      enddo
+      iecho=iechox
+      igo1=1
+      endif
+      end
+
+c-----------------------------------------------------------------------
+      subroutine setIfSmallSystem(line,i,j,igo1)
+c-----------------------------------------------------------------------
+#include "aaa.h"
+      character*1000 line
+      igo1=0
+      if(.not.(maproj*matarg.le.5000))then 
+      iechox=iecho
+      iecho=0
+      call utword(line,i,j,ne)
+      do while(line(i:j).ne.'#fiSmallSystem')
+      call utword(line,i,j,ne)
+      enddo
+      iecho=iechox
+      igo1=1
+      endif
+      end
+
+c-----------------------------------------------------------------------
       subroutine setIf1(line,i,j) !#if1 definition
 c-----------------------------------------------------------------------
 #include "aaa.h"
       character*1000 line
       character cext1*10
       common/ccext1/cext1
-      character*2 celse(20)
+      character*10 celse(20)
       integer nelse,inotelse
       common/ccelse/nelse,inotelse,celse
       lcext1=index(cext1,' ')-1
@@ -64,11 +100,13 @@ c-----------------------------------------------------------------------
       endif
       nelse=nif1
       iskip=2 !skip
-      celse(1)=line(i:j)
+      celse(1)='          '
+      celse(1)(1:j-i+1)=line(i:j)
       if(line(i:j).eq.cext1(1:lcext1))iskip=1 !noskip
       do nuw=2,nif1
         call utword(line,i,j,0)
-        celse(nuw)=line(i:j)
+        celse(nuw)='          '
+        celse(nuw)(1:j-i+1)=line(i:j)
         if(line(i:j).eq.cext1(1:lcext1))iskip=1 !noskip
       enddo
       if(inot.eq.1)iskip=3-iskip !invert
@@ -97,16 +135,18 @@ c-----------------------------------------------------------------------
       character*1000 line
       character cext1*10
       common/ccext1/cext1
-      character*2 celse(20)
+      character*10 celse(20)
       integer nelse,inotelse
       common/ccelse/nelse,inotelse,celse
       lcext1=index(cext1,' ')-1
       inot=inotelse
       nif1=nelse
       iskip=2 !skip
-      if(celse(1).eq.cext1(1:lcext1))iskip=1 !noskip
+      lelse=index(celse(1),' ')-1
+      if(celse(1)(1:lelse).eq.cext1(1:lcext1))iskip=1 !noskip
       do nuw=2,nif1
-        if(celse(nuw).eq.cext1(1:lcext1))iskip=1 !noskip
+        lelse=index(celse(nuw),' ')-1
+        if(celse(nuw)(1:lelse).eq.cext1(1:lcext1))iskip=1 !noskip
       enddo
       if(inot.eq.0)iskip=3-iskip !invert
       if(iskip.eq.2)then !skip
@@ -128,8 +168,8 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
       subroutine setCentralityClass(line,i,j,nopen)
 c-----------------------------------------------------------------------
-      common/files/ifop,ifmt,ifch,ifcx,ifhi,ifdt,ifhm,ifcp,ifdr,ifio
-      common/hydr4/zclass(5,100),izmode,maxsurf,iofrout,jzmode(7)
+      common/files/ifop,ifmt,ifch,ifcx,ifhi,ifdt,ifcp,ifdr,ifio
+      common/hydr4/zclass(5,100),izmode,maxsurf,iofrout,jzmode(8)
       common/ccc20/icc20
       character line*1000
       call utword(line,i,j,0)
@@ -179,7 +219,7 @@ c-----------------------------------------------------------------------
       subroutine setCentrality(line,i,j,iopcnt,ifmt
      .               ,icentrality,jcentrality,ffac,imax,ival,ishxxx)
 c-----------------------------------------------------------------------
-      common/hydr4/zclass(5,100),izmode,maxsurf,iofrout,jzmode(7)
+      common/hydr4/zclass(5,100),izmode,maxsurf,iofrout,jzmode(8)
       common/crootcproot/irootcproot,iboein
       character line*1000
       
@@ -367,7 +407,8 @@ c       print*,line(i:j)
           cfmt='(i )'
           write(cfmt(3:3),'(i1)')n
           jj=j-5-n
-          read(line(jj:j-6),cfmt)iopcnt
+c         in case of string cast to integer error, iopcnt equals 0
+          read(line(jj:j-6),cfmt,iostat=ios)iopcnt
         endif
         do k=i,j-4
           if(line(k:k+4).eq.'ppihd')iexhd=1
@@ -446,8 +487,11 @@ c-----------------------------------------------------------------------
       ndefine=ndefine+1
       l1define(ndefine)=l1
       l2define(ndefine)=l2
-      if(k.eq.2)then
+      if(k.ge.2)then
         call utword(line,i,j,ne)
+        call utword(line,i,j,ne)
+      endif
+      if(k.ge.3)then
         call utword(line,i,j,ne)
       endif
       end

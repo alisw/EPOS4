@@ -19,10 +19,9 @@ CentralityClass 16  16 16   1   0   0.12
 CentralityClass 17  17 17   1   0   0.08
 CentralityClass 18  18 18   1   0   0.05
 
-#define  npo100  1000
 #define  npoXX  1000
 #define  npo100.00  1000
-#define  npo00  0
+#define  npo00.00  0
 
 #define  vzac100 1000
 #define  vzac00  0

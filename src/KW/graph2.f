@@ -84,6 +84,23 @@ c#######################################################################
 !
 !> @param[in] name name of the calling subroutine
 !> @param[in] text test of the histo
+!-----------------------------------------------------------------------
+      subroutine histo2BeginSubPlot(name, text)
+c#######################################################################
+      character(*) :: name, text
+
+      write(97,'(3a/3a)')
+     .     'openhisto2 name "', text, '"',
+     .     'subroutine "', name, '"'
+
+      end
+
+
+c#######################################################################
+!-----------------------------------------------------------------------
+!> @brief
+!> write histo informations
+!
 !> @param[in] title test of the histo
 !> @param[in] xmin min value in x
 !> @param[in] xmax max value in x
@@ -94,26 +111,67 @@ c#######################################################################
 !> @param[in] xtitle title for x-axis
 !> @param[in] ytitle title for y-axis
 !-----------------------------------------------------------------------
-      subroutine histo2BeginSubPlot(name, text, title,
+      subroutine histo2AddHeader(title,
      .     xmin, xmax, xstep,
      .     ymin, ymax, ystep,
      .     xtitle, ytitle)
 c#######################################################################
-      character(*) :: name, text, title, xtitle, ytitle
+      character(*) :: title, xtitle, ytitle
       real :: xmin, xmax, xstep, ymin, ymax, ystep
 
-      write(97,'(3a/3a/3a/(a, 2e11.3)/(a, 2e11.3)/(a, 2e11.3)
-     .           /3a/3a/a)')
-     .     'openhisto2 name "', text, '"',
-     .     'subroutine "', name, '"',
+      write(97,'(3a/(a, 2e11.3)/(a, 2e11.3)/(a, 2e11.3)/3a/3a)')
      .     'title "', title, '"',
      .     'xrange ', xmin, xmax, 
      .     'yrange ', ymin, ymax,
      .     'step ', xstep, ystep,
      .     'txt "xaxis ', xtitle, '"',
-     .     'txt "yaxis ', ytitle, '"',
-     .     'array 3'
+     .     'txt "yaxis ', ytitle, '"'
+      end
 
+
+c#######################################################################
+!-----------------------------------------------------------------------
+!> @brief
+!> write histo informations related to PHSD
+!
+!-----------------------------------------------------------------------
+      subroutine histo2AddPHSDHeader()
+c#######################################################################
+      integer iphsd
+      common/cphsd/iphsd
+      real    egymin,egymax,elab,ecms,ekin
+      common/enrgy/egymin,egymax,elab,ecms,ekin
+      real         bmaxim,bminim,phimax,phimin,zzsoft,asatur,bsatur
+      common/nucl2/bmaxim,bminim,phimax,phimin,zzsoft,asatur,bsatur
+      integer      nevent,nfull,nfreeze,ninicon
+      common/events/nevent,nfull,nfreeze,ninicon
+      character(len = 70) :: text1 
+      character(len = 15) :: text2, text3
+      character(len = 10) :: energy
+      character(len = 25) :: bstring
+
+      if (iphsd.eq.2) then
+         write(text2,'(a,i6)')'num=',nfreeze
+         text3 = "EPOSi + PHSDe"
+      elseif (iphsd.eq.9) then
+         write(text2,'(a,i6)')'num=',ninicon
+         text3 = "pure PHSD"
+      endif
+
+      write(energy,'(f8.2)')ecms
+      
+      if (bminim.eq.bmaxim) then
+         write(bstring,'(a,f5.2,a)')'b=',bminim,'fm'
+      else
+         write(bstring,'(f5.2,a,f5.2,a)')bminim,'fm<=b<=',bmaxim,'fm'
+      endif
+
+      text1 = "AuAu@"//energy//"GeV, "//bstring//", "//text2
+      call stripSpaces(text1)
+
+      write(97,'(3a/3a/3a)')
+     .     'text  0.05 0.93  " ', trim(text1), ' "',
+     .     'text  0.05 0.05  " ', trim(text3), ' "'
       end
 
 
@@ -145,13 +203,59 @@ c#######################################################################
 c#######################################################################
 !-----------------------------------------------------------------------
 !> @brief
+!> write array data
+!
+!> @param[in] x_center
+!> @param[in] y_center
+!> @param[in] radius
+!-----------------------------------------------------------------------
+      subroutine histo2DrawCircle(x_center, y_center, radius)
+      real :: x_center, y_center, radius
+      
+      write(97,'(3(a, e11.3))') 
+     .     'circle ', x_center, ' ', y_center, ' ', radius
+
+      end
+
+
+
+c#######################################################################
+!-----------------------------------------------------------------------
+!> @brief
+!> write array footer
+!
+!-----------------------------------------------------------------------
+      subroutine histo2BeginArray()
+c#######################################################################
+
+      write(97,'(a)') 'array 3'
+
+      end
+
+
+c#######################################################################
+!-----------------------------------------------------------------------
+!> @brief
+!> write array footer
+!
+!-----------------------------------------------------------------------
+      subroutine histo2EndArray()
+c#######################################################################
+
+      write(97,'(a)') 'endarray'
+
+      end
+
+
+c#######################################################################
+!-----------------------------------------------------------------------
+!> @brief
 !> write histo footer
 !
 !-----------------------------------------------------------------------
       subroutine histo2EndSubPlot()
 c#######################################################################
 
-      write(97,'(a)') 'endarray'
       write(97,'(a)') 'closehisto2'
 
       end
@@ -165,7 +269,20 @@ c#######################################################################
 !-----------------------------------------------------------------------
       subroutine histo2EndPlot()
 c#######################################################################
-      write(97,'(a)') 'plot'
+      write(97,'(a)') 'plot 0-'
+
+      end
+
+      
+c#######################################################################
+!-----------------------------------------------------------------------
+!> @brief
+!> write plot command
+!
+!-----------------------------------------------------------------------
+      subroutine histo2EndLastPlot()
+c#######################################################################
+      write(97,'(a)') 'plot 0'
 
       end
 

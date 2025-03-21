@@ -3,87 +3,74 @@ echo off
 #define  bi100  20.00
 #define  bimXX  20.00
 #define  bim00   0.00 
+#define  bim100  20.00
 
-#define  npo100  50000
 #define  npoXX  50000
 #define  npo100.00  50000
-#define  npo00  0
+#define  npo00.00  0
 
-!========> After copy/paste, remove manually '.00' <=========
-#define2  bim01   1.53    1.52         1  
-#define2  bim02   2.17    2.18        -1  
-#define2  bim025  2.43    2.43         0  
-#define2  bim03   2.66    2.66         0  
-#define2  bim05   3.43    3.44        -1  
-#define2  bim06   3.76    3.77        -1  
-#define2  bim075  4.22    4.22         0  
-#define2  bim10   4.86    4.87        -1  
-#define2  bim12   5.33    5.33         0  
-#define2  bim15   5.97    5.96         1  
-#define2  bim20   6.89    6.89         0  
-#define2  bim25   7.70    7.71        -1  
-#define2  bim30   8.44    8.45        -1  
-#define2  bim35   9.12    9.13        -1  
-#define2  bim40   9.75    9.76        -1  
-#define2  bim45  10.35   10.34         1  
-#define2  bim50  10.91   10.90         1  
-#define2  bim55  11.44   11.44         0  
-#define2  bim60  11.95   11.95         0  
+#define  npn100.00  50000
+#define  npn00.00  0
+
+!#####################################################################################
+!========> For bim: After copy/paste, remove manually '.00' <=========
+!#####################################################################################
+#define2  bim01   1.54    1.53         1  
+#define2  bim02   2.18    2.17         1  
+#define2  bim025  2.45    2.43         2  
+#define2  bim03   2.68    2.66         2  
+#define2  bim05   3.46    3.43         3  
+#define2  bim06   3.78    3.76         2  
+#define2  bim075  4.23    4.22         1  
+#define2  bim10   4.88    4.86         2  
+#define2  bim12   5.34    5.33         1  
+#define2  bim15   5.96    5.97        -1  
+#define2  bim20   6.90    6.89         1  
+#define2  bim25   7.72    7.70         2  
+#define2  bim30   8.46    8.44         2  
+#define2  bim35   9.14    9.12         2  
+#define2  bim40   9.77    9.75         2  
+#define2  bim45  10.36   10.35         1  
+#define2  bim50  10.92   10.91         1  
+#define2  bim55  11.45   11.44         1  
+#define2  bim60  11.96   11.95         1  
 #define2  bim65  12.44   12.44         0  
-#define2  bim70  12.91   12.91         0  
-#define2  bim75  13.36   13.36         0  
+#define2  bim70  12.92   12.91         1  
+#define2  bim75  13.37   13.36         1  
 #define2  bim80  13.81   13.81         0  
-#define2  bim85  14.28   14.28         0  
+#define2  bim85  14.27   14.28        -1  
 #define2  bim90  14.80   14.80         0  
 #define2  bim92  15.05   15.05         0  
-#define2  bim95  15.51   15.52        -1  
-
-#if1 ma !--------------------take ma
-
-#define2  npo05.00   2.78    2.87        -9  
-#define2  npo10.00   5.57    5.73       -16  
-#define2  npo15.00   8.35    8.60       -25  
-#define2  npo20.00  12.79   13.53       -74  
-#define2  npo25.00  19.63   20.72      -109  
-#define2  npo30.00  30.36   32.27      -191  
-#define2  npo35.00  46.01   48.50      -249  
-#define2  npo40.00  67.41   71.25      -384  
-#define2  npo45.00  96.01  102.60      -659  
-#define2  npo50.00  133.0  142.40      -944  
-#define2  npo55.00  180.3  192.50     -1219  
-#define2  npo60.00  238.2  255.10     -1688  
-#define2  npo65.00  308.3  329.50     -2123  
-#define2  npo70.00  393.4  420.70     -2732  
-#define2  npo75.00  495.5  532.10     -3657  
-#define2  npo80.00  616.1  663.80     -4766  
-#define2  npo85.00  761.7  823.30     -6160  
-#define2  npo90.00  941.2 1018.00     -7681  
-#define2  npo95.00  1169. 1265.00     -9596  
-
-#fi
-#if1 #not ma  !------------------take my 
-
-#define2  npo05.00   2.79    2.78         1  
-#define2  npo10.00   5.58    5.56         2  
-#define2  npo15.00   8.37    8.33         4  
-#define2  npo20.00  12.65   12.81       -16  
-#define2  npo25.00  19.01   19.82       -81  
-#define2  npo30.00  28.71   33.20      -449  
-#define2  npo35.00  42.84   50.31      -747  
-#define2  npo40.00  65.09   71.36      -627  
-#define2  npo45.00  92.63  102.40      -977  
-#define2  npo50.00  128.9  140.80     -1192  
-#define2  npo55.00  175.2  189.70     -1449  
-#define2  npo60.00  238.8  250.60     -1182  
-#define2  npo65.00  306.7  319.20     -1249  
-#define2  npo70.00  390.0  427.50     -3750  
-#define2  npo75.00  484.5  541.10     -5655  
-#define2  npo80.00  599.3  670.70     -7138  
-#define2  npo85.00  742.0  822.70     -8070  
-#define2  npo90.00  920.4 1024.00    -10364  
-#define2  npo95.00  1150. 1274.00    -12400  
-
-#fi
+#define2  bim95  15.51   15.51         0  
+#define3  npo05.00   2.31    2.28         1      **
+#define3  npo10.00   5.11    5.05         1      **
+#define3  npo15.00   7.92    7.83         1      **
+#define3  npo20.00  12.52   12.28         2      ***
+#define3  npo25.00  19.46   19.27         1      **
+#define3  npo30.00  30.69   29.78         3      ****
+#define3  npo35.00  46.46   45.54         2      ***
+#define3  npo40.00  68.29   66.49         3      ****
+#define3  npo45.00  97.78   95.81         2      ***
+#define3  npo50.00  136.4  133.90         2      ***
+#define3  npo55.00  184.7  181.70         2      ***
+#define3  npo60.00  243.5  242.40         0      *
+#define3  npo65.00  315.1  313.10         1      **
+#define3  npo70.00  402.6  403.40         0      *
+#define3  npo75.00  507.5  510.80        -1      **
+#define3  npo80.00  631.7  637.80        -1      **
+#define3  npo85.00  778.4  799.30        -3      ****
+#define3  npo90.00  950.5  996.50        -5      ******
+#define3  npo95.00  1139. 1232.00        -8      *********
+#define3  npo99.00  1307. 1492.00       -12      *************
+#define3  npo99.90  1387. 1596.00       -13      **************
+#define3  npn20.00   9.45    9.30         2      ***
+#define3  npn40.00  39.08   38.12         3      ****
+#define3  npn60.00  104.4  103.40         1      **
+#define3  npn80.00  220.0  218.70         1      **
+#define3  npn90.00  305.9  307.80        -1      **
+#define3  npn99.00  400.7  400.40         0      *
+#define3  npn99.90  410.3  410.40         0      *
+!#####################################################################################
 
 #define hei100 5000 !from arXiv:1303.0737 Centrality dep pi, K, p, production
 #define hei95 1450

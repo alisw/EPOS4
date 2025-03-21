@@ -6,6 +6,19 @@ C  (See COPYING file for the text of the licence)
 C
 
 c-----------------------------------------------------------------------
+      subroutine printFirst(text,value)
+c-----------------------------------------------------------------------
+      character*20 text
+      data ncount/0/
+      save ncount
+      ncount=ncount+1 
+      if(ncount.eq.1)then
+       write(*,'(a,$)')text
+       print*,value
+      endif
+      end
+
+c-----------------------------------------------------------------------
       subroutine psmirror(ep3)
 c-----------------------------------------------------------------------
       common/cmirror/mirror
@@ -49,6 +62,428 @@ c-----------------------------------------------------------------------
         leq=.false.
       endif
       end 
+
+c-----------------------------------------------------------------------
+      subroutine skipRandomNumbers
+c-----------------------------------------------------------------------
+#include "aaa.h"
+      if(iopcnt.le.0)stop'***** batch required *****'
+      write(ifmt,'(a,$)')'Skip random numbers: 10 x '
+      write(ifmt,*)iopcnt
+      do i=1,iopcnt
+        do j=1,10
+          r=rangen()
+        enddo
+      enddo
+      write(ifmt,'(a,f10.7)')'Last random number: ',r
+      end
+ 
+c-----------------------------------------------------------------------
+      integer function iSkipSurfForCheck(nsurf,neta,ntau,nphi)
+c-----------------------------------------------------------------------
+      iSkipSurfForCheck=0
+
+      return !(un)comment this line to turn on(off) the skip for testing 
+
+      if(neta.ne.10)dmy=1
+      if(nphi.ne.10)dmy=1
+      if(nsurf.ne.1)iSkipForCheck=1
+      if(ntau.lt.15.or.ntau.gt.16)iSkipForCheck=1
+      end
+
+c-----------------------------------------------------------------------
+      subroutine checkGrandCanon(iii,imess,dM,ve3)
+c-----------------------------------------------------------------------
+#include "aaa.h"
+#include "ho.h"
+      parameter (mspecs=400)
+      common/cspecs/nspecs
+     .,ispecs(mspecs+1),aspecs(mspecs+1),gspecs(mspecs+1)
+      common/ctempGC/tempGC
+      real yield2mass(6)
+      data yield2mass/0.18536,0.06136,0.01772,0.00760,0.00274,0.00092/ 
+      real ve3(3),u(4),p(4)
+      parameter (mxyieldGC=20)
+      real yieldGC(6,0:mxyieldGC+1)
+      common/cyieldGC/yieldGC,sumMassGC,ncountGC,sumPionsGC,sumPifGC
+      common/cnfrx/nfrx
+      integer isele(6)
+      data isele/2,5,94,98,108,128/
+
+      return !(un)comment this line to turn on(off) the test
+
+      if(nfrx.gt.0)return
+
+      if(efrout.ne.0.57)stop'ERROR 230807' !sumPionsGC defined for 0.57
+      select case (iii)
+
+      case (0) !------- initialize -------
+
+      do i=1,6
+        do j=0,mxyieldGC+1
+          yieldGC(i,j)=0
+        enddo 
+      enddo
+      sumMassGC=0
+      ncountGC=0
+      sumPionsGC=0
+      sumPifGC=0
+      write(ifmt,'(a,6i6)')'checkGrandCanon(0)'
+     .,(ispecs(isele(ii)),ii=1,6)
+
+      case (1) !------- fill -------
+
+      if(dM.eq.0.)goto 777
+      sumMassGC=sumMassGC+dM
+      sumPionsGC=sumPionsGC+yield2mass(1)*dM !for efrout=0.57 
+      ncountGC=ncountGC+1
+      T=tempGC
+      hbarc=0.197327
+      call printFirst('checkGrandCanon(1)  ',T)
+      volu=dM/efrout
+      volu=volu*2 !to count for antiparticles
+      do i=1,3
+        u(i)=ve3(i)
+      enddo
+      gmx=max(1e-8, 1.-u(1)**2-u(2)**2-u(3)**2)
+      gm=1./sqrt(gmx)
+      u(4)=1
+      do k=1,4
+        u(k)=u(k)*gm
+      enddo
+
+      jmax=64
+      pmax=8
+      del=pmax/jmax
+      kmax=40
+      dtheta=pi/kmax
+      dphi=pi/kmax
+      ptmax=4 
+      delpt=ptmax/mxyieldGC
+      do ii=1,6
+        i=isele(ii)
+        id=ispecs(i)
+        am=aspecs(i)
+        g=gspecs(i)
+        a=g/(hbarc*2*pi)**3
+        !print*,ii,i,id,am,g
+        fsum=0
+        do j=1,jmax
+          pp=(j-0.5)*del
+          ee=sqrt(pp*pp+am*am)
+          f=a*volu*exp(-ee/T) * pp**2 * del
+          fsum=fsum+f
+          do k=1,kmax
+            theta=(k-0.5)*dtheta
+            pxy=pp*sin(theta)
+            do l=1,kmax*2
+              phi=(l-0.5)*dphi
+              dn=f*sin(theta)*dtheta*dphi
+              p(1)=pxy*cos(phi)
+              p(2)=pxy*sin(phi)
+              p(3)=pp*cos(theta)
+              p(4)=ee
+           call utlob3(-1,u(1),u(2),u(3),u(4),1e0,p(1),p(2),p(3),p(4))
+              ptr=sqrt(p(1)**2+p(2)**2)
+              ipt=ptr/delpt+1
+              if(ipt.lt.1)ipt=0
+              if(ipt.gt.mxyieldGC)ipt=mxyieldGC+1
+              yieldGC(ii,ipt)=yieldGC(ii,ipt)+dn !not normalized!
+            enddo
+          enddo
+        enddo
+        if(ii.eq.1)sumPifGC=sumPifGC+fsum*4*pi
+      enddo
+ 777  if(imess.gt.0)then !write(ifmt,'(i5,5f10.3)')imess
+      write(ifmt,'(i5,f10.2,i8,4x,3f8.4,4x,4f8.4,f12.4)')
+     .imess,sumMassGC,ncountGC,sumPionsGC,sumPifGC
+     .,yieldGC(1,0), ((yieldGC(1,j)+yieldGC(1,j+1)),j=1,8,2)
+     .,yieldGC(1,mxyieldGC+1)
+        call clop(3)
+      endif
+     
+      case (2) !------- plot -------
+
+      call printFirst('checkGrandCanon     ',2.)
+      do n=1,6
+        write(ifhi,'(a,i1,$)')'openhisto name checkGrandCanon',n
+        write(ifhi,'(a,$)')' xrange 0 4 htyp lin'
+        write(ifhi,'(a)')' xmod lin ymod log'
+        write(ifhi,'(a)')'text 0 0 ""xaxis pt   "" '
+        write(ifhi,'(a)')'text 0 0 ""yaxis dn/dpt  ""' 
+        write(ifhi,'(a)')'histoweight 1'
+        write(ifhi,'(a)')'array  2'
+        do j=1,mxyieldGC
+          pp=(j-0.5)*delpt
+          write(ifhi,'(2f12.5)') pp,yieldGC(n,j)
+        enddo
+        write(ifhi,'(a)')'endarray'
+        write(ifhi,'(a)')'closehisto plot 0'
+      enddo
+
+      end select
+
+      end
+
+c########################################################################################################
+c########################################################################################################
+c############################################### set / get ##############################################
+c########################################################################################################
+c########################################################################################################
+
+c
+c  KW: to simplify future activities towards C++ classes to avoid common blocks, I will in the
+c      future always add a header of the form "future classe <name_of_the_classe>"
+c
+
+c--------------------------------------------------- --------------------
+c future classe Jet  
+c-----------------------------------------------------------------------
+      subroutine setJetJet(ival)
+      integer :: Jet !activates Jet module (1) or not (0)
+      common/JetJet/Jet 
+      Jet=ival
+      end
+      integer function igetJetJet()
+      integer :: Jet 
+      common/JetJet/Jet
+      igetJetJet=Jet
+      end
+
+      subroutine setJetCheck(ival)
+      integer :: Check !print info to check file (1) or not (0)
+      common/JetCheck/Check
+      Check=ival
+      end
+      integer function igetJetCheck()
+      integer :: Check
+      common/JetCheck/Check
+      igetJetCheck=Check
+      end
+
+      subroutine setJetEmin(val)
+      real :: Emin !min energy to trigger Jet procedure
+      common/JetEmin/Emin
+      Emin=val
+      end
+      function getJetEmin()
+      real :: Emin
+      common/JetEmin/Emin
+      getJetEmin=Emin
+      end
+
+      subroutine setJetNdijet(ival)
+      integer :: Ndijet !number of hard dijets (at least on to trigger Jet procedure)
+      common/JetNdijet/Ndijet
+      Ndijet=ival
+      end
+      integer function igetJetNdijet()
+      integer :: Ndijet
+      common/JetNdijet/Ndijet
+      igetJetNdijet=Ndijet
+      end
+      subroutine incrementJetNdijet()
+      integer :: Ndijet 
+      common/JetNdijet/Ndijet
+      Ndijet=Ndijet+1
+      end
+
+c-----------------------------------------------------------------------
+c future classe Particle / groupe Highpt25
+c-----------------------------------------------------------------------
+      subroutine iniParticleHighpt25() 
+      parameter (maxHighpt25=10)
+      common /cHighpt25/ iHighpt25(maxHighpt25) , nHighpt25
+      nHighpt25=0
+      end
+      subroutine addParticleHighpt25(index)
+      parameter (maxHighpt25=10)
+      common /cHighpt25/ iHighpt25(maxHighpt25) , nHighpt25
+      nHighpt25=nHighpt25+1
+      if(nHighpt25.gt.maxHighpt25)stop '####### ERROR 231027 #######'
+      iHighpt25(nHighpt25)=index
+      end
+      integer function igetParticleHighpt25Max() 
+      parameter (maxHighpt25=10)
+      common /cHighpt25/ iHighpt25(maxHighpt25) , nHighpt25
+      igetParticleHighpt25Max=nHighpt25
+      end
+      integer function igetParticleHighpt25Value(n) 
+      parameter (maxHighpt25=10)
+      common /cHighpt25/ iHighpt25(maxHighpt25) , nHighpt25
+      if(n.gt.nHighpt25)stop '####### ERROR 231027b #######'
+      igetParticleHighpt25Value=iHighpt25(n)
+      end
+
+c-----------------------------------------------------------------------
+c future class Heavyquarks
+c-----------------------------------------------------------------------
+
+      subroutine setHeavyquarksKeep(ival)
+      integer :: Keep !keep event if no HQ is found (1) or not (0)
+      common/HeavyquarksKeep/Keep
+      Keep=ival
+      end
+      integer function igetHeavyquarksKeep()
+      integer :: Keep
+      common/HeavyquarksKeep/Keep
+      igetHeavyquarksKeep=Keep
+      end
+      
+c-----------------------------------------------------------------------
+c to be added to class Event 
+c-----------------------------------------------------------------------
+
+      subroutine getBim(value)
+#include "aaa.h"
+      value=bimevt !absolute value of impact parameter
+      end
+
+
+c-----------------------------------------------------------------------
+c             Ptintr
+c-----------------------------------------------------------------------
+
+      subroutine setPtintr1(i,x)
+#include "aaa.h"
+      if(i.eq.1)then
+        ptipom  = x
+      elseif(i.eq.2)then
+        ptipomi = x
+      elseif(i.eq.3)then
+        ptipos  = x
+      elseif(i.eq.4)then
+        ptiposi = x
+      else
+        stop'ERROR 240406'
+      endif
+      end
+
+      subroutine setPtintr(a,b,c,d)
+#include "aaa.h"
+      ptipom  = a
+      ptipomi = b
+      ptipos  = c
+      ptiposi = d
+      end
+
+      subroutine getPtintr(a,b,c,d)
+#include "aaa.h"
+      a = ptipom
+      b = ptipomi
+      c = ptipos
+      d = ptiposi
+      end
+
+c-----------------------------------------------------------------------
+      subroutine getIorsdf(ival)
+c-----------------------------------------------------------------------
+#include "aaa.h"
+      ival=iorsdf
+      end
+c-----------------------------------------------------------------------
+      subroutine setRadsize(val1,val2,val3,val4)
+c-----------------------------------------------------------------------
+#include "aaa.h"
+      radeft1=val1
+      radeft2=val2
+      facposf=val3
+      facposz=val4
+      end
+c-----------------------------------------------------------------------
+      subroutine setFRA(val1,val2,val3,val4,val5)
+c-----------------------------------------------------------------------
+#include "aaa.h"
+      pbreakg= val1
+      pbreak = val2
+      zipinc = val3
+      pmqq   = val4
+      zopinc = val5
+      end
+
+c-----------------------------------------------------------------------
+c                    HY
+c-----------------------------------------------------------------------
+
+      subroutine setHY1(i,x)
+#include "aaa.h"
+#include "ho.h"
+      if(i.eq.1)then
+        tauzer1 = x
+      elseif(i.eq.2)then
+        tauzer2 = x
+      elseif(i.eq.3)then
+        efrout  = x
+      else
+        stop'ERROR 240407'
+      endif
+      end
+
+      subroutine setHY(val1,val2,val3)
+#include "aaa.h"
+#include "ho.h"
+      tauzer1=val1
+      tauzer2=val2
+      efrout=val3
+      end
+
+      subroutine getHY(val1,val2,val3)
+#include "aaa.h"
+#include "ho.h"
+      val1=tauzer1
+      val2=tauzer2
+      val3=efrout
+      end
+
+c-----------------------------------------------------------------------
+      subroutine setDisize(val)
+c-----------------------------------------------------------------------
+#include "aaa.h"
+      disize=val
+      end
+      subroutine getDisize(val)
+#include "aaa.h"
+      val=disize
+      end
+c-----------------------------------------------------------------------
+      subroutine setAlpsat(val)
+c-----------------------------------------------------------------------
+#include "sem.h"
+      alpsat=val
+      end
+c-----------------------------------------------------------------------
+      subroutine setFactsat(val)
+c-----------------------------------------------------------------------
+#include "sem.h"
+      factsat=val
+      end
+c-----------------------------------------------------------------------
+      subroutine setAlpdi(val1,val2)
+c-----------------------------------------------------------------------
+#include "aaa.h"
+      alpdi(1)=val1
+      alpdi(2)=val2
+      end
+c-----------------------------------------------------------------------
+      subroutine setLeadcore(ival)
+c-----------------------------------------------------------------------
+#include "aaa.h"
+      leadcore=ival
+      end
+c-----------------------------------------------------------------------
+      subroutine setEpscrXiG(val1,val2,i)
+c-----------------------------------------------------------------------
+#include "par.h"
+      epscrxi=val1
+      epscrg=val2
+      if(i.eq.1) epscrs=epscrg
+      end
+c-----------------------------------------------------------------------
+      subroutine setZnurho(val)
+c-----------------------------------------------------------------------
+#include "aaa.h"
+      znurho=val
+      end
 c-----------------------------------------------------------------------
       subroutine getSystemABE(ia,ib,e)
 c-----------------------------------------------------------------------
@@ -58,11 +493,23 @@ c-----------------------------------------------------------------------
       e=engy
       end
 c-----------------------------------------------------------------------
-      subroutine getSystemType(isys)
+      subroutine getIphsd(ival)
+c-----------------------------------------------------------------------
+#include "aaa.h"
+      ival=iphsd
+      end
+c-----------------------------------------------------------------------
+      subroutine getSystemType(isys,amassMax,amassAsy)
 c-----------------------------------------------------------------------
 #include "aaa.h"
       isys=0
       if(iappl.ne.1)return ! not hadron
+      amassMax = float( max ( iabs(maproj) , iabs(matarg) ) )
+      amassAsy = 0
+      if(amassMax.gt.1)then
+        amassAsy = float( iabs( iabs(maproj) - iabs(matarg) ) ) 
+     .            / (amassMax-1.)
+      endif
       if(iabs(maproj)*iabs(matarg).eq.1)then !pp
          isys=1
       elseif(iabs(maproj).le.3.or.iabs(matarg).le.3)then!aA (a=p,d,He)
@@ -94,10 +541,51 @@ c-----------------------------------------------------------------------
       end
 
 c-----------------------------------------------------------------------
-      subroutine getZng1(Z) !centrality variable for AA
+      subroutine getNhpomK(kcol,i) !hard Poms, known after call ProPoTy in emsaa
+c-----------------------------------------------------------------------
+#include "ems.h"
+      i=npr(3,kcol) !3 means "hard", kcol means "collision kcol"
+      end
+
+c-----------------------------------------------------------------------
+      subroutine getRnpom(f,Rnpom) !eva Rnpom=Zpom/ZpomMax/f  1=high (>1 possible)
 c-----------------------------------------------------------------------
 #include "aaa.h"
-      Z=max(0.,ng1evt-2.)/ZpartMax() !ng1evt via common
+      call getMaxValues(dmy,ZpomMax)  
+      Zpom=float(igetNpom())
+      Rnpom=Zpom/ZpomMax/f
+      end
+
+c-----------------------------------------------------------------------
+      subroutine getRnpom1(f,Rnpom) !as getRnpom, but defined early in ems
+c-----------------------------------------------------------------------
+#include "aaa.h"
+#include "ems.h"
+      call getMaxValues(dmy,ZpomMax)  
+      Zpom=0
+      do k=1,koll
+        Zpom=Zpom+float(npr(1,k)+npr(3,k))
+      enddo
+      Rnpom=Zpom/ZpomMax/f
+      end
+
+c-----------------------------------------------------------------------
+      subroutine getNpom1(Npom)
+c-----------------------------------------------------------------------
+#include "aaa.h"
+#include "ems.h"
+      Npom=0
+      do k=1,koll
+        Npom=Npom+npr(1,k)+npr(3,k)
+      enddo
+      end
+
+c-----------------------------------------------------------------------
+      subroutine getRng1(Rng1) !centrality Rng1=ng1evt/ZpartMax  1=central
+c-----------------------------------------------------------------------
+#include "aaa.h"
+      call getMaxValues(ZpartMax,dmy)  
+      Rng1=max(0.,ng1evt-2.)/ZpartMax !ng1evt via common
       end
 
 c-----------------------------------------------------------------------
@@ -209,6 +697,24 @@ c-----------------------------------------------------------------------
       end
 
 c-----------------------------------------------------------------------
+      subroutine setNskipNpassWomTy(nskipwomtyX,npasswomtyX)
+c-----------------------------------------------------------------------
+      common/cNskipNpassWomTy/nskipwomty,npasswomty
+      nskipwomty=nskipwomtyX
+      npasswomty=npasswomtyX
+      end
+      subroutine getNskipNpassWomTy(nskipwomtyX,npasswomtyX)
+      common/cNskipNpassWomTy/nskipwomty,npasswomty
+      nskipwomtyX=nskipwomty
+      npasswomtyX=npasswomty
+      end
+      subroutine incrementNskipNpassWomTy(ii)
+      common/cNskipNpassWomTy/nskipwomty,npasswomty
+      if(ii.eq.1)nskipwomty=nskipwomty+1
+      if(ii.eq.2)npasswomty=npasswomty+1
+      end
+
+c-----------------------------------------------------------------------
       subroutine setIshy(ishyx)
 c-----------------------------------------------------------------------
       common/cishy/ishy
@@ -276,6 +782,12 @@ c-----------------------------------------------------------------------
       common/ckomg/komg
       ivalue=komg
       end
+
+c################################################################################################################
+c################################################################################################################
+c################################################################################################################
+c################################################################################################################
+c################################################################################################################
 
 c-----------------------------------------------------------------------
       subroutine updateXor(n,nn)
@@ -363,8 +875,8 @@ c-------------------------------------------------------------------------------
        if(istptl(jj).ne.21.and.istptl(jj).ne.25)then
          ncount=ncount+1 
          if(ncount.eq.1)then
-           write(ifmt,*)'WARNING in getItyJor() : parton found'
-           write(ifch,*)'WARNING in getItyJorx() : parton found'
+           write(ifmt,'(a)')'WARNING in getItyJor() : parton found'
+           write(ifch,'(a)')'WARNING in getItyJorx() : parton found'
            do jik=1,jj
            write(ifch,*)'PTL',iorptl(jik),jorptl(jik),jik
      .      ,ifrptl(1,jik),ifrptl(2,jik),idptl(jik),istptl(jik)
@@ -781,7 +1293,7 @@ c---------------------------
       end
 
 c-----------------------------------------------------------------------
-      subroutine utrescxx(iret,icopy)
+      subroutine utrescxx(iret,icopy,iii)
 c-----------------------------------------------------------------------
 c New procedure based on rapidity rescaling, should always work 
 c-----------------------------------------------------------------------
@@ -824,7 +1336,7 @@ c-----------------------------------------------------------------------
           write(ifmt,'(7i8)')iorptl(n),jorptl(n),n,(ifrptl(i,n),i=1,2)
      .    ,idptl(n),istptl(n)   
         enddo
-        write(ifmt,'(a)')'  ERROR 08042021c'
+        write(ifmt,'(a,i5)')'  ERROR 08042021c',iii
         write(ifmt,'(80a)')('-',n=1,80)
         stop
       endif
@@ -1628,7 +2140,7 @@ c     kebx: net b quark number
 c     ketx: net t quark number
 c     modus: 4=two lowest multiplets; 5=lowest multiplet
 c----------------------------------------------------------------------
-      common/files/ifop,ifmt,ifch,ifcx,ifhi,ifdt,ifhm,ifcp,ifdr,ifio
+      common/files/ifop,ifmt,ifch,ifcx,ifhi,ifdt,ifcp,ifdr,ifio
       common/csjcga/amnull,asuha(7)
       common/drop4/asuhax(7),asuhay(7)
 
@@ -1954,12 +2466,15 @@ c-----------------------------------------------------------------------
 c     returns the array xx with xx(1)=x0 <= xx(i) <= xx(i3)=x3
 c-----------------------------------------------------------------------
       real xx(i3)
-      do 1 i=1,i1-1
-  1   xx(i)=x0+(i-1.)/(i1-1.)*(x1-x0)
-      do 2 i=i1,i2-1
-  2   xx(i)=x1+(i-i1*1.)/(i2-i1*1.)*(x2-x1)
-      do 3 i=i2,i3
-  3   xx(i)=x2+(i-i2*1.)/(i3-i2*1.)*(x3-x2)
+      do i=1,i1-1
+        xx(i)=x0+(i-1.)/(i1-1.)*(x1-x0)
+      enddo
+      do i=i1,i2-1
+        xx(i)=x1+(i-i1*1.)/(i2-i1*1.)*(x2-x1)
+      enddo 
+      do i=i2,i3
+        xx(i)=x2+(i-i2*1.)/(i3-i2*1.)*(x3-x2)
+      enddo
       return
       end
 
@@ -2601,11 +3116,13 @@ c-----------------------------------------------------------------------
       beta(3)=-p3/p5
       beta(4)= p4/p5
       bp=0.
-      do 220 k=1,3
-220   bp=bp+z(k)*isig*beta(k)
-      do 230 k=1,3
-230   z(k)=z(k)+isig*beta(k)*z(4)
+      do k=1,3
+        bp=bp+z(k)*isig*beta(k)
+      enddo
+      do k=1,3
+        z(k)=z(k)+isig*beta(k)*z(4)
      *+isig*beta(k)*bp/(beta(4)+1.)
+      enddo
       z(4)=beta(4)*z(4)+bp
       x1=z(1)
       x2=z(2)
@@ -2718,11 +3235,13 @@ c-----------------------------------------------------------------------
       beta(3)=-p3/p5
       beta(4)= p4/p5
       bp=0.
-      do 220 k=1,3
-220   bp=bp+z(k)*isig*beta(k)
-      do 230 k=1,3
-230   z(k)=z(k)+isig*beta(k)*z(4)
-     *+isig*beta(k)*bp/(beta(4)+1.)
+      do k=1,3
+        bp=bp+z(k)*isig*beta(k)
+      enddo 
+      do k=1,3
+        z(k)=z(k)+isig*beta(k)*z(4)
+     *  +isig*beta(k)*bp/(beta(4)+1.)
+      enddo
       z(4)=beta(4)*z(4)+bp
       x1=z(1)
       x2=z(2)
@@ -2955,8 +3474,9 @@ c     performs an integration according to simpson
 c-----------------------------------------------------------------------
       real x(m),f(m)
       utquad=0
-      do 1 i=1,k-1
-  1   utquad=utquad+(f(i)+f(i+1))/2*(x(i+1)-x(i))
+      do i=1,k-1
+        utquad=utquad+(f(i)+f(i+1))/2*(x(i+1)-x(i))
+      enddo
       return
       end
 
@@ -2979,13 +3499,14 @@ c-----------------------------------------------------------------------
       endif
       call utar(n/3,n*2/3,n,x0,x1,x2,x3,x)
       q(1)=0
-      do 2 i=2,n
-      do 3 k=1,m
-      z=x(i-1)+(k-1.)/(m-1.)*(x(i)-x(i-1))
-      xa(k)=z
-3     fa(k)=fu(z)
-      q(i)=q(i-1)+utquad(m,xa,fa,m)
-2     continue
+      do i=2,n
+       do k=1,m
+        z=x(i-1)+(k-1.)/(m-1.)*(x(i)-x(i-1))
+        xa(k)=z
+        fa(k)=fu(z)
+       enddo
+       q(i)=q(i-1)+utquad(m,xa,fa,m)
+      enddo
       return
       end
 
@@ -2995,20 +3516,25 @@ c-----------------------------------------------------------------------
 c     i is replaced by j in /cptl/
 c-----------------------------------------------------------------------
 #include "aaa.h"
-      do 1 k=1,5
-1     pptl(k,i)  =pptl(k,j)
+      do k=1,5
+        pptl(k,i)  =pptl(k,j)
+      enddo
       iorptl(i)  = 0 !iorptl(j)
       idptl(i)   =idptl(j)
       istptl(i)  =istptl(j)
-      do 2 k=1,2
-2     tivptl(k,i)=tivptl(k,j)
-      do 3 k=1,2
-3     ifrptl(k,i)= 0 !ifrptl(k,j)
+      do k=1,2
+        tivptl(k,i)=tivptl(k,j)
+      enddo
+      do k=1,2
+        ifrptl(k,i)= 0 !ifrptl(k,j)
+      enddo
       jorptl(i)  = 0 !jorptl(j)
-      do 4 k=1,4
-4     xorptl(k,i)=xorptl(k,j)
-      do 5 k=1,4
-5     ibptl(k,i) =ibptl(k,j)
+      do k=1,4
+        xorptl(k,i)=xorptl(k,j)
+      enddo
+      do k=1,4
+        ibptl(k,i) =ibptl(k,j)
+      enddo
       ityptl(i)  =ityptl(j)
       iaaptl(i)  =iaaptl(j)
       radptl(i)  =radptl(j)
@@ -3028,20 +3554,25 @@ c-----------------------------------------------------------------------
 c     i is replaced by j in /cptl/
 c-----------------------------------------------------------------------
 #include "aaa.h"
-      do 1 k=1,5
-1     pptl(k,i)  =pptl(k,j)
+      do k=1,5
+        pptl(k,i)  =pptl(k,j)
+      enddo
       iorptl(i)  = iorptl(j)
       idptl(i)   =idptl(j)
       istptl(i)  =istptl(j)
-      do 2 k=1,2
-2     tivptl(k,i)=tivptl(k,j)
-      do 3 k=1,2
-3     ifrptl(k,i)= ifrptl(k,j)
+      do k=1,2
+        tivptl(k,i)=tivptl(k,j)
+      enddo
+      do k=1,2
+        ifrptl(k,i)= ifrptl(k,j)
+      enddo
       jorptl(i)  = jorptl(j)
-      do 4 k=1,4
-4     xorptl(k,i)=xorptl(k,j)
-      do 5 k=1,4
-5     ibptl(k,i) =ibptl(k,j)
+      do k=1,4
+        xorptl(k,i)=xorptl(k,j)
+      enddo
+      do k=1,4
+        ibptl(k,i) =ibptl(k,j)
+      enddo
       ityptl(i)  =ityptl(j)
       iaaptl(i)  =iaaptl(j)
       radptl(i)  =radptl(j)
@@ -3054,6 +3585,72 @@ c-----------------------------------------------------------------------
       rinptl(i)  =rinptl(j)
       return
       end
+
+c-----------------------------------------------------------------------
+      subroutine utreplaZero(i)
+c-----------------------------------------------------------------------
+c     i is replaced by j in /cptl/
+c-----------------------------------------------------------------------
+#include "aaa.h"
+      do k=1,5
+        pptl(k,i)  =0
+      enddo
+      iorptl(i)    =0
+      idptl(i)     =0
+      istptl(i)    =0
+      do k=1,2
+        tivptl(k,i) =0
+      enddo
+      do k=1,2
+        ifrptl(k,i) =0
+      enddo
+      jorptl(i)     =0
+      do k=1,4
+        xorptl(k,i) =0
+      enddo
+      do k=1,4
+        ibptl(k,i)  =0
+      enddo
+      ityptl(i)  =0
+      iaaptl(i)  =0
+      radptl(i)  =0
+      desptl(i)  =0
+      dezptl(i)  =0
+      qsqptl(i)  =0
+      zpaptl(1,i)=0
+      zpaptl(2,i)=0
+      itsptl(i)  =0
+      rinptl(i)  =0
+      return
+      end
+
+c-----------------------------------------------------------------------
+      function utJetPt(en1,ey,s0xi,c0xi,s0i,c0i,s0xh,c0xh,s0h,c0h)
+c-----------------------------------------------------------------------
+c  rotate+boost from CMS(pt=0) to Lab
+c-----------------------------------------------------------------------
+      dimension ep3(4)
+      dimension ey(3)  
+      p1=0.
+      p2=0.
+      p3=en1
+      p4=en1
+      !copied from tim.f
+      ep3(1)=p4
+      ep3(2)=p3
+      ep3(3)=p1
+      ep3(4)=p2
+      call psrotat(ep3,s0xh,c0xh,s0h,c0h) 
+      call psrotat(ep3,s0xi,c0xi,s0i,c0i)  
+      call pstrans(ep3,ey,1)              
+      call psmirror(ep3)
+      p1=ep3(3)
+      p2=ep3(4)
+      p3=ep3(2)
+      p4=ep3(1)
+      pt=sqrt(p1**2+p2**2)
+      utJetPt=pt
+      end  
 
 c-----------------------------------------------------------------------
       subroutine utroa1(phi,a1,a2,a3,x1,x2,x3)
@@ -4046,12 +4643,14 @@ c-------------------------------------------------------------------
 
     7 j=j-1
 
-      if(line(i:i+1).eq.'::'.and.line(j-1:j).eq.'::')then
+      if(line(i:i+1).eq.'::')then
+       if(line(j-1:j).eq.'::')then
         line(i:i+1)='  '
         line(j-1:j)='  '
         i=i+2
         j=j-2
         goto 7777
+       endif
       endif
 
       if(iqu.ne.-1)call expand(line,i,j)
@@ -4092,7 +4691,8 @@ c-------------------------------------------------------------------
         l1=l1define(ndf)
         l2=l2define(ndf)
         do i0=i,j+1-l1
-          if(line(i0:i0-1+l1).eq.w1define(ndf)(1:l1))then
+         if(line(i0:i0-1+l1).eq.w1define(ndf)(1:l1))then
+          if(line(i0-1+l1+1:i0-1+l1+1).eq.' ')then
            if(line(i0-1:i0-1).ne.'\'.and.line(i0-1:i0-1).ne.'/')then
             jj=1 
             if(l2.eq.l1)then
@@ -4131,7 +4731,11 @@ c-------------------------------------------------------------------
            elseif(line(i0-1:i0-1).eq.'/')then
             line(i0-1:i0-1)=' '
            endif
+          else
+           !print*,'expand: In ',line(i0:i0-1+l1+1)
+           !.,' NOT replace ',line(i0:i0-1+l1),' by ',w2define(ndf)(1:l2)
           endif
+         endif
         enddo
       enddo
       if(jj.eq.1)then
@@ -5396,3 +6000,37 @@ ckw        amass=amtbl(nl)
 ckw      end
 
 
+      subroutine stripSpaces(string)
+      character(len=*) :: string
+      integer :: stringLen 
+      integer :: last, actual
+      
+      stringLen = len (string)
+      last = 1
+      actual = 1
+      
+      do while (actual < stringLen)
+         if (string(last:last) == ' ') then
+            actual = actual + 1
+            string(last:last) = string(actual:actual)
+            string(actual:actual) = ' '
+         else
+            last = last + 1
+            if (actual < last) then
+               actual = last
+            endif
+         endif
+      end do
+      
+      end subroutine
+      
+      subroutine generateBim
+#include "aaa.h"
+      b1=bminim
+      b2=bmaxim
+      if(b1.gt.b2)stop'ERROR bmin > bmax'
+      bimp=sqrt(b1**2+(b2**2-b1**2)*rangen())
+      !if(nbarray.gt.0)bimp=barray(mod(nrevt,nbarray)+1)
+      bimevt=bimp
+      end       
+      

@@ -37,27 +37,179 @@ c-----------------------------------------------------------------------
 
 #ifndef __BS__
 
+c#######################################################################
+!-----------------------------------------------------------------------
+!> @brief
+!> removes final TLC partons originating from 25 (=Born) partons 
+!> for 25 partons with pt > ptrmin and E > getJetEmin()
+!>
+!> To add in optns:
+!>   !---------------------------------------------------------------------------
+!>   print * 2      !print info to check file (see "list before fragmentation")
+!>   set jet 1      !activate jet stuff
+!>   set jetcheck 1 !print additional (jet related) info to checkfile
+!>                  !find in the check file:
+!>                  !"removeTLCfromBorn (1)" contains relevant piece of particle list
+!>                  !"removeTLCfromBorn (2)" piece of list after removing TLC partons
+!>                  !"list before fragmentation (2)"  --> new complete list
+!>                  !Important:
+!>                  !Our 21 partons (TLC) have at this stage still ist=20; 
+!>                  !  among these ist=20 partons one identifies those coming from 
+!>                  !  Born by the ifr1 (4th column) values bigger than 10
+!>                  !If the Jet procedure is triggered, there are only 2 ifr1>10
+!>                  !  partons,  since the TL cascade was suppressed
+!>                  !These two ifr1>10 partons are actually replaced by zero momentum
+!>                  !  partons (same flavor) which is needed to make color connections
+!>   set jetemin 50 !min jet energy (Born CMS) to trigger Jet procedure
+!>   set ptrmin 30  !min jet pt (Lab sys) to trigger Jet procedure
+!>   !---------------------------------------------------------------------------
+!
+!> @param[in] idry to do a dry run (1) or the real one (2) 
+!> @param[in] icheck to produce output to check file (1) or not (0) 
+!-----------------------------------------------------------------------
+      subroutine removeTLCfromBorn(idry,icheck)
+c#######################################################################
+#include "aaa.h"
+      integer :: idry,icheck
+      real p1,p2,p3,p4,p5
+      if(idry.ne.1.and.idry.ne.2)stop '####### ERROR 231026d #######'
+      if(idry.eq.1.and.icheck.eq.0)return
+      if(idry.eq.2)call iniParticleHighpt25() !initialize Highpt25 list
+c header
+      if(icheck.eq.1)
+     .write(ifch,'(/S1x,72a1/1x,a,i1,a,35a1/1x,72a1/)')
+     .('#',k=1,72),'############  removeTLCfromBorn (',idry,')  ',
+     .('#',k=1,35),('#',k=1,72)
+c find 25 partons in the particle list
+      nk1=maproj+matarg+1 
+      do while(nk1.le.nptl)
+        call getistptl(nk1,ist1)
+        if(ist1.eq.25)then
+          nk2=nk1+1
+          call getistptl(nk2,ist2)
+          if(ist2.ne.25)stop '####### ERROR 231026a #######'
+          nk1x25=nk1 !25 parton
+          nk2x25=nk2 !25 parton
+          nk1=nk2+1 !first 21 parton
+          call getidptl(nk1,id1) !should not be 9 (gluon)
+          if(id1.eq.9)stop '####### ERROR 231026b #######'
+          nk2=nk1+1
+          call getistptl(nk2,ist2)
+          do while(ist2.eq.20)
+            nk2=nk2+1
+            call getistptl(nk2,ist2)
+          enddo
+          nk2=nk2-1
+          call getidptl(nk2,id2) !should not be 9 (gluon)
+          if(id2.eq.9)stop '####### ERROR 231026c #######'
+          !we have 21 partons from nk1 to nk2 (Born partons + SLC partons)
+          nfromBorn=0
+          do nk=nk1,nk2
+            call getifrptl(nk,ifr1,ifr2) 
+            if(ifr1.gt.10)then !Born partons (emitted from 25)
+              nfromBorn=nfromBorn+1
+            endif
+          enddo 
+          iOK=0
+          if(nfromBorn.eq.2)then
+            call getidptl(nk1x25,id1x25)
+            call getidptl(nk2x25,id2x25)
+            call getpptl(nk1x25,p1,p2,p3,p4,p5)
+            pt1=p1**2+p2**2
+            call getpptl(nk2x25,p1,p2,p3,p4,p5)
+            pt2=p1**2+p2**2
+            if(pt1.gt.ptrmin**2.or.pt2.gt.ptrmin**2)iOK=1
+          endif
+          if(iOK.eq.1)then
+            !=====================================================================
+            if(idry.eq.2)call addParticleHighpt25(nk1x25)
+            if(idry.eq.2)call addParticleHighpt25(nk2x25)
+            ! print list of partons
+            if(icheck.eq.1)
+     .      write(ifch,'(1x,97a1/1x,4x,a,9x,a/1x,97a1)')('-',k=1,97),
+     .      'ior    jor      i   ifr1   ifr2       id ist ity',
+     .      'p1         p2         p3         p4',('-',k=1,97)
+            do k=1,4
+            enddo
+            irem=0
+            i=nk1-2
+            do while(i.le.nk2)
+              call getifrptl(i,ifr1,ifr2) 
+              idelete=0
+              if(i.ge.nk1)then !21 partons
+                if(ifr1.gt.10)then !only Born partons (emitted from 25)
+                  if(idry.eq.2)idelete=1
+                endif
+              endif
+              call getiorptl(i,ior)    
+              call getjorptl(i,jor)
+              call getidptl (i,id)
+              call getistptl(i,ist)
+              call getityptl(i,ity)
+              call getpptl(i,p1,p2,p3,p4,p5)
+              if(idelete.eq.1)then
+                write(ifmt,'(a,5i7,i10,2i3,2x,e10.3)')
+     .          'removeTLCfromBorn ',
+     .          ior,jor,i,ifr1,ifr2,id,ist,ity,sqrt(p1**2+p2**2)
+                call utreplaZero(i)  !replaced by zero momentum parton 
+                call setidptl (i,id)   
+                call setistptl(i,20) 
+                call setiorptl(i,ior  ) 
+                call getiorptl(i,ior)    
+                call getjorptl(i,jor)
+                call getifrptl(i,ifr1,ifr2) 
+                call getidptl (i,id)
+                call getistptl(i,ist)
+                call getityptl(i,ity)
+                call getpptl(i,p1,p2,p3,p4,p5)
+              endif
+              if(icheck.eq.1)
+     .        write(ifch,'(1x,5i7,i10,2i3,2x,4(e10.3,1x))')
+     .        ior,jor,i,ifr1,ifr2,id,ist,ity,p1,p2,p3,p4
+              i=i+1
+            enddo ! i loop 
+            !=====================================================================
+          endif
+          nk1=nk2+1
+        else
+          nk1=nk1+1
+        endif
+      enddo
+      end
 
 c-----------------------------------------------------------------------
       subroutine hllex(nfr)
 c-----------------------------------------------------------------------
-
+c      use arrayModule, only: newDoubleArray, deleteDoubleArray
+c      use hocoModule, only: epsc, sigc, velc, barc,
+c      use hocoModule, only: sigc, velc, barc,
+c     &     sigcShape, velcShape, barcShape 
 #include "aaa.h"
 #include "ho.h"
       common /jcen/jcentr,jmxcentr
       common/cwmaxIcoE/wmaxIcoE
+      common/ciemuc/iemuc
+
+      real getHydynTauhy
+      integer getAccumNrevt
+
       if(ihlle.ne.0.and.ireadhyt.eq.0)then
         if(nfr.eq.0)then
           call InitializeHyperbola
           if(wmaxIcoE.gt.0.)then
-            call memo(1,'create emuc;')
-            call createemuc(10,nzhy,ntauhxx,nxhy,nyhy)
-            call memo(2,';')
+            if(iemuc.eq.0)then
+             call memo(1,'create emuc object;')
+             call createemuc(10,nzhy,ntauhxx,nxhy,nyhy)
+             call memo(2,';')
+             iemuc=1
+            endif
             write(ifmt,'(a,i3,a)')'enter hlle; nfr=',nfr,' ... '
             call clop(3)
             call hlle(1)
             call useHydroTable
-            write(ifmt,'(a,f7.2)')'exit hlle, taumax=',tauhy(ntauhy)
+            write(ifmt,'(a,f7.2)')'exit hlle, taumax=',
+     .           getHydynTauhy(ntauhy)
+            !call skipRandomNumbers
             call clop(3)
             call WriteHydroTable
           else
@@ -65,18 +217,13 @@ c-----------------------------------------------------------------------
             ntauhy=0
           endif
           call ManiHydroTable
-          if(wmaxIcoE.gt.0.)then
-            call memo(1,'destroy emuc;')
-            call destroyemuc()
-            call memo(2,';')
-          endif
           call clop(3)
           call setHo(1,1,0)
           call getJcentr
           call fros(1)
           call fros(2)
           jcentr_save=jcentr
-          if(nrevt.gt.nevent-nfreeze)then
+          if(getAccumNrevt().gt.nevent-nfreeze)then
             call setHo(0,2,1)
             do jcentr=1,jmxcentr
               call fros(1)
@@ -95,11 +242,14 @@ c-----------------------------------------------------------------------
         !call checkengy('before jetfluid ')
         call jetfluid
         !call checkengy('after jetfluid  ')
+        nptlBeforeFO=nptl
         call EpoMiF
         call epof(2)
+        if(ish.ge.2)
+     .  call aalist('list after core freeze out&',nptlBeforeFO+1,nptl)
         !if(mod(nrevt+1,modsho).eq.0)
         call checkengy('after freeze out')
-        call utrescxx(iret,0)  !after freeze out, not any more before call afinal
+        call utrescxx(iret,0,104)  !after freeze out, not any more before call afinal
         call checkengy('after utrescxx  ')
         do i=1,nptl
         if(ityptl(i).ne.61.and.idptl(i).eq.331)call utphiBW(i)  !BW mass smearing
@@ -128,10 +278,14 @@ c-----------------------------------------------------------------------
         call dmass_i3destroy()
         call memo(2,';')
       endif
-      !call memo(0,'exit hllex;')
-      end
+!call memo(0,'exit hllex;')
 
+      end subroutine hllex
+
+
+c-----------------------------------------------------------------------
       subroutine hllexx
+c-----------------------------------------------------------------------
 #include "aaa.h"
       if(iorsdf.eq.5.and.ispherio+ihlle.eq.0)then
         !write(ifmt,'(a)')'core but no hydro, change ist=5 to 0'
@@ -144,33 +298,86 @@ c-----------------------------------------------------------------------
           endif 
         enddo
       endif
-      end
+      end subroutine hllexx
+
 
 c-----------------------------------------------------------------------
       subroutine hlle(mode)
 c-----------------------------------------------------------------------
+      implicit none
+      integer,parameter::mxjerr=30
+      integer,parameter::mxho=10
+      integer icotabr
+      integer nfnio
+      integer       iopcnt
+      integer ifmt
+      real         tauzer,tauone,tautwo,tauthree,tauup
+      integer ioeos, iozerof
+      real etaos, zetaos
+      integer ntaumx
+      character*500 fnio
+      real xminico,xmaxico,yminico,ymaxico,zminico,zmaxico
+      integer,parameter::nxicomax=161
+      integer,parameter::nyicomax=161
+      integer,parameter::nzicomax=45
+      integer nxico,nyico,nzico
+      real getIcoIcoE, getIcoIcoV, getIcoIcoF
+      integer,parameter::ntauhxx=120
 
-#include "aaa.h"
-#include "ico.h"
-#include "ho.h"
-#include "sf.h"
+      integer nxhy,nyhy,nzhy,ntauhy
+      real oEeos
+      real dtauhy
+      real epsfin
+      integer ienvar
+      integer ifaahlle,ifathlle,ifazhlle
+      real tfo
+      real xminhy,xmaxhy,yminhy,ymaxhy,zminhy,zmaxhy
+      real tfrout
+      integer i, ierrchk, istep, istepx, itest, ix, iy, iz, 
+     . j, jx, jy, jz, k, memory, mmsteps, mode,
+     . ncnthl, ncnthlf, ntau, ntsteps, nxihy, nyihy, nzihy
+      real cputime, del_tau, delx, dely, delz, eeitau, 
+     . eejtau, eektau, eetau2, eetauaa, eetauxx, egain,  
+     . eistxx, emx, eps, esollxx, fd, fs, fu, gamma, ggi, pi00, pi03, 
+     . pi33, ratioee, tau, tau2, tau3, tidisu, u0, u3, zero, zz
+      real eflow, eechk, gettimehlle
+      real dummy1,dummy2,enfo
+
+      integer getAccumJerr
+      integer getCoreIcotabr
+      real    getEospOeEos
+      integer getEventIopcnt
+      integer getFilesIfmt
+      integer getFilesNfnio
+      real    getHydynDtauhy
+      real    getHydynEpsfin
+      integer getHydynIenvar
+      integer getHydynIfaahlle
+      integer getHydynIfathlle
+      integer getHydynIfazhlle
+      integer getHydynNtaumx
+      real    getHydynTfo
+      real    getHydynTfrout
+      real    getHydynTauhy
+      real    getCcotiCoti
+      real    getRescEtaos
+      real    getRescZetaos
+      real    getIcoEe1ico
+      real    getIcoEistico
+      real    getHydynEetau
+      real    getHydynEetau2
+      real    getHydynEmx
+      real    getHydynRatioeex
+c ------------------------------------------------------------
+
       double precision tau0,tau_max,dtau,frac,nb,nq,ns,tau1
       double precision e,vx,vy,vz,x,y,z,xj,yj,zj,efin,v2
       double precision zzz
       double precision ecc,vxcc,vycc,vzcc,nbcc,nqcc,nscc,xcc,ycc,zcc
       double precision getxhlle, getyhlle, getzhlle,wx(2),wy(2),wz(2)
       double precision delxico,delyico,delzico
-      double precision xmnhy,xmxhy,ymnhy,ymxhy
-     . ,zmnhy,zmxhy
+      double precision xmnhy,xmxhy,ymnhy,ymxhy,zmnhy,zmxhy
       double precision etaS,zetaS
-      common/ceetau/eetau,eetau2
-      common/cmaxi/emx,xmx,ymx,zmx
-      common/cee1ico/ee1ico,eistico,ee1hll
-      common/cchkengy/ichkengy/cchkengy2/esollxx,eistxx
-      common/ceevtau/eevtau/ceeinn/eeinn
-      common/cmm/mmx,mmy,mmz
-      common/ceetauxx/eetauxx
-      common/cratioee/ratioee,ratioeex(ntauhxx)
       double precision exxx, efull,etotsurf,nbsurf
       double precision iutime(5),tiu3,tiu4,tidi
       data ncnthl/0/
@@ -180,15 +387,68 @@ c-----------------------------------------------------------------------
       integer ncnthlle
       data ncnthlle/0/
       save ncnthlle
+
+      real IcoEArray
+      dimension IcoEArray(nxicomax,nyicomax,nzicomax)
+      
+      character onechar
+
+c     read Fortran common variable values from Cpp
+
+      call createCore()
+      call createEosp()
+      call createEvent()      
+      call createResc()
+
+      call getRescTau(tauzer, tauone, tautwo, tauthree, tauup)
+      etaos    = getRescEtaos()
+      zetaos   = getRescZetaos()
+      icotabr  = getCoreIcotabr()
+      oEeos    = getEospOeEos()
+      iopcnt   = getEventIopcnt()
+      ifmt     = getFilesIfmt()
+      nfnio    = getFilesNfnio()
+      ntaumx   = getHydynNtaumx()
+      dtauhy   = getHydynDtauhy()
+      tfrout   = getHydynTfrout()
+      epsfin   = getHydynEpsfin()
+      ienvar   = getHydynIenvar()
+      ifaahlle = getHydynIfaahlle()
+      ifathlle = getHydynIfathlle()
+      ifazhlle = getHydynIfazhlle()
+      tfo      = getHydynTfo()
+
+      call getHY(dummy1,dummy2,enfo)
+      if(epsfin.gt.0.5*enfo)stop'##### ERROR 03112024 #####'
+      
+      call getHydynIo(ioeos, iozerof)
+      call getIcoBound(
+     .     xminico, xmaxico,
+     .     yminico, ymaxico,
+     .     zminico, zmaxico
+     . )
+      call getIcoDim(nxico,nyico,nzico)
+      call getHydynDim(nxhy,nyhy,nzhy,ntauhy)
+      call getHydynBound(xminhy,xmaxhy,yminhy,ymaxhy,zminhy,zmaxhy)
+
+c copy the C++ Array<char> *fnio to the Fortran array fnio
+      do i=1,getFilesNfnio()
+         call getFilesFnio(i, onechar)
+         fnio(i:i)=onechar
+      end do
+ 
       ncnthlle=ncnthlle+1
       call checkmemory(memory)
       write(ifmt,'(a,i8)')'start hlle;  memory',memory
       !call redirecterrorshlle('hydro_messages.txt'//CHAR(0))
 
       tfo=tfrout
+      call setHydynTfo(tfo)
 
       if(mode.eq.-1)then
       call getEosHlle
+      oEeos   = getEospOeEos()
+
       call destroyhlle()
       return
       endif
@@ -218,11 +478,12 @@ c-----------------------------------------------------------------------
       delz=(zmxhy-zmnhy)/(nzihy-1)
       write(ifmt,*)'cell size:',delx,' * ',dely,' * ',delz
       write(ifmt,*)'initial tau:',tau0,'   tau step:',dtau
-      mmx=1+nint((xminhy-xmnhy)/delx)     !for transfer
-      mmy=1+nint((yminhy-ymnhy)/dely)
-      mmz=1+nint((zminhy-zmnhy)/delz)
+      call setHydynMmx(1+nint((xminhy-xmnhy)/delx))     !for transfer
+      call setHydynMmy(1+nint((yminhy-ymnhy)/dely))
+      call setHydynMmz(1+nint((zminhy-zmnhy)/delz))
 
       call getEosHlle
+      oEeos   = getEospOeEos()
 
       etaS=etaos
       zetaS=zetaos
@@ -251,7 +512,26 @@ c-----------------------------------------------------------------------
           write(ifmt,'(a)')'  done'
       endif
 
-      call IniFlowIni(nxicomax,nyicomax,nzicomax,IcoE)
+c fill IcoEArray array parameter from IcoE values
+      do ix = 1, nxicomax
+         do iy = 1, nyicomax
+            do iz = 1, nzicomax
+               IcoEArray(ix, iy, iz)=getIcoIcoE(ix, iy, iz)
+            end do
+         end do
+      end do
+c call iniflowini : IcoEArray is a fortran array
+      call IniFlowIni(nxicomax,nyicomax,nzicomax,IcoEArray)
+c fill IcoE from IcoEArray array parameter values
+      do ix = 1, nxicomax
+         do iy = 1, nyicomax
+            do iz = 1, nzicomax
+               call setIcoIcoE(ix, iy, iz, IcoEArray(ix, iy, iz))
+            end do
+         end do
+      end do
+
+
       eeitau=0
       eejtau=0
       delxico=(xmaxico-xminico)/nxico
@@ -291,13 +571,14 @@ c-----------------------------------------------------------------------
           do i=1,2
           do j=1,2
           do k=1,2
-          e=e  +wx(i)*wy(j)*wz(k)*IcoE(  jx+i-1,jy+j-1,jz+k-1)
-          vx=vx+wx(i)*wy(j)*wz(k)*IcoV(1,jx+i-1,jy+j-1,jz+k-1)
-          vy=vy+wx(i)*wy(j)*wz(k)*IcoV(2,jx+i-1,jy+j-1,jz+k-1)
-          vz=vz+wx(i)*wy(j)*wz(k)*IcoV(3,jx+i-1,jy+j-1,jz+k-1)*tau0
-          fu=fu+wx(i)*wy(j)*wz(k)*IcoF(1,jx+i-1,jy+j-1,jz+k-1)
-          fd=fd+wx(i)*wy(j)*wz(k)*IcoF(2,jx+i-1,jy+j-1,jz+k-1)
-          fs=fs+wx(i)*wy(j)*wz(k)*IcoF(3,jx+i-1,jy+j-1,jz+k-1)
+          e=e  +wx(i)*wy(j)*wz(k)*getIcoIcoE(  jx+i-1,jy+j-1,jz+k-1)
+          vx=vx+wx(i)*wy(j)*wz(k)*getIcoIcoV(1,jx+i-1,jy+j-1,jz+k-1)
+          vy=vy+wx(i)*wy(j)*wz(k)*getIcoIcoV(2,jx+i-1,jy+j-1,jz+k-1)
+          vz=vz+wx(i)*wy(j)*wz(k)*
+     .         getIcoIcoV(3,jx+i-1,jy+j-1,jz+k-1)*tau0
+          fu=fu+wx(i)*wy(j)*wz(k)*getIcoIcoF(1,jx+i-1,jy+j-1,jz+k-1)
+          fd=fd+wx(i)*wy(j)*wz(k)*getIcoIcoF(2,jx+i-1,jy+j-1,jz+k-1)
+          fs=fs+wx(i)*wy(j)*wz(k)*getIcoIcoF(3,jx+i-1,jy+j-1,jz+k-1)
           enddo
           enddo
           enddo
@@ -330,9 +611,10 @@ c-----------------------------------------------------------------------
         nb=(fu+fd+fs)/3.
         nq=(2*fu-fd-fs)/3.
         ns=-fs
+
         if(e.ge.20*oEeos)then
         ncnthl=ncnthl+1
-        jerr(14)=jerr(14)+1
+        call setAccumJerr(14,getAccumJerr(14)+1)
         if(50.gt.ncnthl)then
          write(ifmt,*)'hlle: energy density very big: ',e
          !write(ifmt,*)'         e(',ix,iy,iz,')=',e
@@ -451,10 +733,10 @@ c     .     ,ix,iy,iz,nb, nq, ns
      .    ,xmnhy,xmxhy,ymnhy,ymxhy,zmnhy,zmxhy)
 
       !call checkengy('before hyd loop ') !counts only ist=0, gives useless warning
-      if(icotabr.eq.1)ee1ico=eejtau
-      egain=eejtau-ee1ico
+      if(icotabr.eq.1)call setIcoEe1ico(eejtau)
+      egain=eejtau-getIcoEe1ico()
       write(ifmt,'(a,4f8.0,3x,a,f8.0)')
-     . '  ECHK4',ee1ico,eeitau,eektau,eejtau,'  gain',egain
+     . '  ECHK4',getIcoEe1ico(),eeitau,eektau,eejtau,'  gain',egain
          !--------------------------------------------------------------
          !   ECHK4
          !--------------------------------------------------------------
@@ -464,14 +746,16 @@ c     .     ,ix,iy,iz,nb, nq, ns
          !eejtau = E from initial fluid table + IniFlow + visc (eechk)
          !--------------------------------------------------------------
       if(icotabr.eq.0)then
-        eistxx=eistico
+        eistxx=getIcoEistico()
         esollxx=eistxx-egain
-        ichkengy=1
+        call setIcoIchkengy(1)
         write(ifmt,'(a,2f8.0)')
      . '  eist esoll ',eistxx,esollxx
+        call setIcoEistxx(eistxx)
+        call setIcoEsollxx(esollxx)
         call chkengy(ierrchk)
       endif
-      ee1hll=eejtau
+      call setIcoEe1hll(eejtau)
 
       if(ncnthlle.eq.1.and.itest.eq.1)
      . write(ifmt,'(1x,a)')'TEST: passed succesfully.'
@@ -482,22 +766,24 @@ c     .     ,ix,iy,iz,nb, nq, ns
       mmsteps=4*ifathlle        !must identical to def in hyt.f
       del_tau=dtauhy/ifathlle   !must identical to def in hyt.f
       tau=tauzer
-      tauhy(ntau)=tau
+      call setHydynTauhy(ntau,tau)
       write(ifmt,'(i3,3x,a,f6.2,$)')ntau,'  tau',tau
       call TransferHlle(ntau)
       call checkmemory(memory)
       call envarget(exxx, efull,etotsurf,nbsurf)
       eetauxx=eejtau !from eechk
       ratioee=1
-      do n=1,ntauhxx
-        ratioeex(n)=1
-      enddo
+      call initializeHydynRatioeex(real(1.0))
       zero=0
+      emx=getHydynEmx() 
+c      xmx=getHydynXmx()
+c      ymx=getHydynYmx()
+c      zmx=getHydynZmx()
       write(ifmt,'(a,f8.2,2x,a,2f8.0,f6.3,3f8.0)')
      . '  emx',emx
-     . ,'ECHK5',eetau,eejtau,ratioeex(ntau),zero
+     . ,'ECHK5',getHydynEetau(),eejtau,getHydynRatioeex(ntau),zero
                    !.      ,efull,etotsurf+exxx
-                   !.      ,eeinn,eevtau,xmx,ymx,zmx
+                   !.      ,eeinn,xmx,ymx,zmx
       call timer(iutime)
       tiu3=iutime(3)
       tiu4=iutime(4)
@@ -530,8 +816,9 @@ c     .     ,ix,iy,iz,nb, nq, ns
         if(ntsteps.gt.mmsteps)stop'####### ERROR 02112015 #######'
         if(ntsteps.eq.mmsteps)then !any change must be  consistent with
           ntau=ntau+1              !delta_tau_out def in hyt.f
-          tauhy(ntau)=tau
-          if(abs(tauhy(ntau)-tauhy(ntau-1)-4*dtauhy).gt.0.001)
+          call setHydynTauhy(ntau,tau)
+          if(abs(getHydynTauhy(ntau)-getHydynTauhy(ntau-1)-4*dtauhy)
+     .         .gt.0.001)
      .    stop'####### ERROR 27122011 #######'
           call timer(iutime)
           tidi=iutime(3)-tiu3 + (iutime(4)-tiu4)*1d-3
@@ -542,7 +829,7 @@ c     .     ,ix,iy,iz,nb, nq, ns
           eetauaa=eechk(tau,nxihy,nyihy,nzihy
      .    ,xmnhy,xmxhy,ymnhy,ymxhy,zmnhy,zmxhy)
           ratioee=max(ratioee,eetauaa/eetauxx)
-          ratioeex(ntau)=ratioee
+          call setHydynRatioeex(ntau,ratioee)
           call TransferHlle(ntau)
           call checkmemory(memory)
           call envarget(exxx, efull,etotsurf,nbsurf)
@@ -557,11 +844,17 @@ c     .     ,ix,iy,iz,nb, nq, ns
           ! nbsurf  : flow of baryon charge through the surface, 
           !              \int n_B * d\sigma_mu u^\mu
           !--------------------------------------------------------------        
+          emx=getHydynEmx()
+          eetau2=getHydynEetau2()
           write(ifmt,'(a,f8.2,2x,a,f8.0,$)')
      .   '  emx',emx,'ECHK5',eetau2
-          write(ifmt,'(f8.0,f6.3,3f8.0)')eetauaa,ratioeex(ntau),tidi 
+c         xmx=getHydynXmx()
+c         ymx=getHydynYmx()
+c         zmx=getHydynZmx()
+          write(ifmt,'(f8.0,f6.3,3f8.0)')eetauaa,getHydynRatioeex(ntau),
+     .         tidi 
                    !.    ,efull,etotsurf+exxx
-                   !.    ,eeinn,eevtau,xmx,ymx,zmx
+                   !.    ,eeinn,xmx,ymx,zmx
          !--------------------------------------------------------------
          !   ECHK5 (E means energy including visc)
          !--------------------------------------------------------------
@@ -576,7 +869,7 @@ c     .     ,ix,iy,iz,nb, nq, ns
          ! eeinn     = E from eechk  (full grid, inner range)
          !--------------------------------------------------------------
           call clop(3)
-          if(emx.lt.efin)goto2
+          if(emx.lt.efin)goto 2
           if(tau.gt.tau_max)goto 2
           ntsteps=0
         endif
@@ -586,47 +879,67 @@ c     .     ,ix,iy,iz,nb, nq, ns
       ntauhy=ntau
       if(iopcnt.gt.0)then
         j= 1+mod(iopcnt-1,20)
-        coti(1,j)= coti(1,j) +1
-        coti(2,j)= coti(2,j) +tidisu
+        call setCcotiCoti(1,j,getCcotiCoti(1,j)+1.0)
+        call setCcotiCoti(2,j,getCcotiCoti(2,j)+tidisu)
       endif
       cputime=gettimehlle()
       call memo(1,'destroy fluid;')
       call destroyhlle()
       call memo(2,';')
+
+      call setHydynNtauhy(ntauhy)
+
+      call destroyResc()
+      call destroyEvent()
+      call destroyEosp()
+      call destroyCore()
+
       !write(ifmt,*)'finish hlle;   tau =',tau,'   CPU time ='
       !. ,nint(cputime),' sec'
       call checktime('exit hlle;') 
-      end
+      end subroutine hlle
 
 c-----------------------------------------------------------------------
       subroutine TransferHlle(ntau)
 c-----------------------------------------------------------------------
+c      use ArrayModule, only: set
+c      use hocoModule, only: epsc, velc, barc, sigc
+c      use hocoModule, only: velc, barc, sigc
+      
 #include "aaa.h"
 #include "ho.h"
       double precision e, p, nb, nq, ns, vx, vy, vz, viscflag
       double precision temc
       double precision pishear(10), pibulk
+      real emx
+
       real u(4),tmunu(4,4)
       common/citsy/itsy(4,4)
       common/ctemc/temc(netahxx,ntauhxx,nxhxx,nyhxx)
       common/cpssc/pssc(netahxx,ntauhxx,nxhxx,nyhxx)
       common/cvifl/vifl(netahxx,ntauhxx,nxhxx,nyhxx)
-      common/cmaxi/emx,xmx,ymx,zmx
+c      common/cmaxi/emx,xmx,ymx,zmx
       common/ceetau/eetau,eetau2
-      common/cmm/mmx,mmy,mmz
+c      common/cmm/mmx,mmy,mmz
       data ncnttrhl/0/
       save ncnttrhl
+
+      integer getHydynMmx
+      integer getHydynMmy
+      integer getHydynMmz
+      integer getAccumJerr
+
       emx=0
-      eetau=0
+      call setHydynEetau(0)
       d1= (xmaxhy-xminhy) /(nxhy-1)
       d2= (ymaxhy-yminhy) /(nyhy-1)
       d3= (zmaxhy-zminhy) /(nzhy-1)
       do nz=1,nzhy
         do nx=1,nxhy
          do ny=1,nyhy
-           nxhlle = mmx+(nx-1)*ifathlle
-           nyhlle = mmy+(ny-1)*ifathlle
-           nzhlle = mmz+(nz-1)*ifazhlle
+           nxhlle = getHydynMmx()+(nx-1)*ifathlle
+           nyhlle = getHydynMmy()+(ny-1)*ifathlle
+           nzhlle = getHydynMmz()+(nz-1)*ifazhlle
            !-------------------------------------------
            !  get values from hlle :
            !-------------------------------------------
@@ -661,7 +974,7 @@ c-----------------------------------------------------------------------
            !-------------------------------------------
            if(e.ge.20*oEeos)then
              ncnttrhl=ncnttrhl+1
-             jerr(15)=jerr(15)+1
+             call setAccumJerr(15,getAccumJerr(15)+1)
              if(50.gt.ncnttrhl)then
                write(ifmt,*)
      .         'TransferHlle: energy density very big: ',e
@@ -670,18 +983,19 @@ c-----------------------------------------------------------------------
            endif
            if(e.gt.dble(emx))then
              emx=e
+             call setHydynEmx(emx)
              i=nx
              j=ny
              k=nz
            endif
-           epsc(nz,ntau,nx,ny)=e
-           sigc(nz,ntau,nx,ny)=0
-           barc(1,nz,ntau,nx,ny)=nb
-           barc(2,nz,ntau,nx,ny)=nq
-           barc(3,nz,ntau,nx,ny)=ns
-           velc(1,nz,ntau,nx,ny)=vx
-           velc(2,nz,ntau,nx,ny)=vy
-           velc(3,nz,ntau,nx,ny)=vz
+           call setHydynEpsc(nz,ntau,nx,ny,e)
+           call setHydynSigc(nz,ntau,nx,ny,dble(0))
+           call setHydynBarc(1,nz,ntau,nx,ny,nb)
+           call setHydynBarc(2,nz,ntau,nx,ny,nq)
+           call setHydynBarc(3,nz,ntau,nx,ny,ns)
+           call setHydynVelc(1,nz,ntau,nx,ny,vx)
+           call setHydynVelc(2,nz,ntau,nx,ny,vy)
+           call setHydynVelc(3,nz,ntau,nx,ny,vz)
            vifl(nz,ntau,nx,ny)=viscflag
            !~~~~~~ compute T^mu^nu ~~~~~~~
            gamma=1
@@ -716,14 +1030,14 @@ c-----------------------------------------------------------------------
            enddo
            temc(nz,ntau,nx,ny)=PiEos(5,eps,b1,b2,b3)  !*** needed in gethyval
            pssc(nz,ntau,nx,ny)=PiEos(4,eps,b1,b2,b3)  !*** needed in gethyval
-           tau=tauhy(ntau)
+           tau=getHydynTauhy(ntau)
            !~~~~~~~~~~~~~~~~~~~~~~
          enddo
         enddo
       enddo
-      xmx   = xminhy  +(i-1)  *d1
-      ymx   = yminhy  +(j-1)  *d2
-      zmx   = zminhy  +(k-1)  *d3
+      call setHydynXmx(xminhy  +(i-1)  *d1)
+      call setHydynYmx(yminhy  +(j-1)  *d2)
+      call setHydynZmx(zminhy  +(k-1)  *d3)
       !~~~~ test ~~~~~
       eetau2=0
       do nz=1,nzhy
@@ -745,6 +1059,8 @@ c-----------------------------------------------------------------------
          enddo
         enddo
       enddo
+
+      call setHydynEetau2(eetau2)
       !..........
       !print*,'ntau, nxhy, nyhy',ntau, nxhy, nyhy
       !do i=1,16
@@ -752,10 +1068,10 @@ c-----------------------------------------------------------------------
       !enddo
       !if(ntau.eq.3)stop
       !..........
-      end
+      end subroutine TransferHlle
 
 c-----------------------------------------------------------------------
-      function eechk(tau,nxihy,nyihy,nzihy
+      real function eechk(tau,nxihy,nyihy,nzihy
      . ,xmnhy,xmxhy,ymnhy,ymxhy,zmnhy,zmxhy)
 c-----------------------------------------------------------------------
 #include "aaa.h"
@@ -765,13 +1081,16 @@ c-----------------------------------------------------------------------
       double precision pishear(10), pibulk
       double precision e, p, nb, nq, ns, vx, vy, vz
       real u(4),tmunu(4,4)
+c      integer mmx,mmy,mmz
       common/citsy/itsy(4,4)
       common/ceflowvi/pivi,eflowvi
-      common/ceevtau/eevtau/ceeinn/eeinn
-      common/cmm/mmx,mmy,mmz
+c      common/ceevtau/eevtau
+c      common/ceeinn/eeinn
+c      common/cmm/mmx,mmy,mmz
+
       eetau3=0
-      eevtau=0
-      eeinn=0
+c      eevtau=0
+c      eeinn=0
       d1= (xmxhy-xmnhy) /(nxihy-1)
       d2= (ymxhy-ymnhy) /(nyihy-1)
       d3= (zmxhy-zmnhy) /(nzihy-1)
@@ -812,11 +1131,11 @@ c-----------------------------------------------------------------------
            delee=
      .       ( tmunu(4,3)*sinh(eta)+tmunu(4,4)*cosh(eta) )*tau*d1*d2*d3
            eetau3=eetau3 + delee
-           if(  nx.ge.mmx.and.nx.le.nxihy+1-mmx
-     .     .and.ny.ge.mmy.and.ny.le.nyihy+1-mmy
-     .     .and.nz.ge.mmz.and.nz.le.nzihy+1-mmz  )then
-             eeinn=eeinn+delee
-           endif
+c           if(  nx.ge.mmx.and.nx.le.nxihy+1-mmx
+c     .     .and.ny.ge.mmy.and.ny.le.nyihy+1-mmy
+c     .     .and.nz.ge.mmz.and.nz.le.nzihy+1-mmz  )then
+c             eeinn=eeinn+delee
+c           endif
            !~~~endtest~~~~
          enddo
         enddo
@@ -825,22 +1144,27 @@ c-----------------------------------------------------------------------
       end
 
       subroutine FillZero(ntau)
+c      use ArrayModule, only: set
+c      use hocoModule, only: epsc, sigc, velc, barc
+c      use hocoModule, only: sigc, velc, barc
+      
 #include "ho.h"
+
       do nz=1,nzhy
         do nx=1,nxhy
          do ny=1,nyhy
-           epsc(nz,ntau,nx,ny)=0
-           sigc(nz,ntau,nx,ny)=0
-           barc(1,nz,ntau,nx,ny)=0
-           barc(2,nz,ntau,nx,ny)=0
-           barc(3,nz,ntau,nx,ny)=0
-           velc(1,nz,ntau,nx,ny)=0
-           velc(2,nz,ntau,nx,ny)=0
-           velc(3,nz,ntau,nx,ny)=0
+           call setHydynEpsc(nz,ntau,nx,ny,dble(0))
+           call setHydynSigc(nz,ntau,nx,ny,dble(0))
+           call setHydynBarc(1,nz,ntau,nx,ny,dble(0))
+           call setHydynBarc(2,nz,ntau,nx,ny,dble(0))
+           call setHydynBarc(3,nz,ntau,nx,ny,dble(0))
+           call setHydynVelc(1,nz,ntau,nx,ny,dble(0))
+           call setHydynVelc(2,nz,ntau,nx,ny,dble(0))
+           call setHydynVelc(3,nz,ntau,nx,ny,dble(0))
          enddo
         enddo
       enddo
-      end
+      end 
 
 c-----------------------------------------------------------------------
         subroutine checkNaN(e, nb, nq, ns, vx, vy, vz)
@@ -1017,14 +1341,26 @@ c-------------------------------------------------------------------------------
       subroutine IniFlowIni(nxicomx,nyicomx,nzicomx,IcoEx)
 c-------------------------------------------------------------------------------
 #include "aaa.h"
-#include "ico.h"
       common/cninx/ninx
       common/cecc/ecct,rrrt
       common/ciniflo/ecccoe(5),eccphi(5) /ciniflo2/rrr,vvv,xav0,yav0
       real avecos(5),avesin(5)
-      real IcoEx
-      dimension
-     . IcoEx(nxicomx,nyicomx,nzicomx)
+      integer, intent(in) :: nxicomx
+      integer, intent(in) :: nyicomx
+      integer, intent(in) :: nzicomx
+      real, intent(in) :: IcoEx
+      dimension IcoEx(nxicomx,nyicomx,nzicomx)
+      integer nxico,nyico,nzico
+      real xminico,xmaxico,yminico,ymaxico,zminico,zmaxico
+      
+      call getIcoDim(nxico,nyico,nzico)
+      call getIcoBound(
+     .     xminico, xmaxico,
+     .     yminico, ymaxico,
+     .     zminico, zmaxico
+     . )
+
+
       pi=3.1415927
       do m=2,5
       eccphi(m)=0
@@ -1107,6 +1443,8 @@ c-------------------------------------------------------------------------------
      . 'itrigg=',itrigg,ioecc,e2,e3
       end
 
+
+
       subroutine addIniFlow(xo,yo,vx,vy)
       double precision xo,yo,vx,vy,b1,b2,v1,v2,gm,r,vvm,rnll,vv,v,a,bv
       common/ciniflo/ecccoe(5),eccphi(5) /ciniflo2/rrr,vvv,xav0,yav0
@@ -1147,8 +1485,10 @@ c-------------------------------------------------------------------------------
       !.,vv,rnll/r,vx,vxbef
       end
 
+
 c----------------------------------------------------------------------
-      function eflow(epsuu,pressuu,eta,u0uu,u3uu,pi00uu,pi03uu,pi33uu)
+      real function eflow(epsuu,pressuu,eta,u0uu,u3uu,
+     . pi00uu,pi03uu,pi33uu)
 c----------------------------------------------------------------------
       common/ceflowvi/pivi,eflowvi
       double precision sh,ch, eps,press,u0,u3,pi00,pi03,pi33

@@ -1,15 +1,9 @@
-# find_package(ROOT)
-# Define this directory's flags:
-# set(${PROJECT_NAME}_YK_CXX_FLAGS "-std=c++11 -O2 -g -Wall -fPIC" CACHE STRING "${PROJECT_NAME} YK CXX FLAGS")
-
-list(APPEND CXX_FLAGS ${ROOT_CPPFLAGS})
-list(APPEND CXX_FLAGS "-O2 -g -Wall -fPIC")
-list(JOIN CXX_FLAGS " " ${PROJECT_NAME}_YK_CXX_FLAGS)
-
-
-# Enable this directory's flags:
-set(CMAKE_CXX_FLAGS "${${PROJECT_NAME}_YK_CXX_FLAGS}")
-message(STATUS "YK CXX FLAGS: " ${CMAKE_CXX_FLAGS})   
+#
+#  This file is part of EPOS4
+#  Copyright (C) 2022 research institutions and authors (See CREDITS file)
+#  This file is distributed under the terms of the GNU General Public License version 3 or later
+#  (See COPYING file for the text of the licence)
+#
 
 # Do the local stuff:
 set(YK_SRC 
@@ -32,4 +26,11 @@ set(YK_SRC
 )
 
 add_library(YK OBJECT ${YK_SRC})
-target_include_directories(YK PRIVATE ../../src/MS/ PRIVATE . PRIVATE ${ROOT_INCLUDE_DIR})
+separate_arguments(CXX_COMPILE_FLAGS UNIX_COMMAND ${CXX_COMPILE_FLAGS})
+target_compile_options(YK PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${CXX_COMPILE_FLAGS}>)
+
+target_include_directories(YK PRIVATE
+  .
+  ${PROJECT_SOURCE_DIR}/src/MS/
+  ${ROOT_INCLUDE_DIRS}
+)

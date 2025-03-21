@@ -302,7 +302,6 @@ c-----------------------------------------------------------------------
         subroutine gammaA
 c-----------------------------------------------------------------------
 #include "aaa.h"
-#include "ico.h"
 #include "ho.h"
       common/photrans/phoele(4),ebeam,noevt
         if(abs(idprojin).eq.12)then  !fake e-A collision with gamma(pi0)-A

@@ -8,18 +8,24 @@ C
 c-----------------------------------------------------------------------
       subroutine WriteHydroTable
 c-----------------------------------------------------------------------
+c      use ArrayModule, only: getd
+c      use hocoModule, only: epsc, velc, barc, sigc
+c      use hocoModule, only: velc, barc, sigc
+      double precision getHydynEpsc, getHydynVelc 
+      double precision getHydynBarc, getHydynSigc
+
 #include "aaa.h"
 #include "ho.h"
-#include "ico.h"
+      
       character*80 fn
+      real val
       data ncnthyt/0/
       save ncnthyt
       ncnthyt=ncnthyt+1
       !!!if(ncnthyt.ne.8)return ! for debugging
       if(igethyt.lt.2)return
-      stop'###### ERROR 23032018 (emuc must be added to table) #######'
-      tauminhy=tauhy(1)
-      taumaxhy=tauhy(ntauhy)
+      tauminhy=getHydynTauhy(1)
+      taumaxhy=getHydynTauhy(ntauhy)
       ii=index(fnhi(1:nfnhi),".histo")-1
       fn=fnhi(1:ii)//".out"
       iixx=ii+4
@@ -31,26 +37,92 @@ c-----------------------------------------------------------------------
       write(11,*)laproj,maproj,latarg,matarg
       write(11,*)engy
       write(11,*)bminim,bmaxim,ikolmn,ikolmx
-      write(11,*)tauzer
+      write(11,*)tauzer,ifathlle,dtauhy
       write(11,*)0
       write(11,*)nzhy,ntauhy,nxhy,nyhy
       write(11,*)zminhy,zmaxhy,tauminhy,taumaxhy
       write(11,*)xminhy,xmaxhy,yminhy,ymaxhy
-      write(11,*)
-     *  (((((velc(i,neta,ntau,nx,ny),i=1,3),neta=1,nzhy)
-     *          ,ntau=1,ntauhy),nx=1,nxhy),ny=1,nyhy)
-     * ,((((epsc(neta,ntau,nx,ny),neta=1,nzhy)
-     *          ,ntau=1,ntauhy),nx=1,nxhy),ny=1,nyhy)
-     * ,((((sigc(neta,ntau,nx,ny),neta=1,nzhy)
-     *          ,ntau=1,ntauhy),nx=1,nxhy),ny=1,nyhy)
-     * ,(((((barc(i,neta,ntau,nx,ny),i=1,3),neta=1,nzhy)
-     *          ,ntau=1,ntauhy),nx=1,nxhy),ny=1,nyhy)
+
+c      write(11,*)
+c     *  (((((getd(velc,[i,neta,ntau,nx,ny]),i=1,3),neta=1,nzhy)
+c     *          ,ntau=1,ntauhy),nx=1,nxhy),ny=1,nyhy)
+c     * ,((((getd(epsc,[neta,ntau,nx,ny]),neta=1,nzhy)
+c     *          ,ntau=1,ntauhy),nx=1,nxhy),ny=1,nyhy)
+c     * ,((((getd(sigc,[neta,ntau,nx,ny]),neta=1,nzhy)
+c     *          ,ntau=1,ntauhy),nx=1,nxhy),ny=1,nyhy)
+c     * ,(((((getd(barc,[i,neta,ntau,nx,ny]),i=1,3),neta=1,nzhy)
+c     *          ,ntau=1,ntauhy),nx=1,nxhy),ny=1,nyhy)
+
+
+      do ny=1,nyhy
+         do nx=1,nxhy
+            do ntau=1,ntauhy
+               do neta=1,nzhy
+                  do i=1,3
+                     write(11,*)getHydynVelc(i,neta,ntau,nx,ny)
+                  end do
+               end do 
+            end do
+         end do
+      end do
+
+      do ny=1,nyhy
+         do nx=1,nxhy
+            do ntau=1,ntauhy
+               do neta=1,nzhy
+                     write(11,*)getHydynEpsc(neta,ntau,nx,ny)
+               end do 
+            end do
+         end do
+      end do
+
+      do ny=1,nyhy
+         do nx=1,nxhy
+            do ntau=1,ntauhy
+               do neta=1,nzhy
+                     write(11,*)getHydynSigc(neta,ntau,nx,ny)                  
+               end do 
+            end do
+         end do
+      end do
+
+      do ny=1,nyhy
+         do nx=1,nxhy
+            do ntau=1,ntauhy
+               do neta=1,nzhy
+                  do i=1,3
+                     write(11,*)getHydynBarc(i,neta,ntau,nx,ny)
+                  end do
+               end do 
+            end do
+         end do
+      end do
+
+      do ny=1,nyhy
+       do nx=1,nxhy
+        do ntau=1,ntauhy
+         do nz=1,nzhy
+          do ivi=1,10
+            call emucget(ivi,nz,ntau,nx,ny,val)
+            write(11,*)val
+          enddo !ivi
+         enddo !nz
+        enddo !ntau
+       enddo !nx
+      enddo !ny
+
       close(11)
       end
 
 c-----------------------------------------------------------------------
       subroutine ReadHydroTable
 c-----------------------------------------------------------------------
+c      use ArrayModule, only: setDouble, getd
+c      use hocoModule, only: epsc, velc, barc, sigc
+c      use hocoModule, only: velc, barc, sigc
+      double precision getHydynEpsc, getHydynVelc
+      double precision getHydynBarc, getHydynSigc
+      
 #include "aaa.h"
 #include "ho.h"
 #include "ems.h"
@@ -62,13 +134,13 @@ c-----------------------------------------------------------------------
       real pixx(10)
       integer itsy
       real ww
+      double precision readData
+      real val
       common/citsy/itsy(4,4)
       real wi(3),wj(3)
       data nnn/0/
       data ncntrdhy/0/
       save ncntrdhy
-
-      stop'###### ERROR 23032018 (emuc must be added to table) #######'
       
       if(ireadhyt.eq.0)return
 
@@ -83,10 +155,10 @@ c-----------------------------------------------------------------------
         stop
       endif
       write(ifmt,'(3a,$)')'read from '
-     * ,fnho(nnn)(1:nfnho(nnn)),' ...'
+     * ,fnho(nnn)(1:nfnho(nnn)),' ... '
       open(11,file=fnho(nnn)(1:nfnho(nnn)),status='old')
       read(11,*)iversn
-      if(iversn.lt.201)stop'\n\n redo table with version >= 201\n\n'
+      if(iversn.lt.201)stop'ERROR redo table with version >= 201'
       read(11,*)laprojx,maprojx,latargx,matargx
       read(11,*)engyx
       read(11,*)bminimx,bmaximx,ikolmnx,ikolmxx
@@ -99,49 +171,104 @@ c-----------------------------------------------------------------------
       nprt(1)=nprt1
       phievt=0
       ranphi=0
-      read(11,*)tauzer
+      read(11,*)tauzer,ifathlle,dtauhy
       read(11,*)iabs_ninicon
-      read(11,*)nzhyx,ntauhy,nxhyx,nyhyx
-      read(11,*)zminhyx,zmaxhyx,tauminhy,taumaxhy
-      read(11,*)xminhyx,xmaxhyx,yminhyx,ymaxhyx
+      read(11,*)nzhy,ntauhy,nxhy,nyhy
+      read(11,*)zminhy,zmaxhy,tauminhy,taumaxhy
+      read(11,*)xminhy,xmaxhy,yminhy,ymaxhy
       if(laprojx.ne.laproj.or.maprojx.ne.maproj
      . .or.latargx.ne.latarg.or.matargx.ne.matarg)
-     .stop'\n\n STOP in ReadHydroTable: different nuclei\n\n'
+     .stop'***** ERROR in ReadHydroTable: different nuclei *****'
       if(engyx.ne.engy)
-     .stop'\n\n STOP in ReadHydroTable: different energy\n\n  '
-      if(nzhyx.ne.nzhy)
-     .stop'\n\n STOP in ReadHydroTable:  different nzhy\n\n'
-      if(nxhyx.ne.nxhy)
-     .stop'\n\n STOP in ReadHydroTable:  different nxhy\n\n'
-      if(nyhyx.ne.nyhy)
-     .stop'\n\n STOP in ReadHydroTable:  different nyhy\n\n'
-      if(zminhyx.ne.zminhy)
-     .stop'\n\n STOP in ReadHydroTable:  different zminhy\n\n'
-      if(zmaxhyx.ne.zmaxhy)
-     .stop'\n\n STOP in ReadHydroTable:  different zmaxhy\n\n'
-      if(xminhyx.ne.xminhy)
-     .stop'\n\n STOP in ReadHydroTable:  different xminhy\n\n'
-      if(xmaxhyx.ne.xmaxhy)
-     .stop'\n\n STOP in ReadHydroTable:  different xmaxhy\n\n'
-      if(yminhyx.ne.yminhy)
-     .stop'\n\n STOP in ReadHydroTable:  different yminhy\n\n'
-      if(ymaxhyx.ne.ymaxhy)
-     .stop'\n\n STOP in ReadHydroTable:  different ymaxhy\n\n'
-      read(11,*)
-     *  (((((velc(i,neta,ntau,nx,ny),i=1,3),neta=1,nzhy)
-     *          ,ntau=1,ntauhy),nx=1,nxhy),ny=1,nyhy)
-     * ,((((epsc(neta,ntau,nx,ny),neta=1,nzhy)
-     *          ,ntau=1,ntauhy),nx=1,nxhy),ny=1,nyhy)
-     * ,((((sigc(neta,ntau,nx,ny),neta=1,nzhy)
-     *          ,ntau=1,ntauhy),nx=1,nxhy),ny=1,nyhy)
-     * ,(((((barc(i,neta,ntau,nx,ny),i=1,3),neta=1,nzhy)
-     *          ,ntau=1,ntauhy),nx=1,nxhy),ny=1,nyhy)
+     .stop'***** ERROR in ReadHydroTable: different energy *****'
+
+c      read(11,*)
+c     *  (((((velc(i,neta,ntau,nx,ny),i=1,3),neta=1,nzhy)
+c     *          ,ntau=1,ntauhy),nx=1,nxhy),ny=1,nyhy)
+c     * ,((((epsc(neta,ntau,nx,ny),neta=1,nzhy)
+c     *          ,ntau=1,ntauhy),nx=1,nxhy),ny=1,nyhy)
+c     * ,((((sigc(neta,ntau,nx,ny),neta=1,nzhy)
+c     *          ,ntau=1,ntauhy),nx=1,nxhy),ny=1,nyhy)
+c     * ,(((((barc(i,neta,ntau,nx,ny),i=1,3),neta=1,nzhy)
+c     *          ,ntau=1,ntauhy),nx=1,nxhy),ny=1,nyhy)
+
+      iemuc=1
+      call memo(1,'create emuc;')
+      call createemuc(10,nzhy,ntauhxx,nxhy,nyhy)
+      call memo(2,';')
+
+      do ny=1,nyhy
+         do nx=1,nxhy
+            do ntau=1,ntauhy
+               do neta=1,nzhy
+                  do i=1,3
+                     read(11,*) readData
+                     call setHydynVelc(i,neta,ntau,nx,ny,readData)
+                  end do
+               end do 
+            end do
+         end do
+      end do
+
+      do ny=1,nyhy
+         do nx=1,nxhy
+            do ntau=1,ntauhy
+               do neta=1,nzhy
+                  read(11,*) readData
+                  call setHydynEpsc(neta,ntau,nx,ny,readData)
+               end do 
+            end do
+         end do
+      end do
+
+      do ny=1,nyhy
+         do nx=1,nxhy
+            do ntau=1,ntauhy
+               do neta=1,nzhy
+                  read(11,*) readData
+                  call setHydynSigc(neta,ntau,nx,ny,readData)                  
+               end do 
+            end do
+         end do
+      end do
+
+      do ny=1,nyhy
+         do nx=1,nxhy
+            do ntau=1,ntauhy
+               do neta=1,nzhy
+                  do i=1,3
+                     read(11,*) readData
+                     call setHydynBarc(i,neta,ntau,nx,ny,readData)
+                  end do
+               end do 
+            end do
+         end do
+      end do
+
+      do ny=1,nyhy
+       do nx=1,nxhy
+        do ntau=1,ntauhy
+         do nz=1,nzhy
+          do ivi=1,10
+            read(11,*,end=88)val
+            call emucset(ivi,nz,ntau,nx,ny, val )
+          enddo !ivi
+         enddo !nz
+        enddo !ntau
+       enddo !nx
+      enddo !ny
+
       close(11)
       write(ifmt,'(a)')'  done'
-      write(ifmt,'(a,f7.2)')'impact parameter table =',bevt
+      write(ifmt,'(a,f7.2)')'impact parameter =',bevt
+      write(ifmt,'(a,i5,f7.2)')'nzhy,zmaxhy =',nzhy,zmaxhy
       call clop(3)
 
       goto77
+
+  88  continue 
+      write(ifmt,'(5i5)')ivi,nz,ntau,nx,ny
+      stop'ERROR 230805 End of file'  
 
       !-----------------------!
        entry ManiHydroTable
@@ -153,7 +280,7 @@ c-----------------------------------------------------------------------
         !if(ntauhy.le.2)ntauhy=0
       tauminhy=tauzer
       if(ntauhy.gt.0)then
-      taumaxhy=tauhy(ntauhy)
+      taumaxhy=getHydynTauhy(ntauhy)
       else
       taumaxhy=tauminhy
       endif
@@ -172,7 +299,7 @@ c-----------------------------------------------------------------------
        del_tau=dtauhy/ifathlle   !must identical to def in h.f
        delta_tau_out = mmsteps * del_tau
        tau=tauminhy+(ntau-1)*delta_tau_out !for output hydro table
-       tauhy(ntau)=tau
+       call setHydynTauhy(ntau,tau)
       enddo
 
       if(nnn.eq.1)then
@@ -226,18 +353,18 @@ c-----------------------------------------------------------------------
           vt=0
           do nx=1,nxhy
           do ny=1,nyhy
-            e=max(0.d0,epsc(neta,ntau,nx,ny))
-            esum=esum+e
-            x=xminhy+(nx-1)*(xmaxhy-xminhy)/(nxhy-1)
-            y=yminhy+(ny-1)*(ymaxhy-yminhy)/(nyhy-1)
-            xx=xx+x**2*e
-            yy=yy+y**2*e
-            vx=velc(1,neta,ntau,nx,ny)
-            vy=velc(2,neta,ntau,nx,ny)
-            vxx=vxx+vx**2*e
-            vyy=vyy+vy**2*e
-            if(vx**2+vy**2.ne.0.)
-     .       vt=vt+sqrt(vx**2+vy**2)*e
+             e=max(0.d0,getHydynEpsc(neta,ntau,nx,ny))
+             esum=esum+e
+             x=xminhy+(nx-1)*(xmaxhy-xminhy)/(nxhy-1)
+             y=yminhy+(ny-1)*(ymaxhy-yminhy)/(nyhy-1)
+             xx=xx+x**2*e
+             yy=yy+y**2*e
+             vx=getHydynVelc(1,neta,ntau,nx,ny)
+             vy=getHydynVelc(2,neta,ntau,nx,ny)
+             vxx=vxx+vx**2*e
+             vyy=vyy+vy**2*e
+             if(vx**2+vy**2.ne.0.)
+     .            vt=vt+sqrt(vx**2+vy**2)*e
           enddo
           enddo
           if(xx+yy.ne.0.)
@@ -310,14 +437,14 @@ c-----------------------------------------------------------------------
                call emucget(ivi,neta,ntau,nx+i-1,ny+j-1, ww )
                pixx(ivi)=pixx(ivi)+ ww * wi(i)*wj(j)
               enddo
-              vx=vx+ velc(1,neta,ntau,nx+i-1,ny+j-1) * wi(i)*wj(j)
-              vy=vy+ velc(2,neta,ntau,nx+i-1,ny+j-1) * wi(i)*wj(j)
-              vz=vz+ velc(3,neta,ntau,nx+i-1,ny+j-1) * wi(i)*wj(j)
-              ep=ep+ epsc(neta,ntau,nx+i-1,ny+j-1) * wi(i)*wj(j)
-              ba=ba+ barc(1,neta,ntau,nx+i-1,ny+j-1) * wi(i)*wj(j)
-              b2=b2+ barc(2,neta,ntau,nx+i-1,ny+j-1) * wi(i)*wj(j)
-              b3=b3+ barc(3,neta,ntau,nx+i-1,ny+j-1) * wi(i)*wj(j)
-              sg=sg+ sigc(neta,ntau,nx+i-1,ny+j-1) * wi(i)*wj(j)
+              vx=vx+getHydynVelc(1,neta,ntau,nx+i-1,ny+j-1)*wi(i)*wj(j)
+              vy=vy+getHydynVelc(2,neta,ntau,nx+i-1,ny+j-1)*wi(i)*wj(j)
+              vz=vz+getHydynVelc(3,neta,ntau,nx+i-1,ny+j-1)*wi(i)*wj(j)
+              ep=ep+getHydynEpsc(  neta,ntau,nx+i-1,ny+j-1)*wi(i)*wj(j)
+              ba=ba+getHydynBarc(1,neta,ntau,nx+i-1,ny+j-1)*wi(i)*wj(j)
+              b2=b2+getHydynBarc(2,neta,ntau,nx+i-1,ny+j-1)*wi(i)*wj(j)
+              b3=b3+getHydynBarc(3,neta,ntau,nx+i-1,ny+j-1)*wi(i)*wj(j)
+              sg=sg+getHydynSigc(  neta,ntau,nx+i-1,ny+j-1)*wi(i)*wj(j)
              enddo
             enddo
            endif
@@ -336,19 +463,19 @@ c-----------------------------------------------------------------------
                call emucget(ivi,neta,ntau,nx+i-1,ny+j-1, ww )
                pixx(ivi)=pixx(ivi)+ ww * wi(i)*wj(j)
               enddo
-              vx=vx+ velc(1,neta,ntau,nx+i-1,ny+j-1) * wi(i)*wj(j)
-              vy=vy+ velc(2,neta,ntau,nx+i-1,ny+j-1) * wi(i)*wj(j)
-              vz=vz+ velc(3,neta,ntau,nx+i-1,ny+j-1) * wi(i)*wj(j)
-              ep=ep+ epsc(neta,ntau,nx+i-1,ny+j-1) * wi(i)*wj(j)
-              ba=ba+ barc(1,neta,ntau,nx+i-1,ny+j-1) * wi(i)*wj(j)
-              b2=b2+ barc(2,neta,ntau,nx+i-1,ny+j-1) * wi(i)*wj(j)
-              b3=b3+ barc(3,neta,ntau,nx+i-1,ny+j-1) * wi(i)*wj(j)
-              sg=sg+ sigc(neta,ntau,nx+i-1,ny+j-1) * wi(i)*wj(j)
+              vx=vx+getHydynVelc(1,neta,ntau,nx+i-1,ny+j-1)* wi(i)*wj(j)
+              vy=vy+getHydynVelc(2,neta,ntau,nx+i-1,ny+j-1)* wi(i)*wj(j)
+              vz=vz+getHydynVelc(3,neta,ntau,nx+i-1,ny+j-1)* wi(i)*wj(j)
+              ep=ep+getHydynEpsc(  neta,ntau,nx+i-1,ny+j-1)* wi(i)*wj(j)
+              ba=ba+getHydynBarc(1,neta,ntau,nx+i-1,ny+j-1)* wi(i)*wj(j)
+              b2=b2+getHydynBarc(2,neta,ntau,nx+i-1,ny+j-1)* wi(i)*wj(j)
+              b3=b3+getHydynBarc(3,neta,ntau,nx+i-1,ny+j-1)* wi(i)*wj(j)
+              sg=sg+getHydynSigc(  neta,ntau,nx+i-1,ny+j-1)* wi(i)*wj(j)
             enddo
            enddo
            endif
            endif !~~~~~~~~~~~~~~~~~~
-           if(vz.gt.1.)stop'\n\n STOP in ManiHydroTable: vz > 1.'
+           if(vz.gt.1.)stop'***** ERROR in ManiHydroTable: vz > 1.'
            if(ep.ge.20*oEeos.and.50.gt.ncntrdhy.and.ireadhyt.ne.1)then
             ncntrdhy=ncntrdhy+1
             write(ifmt,*)'ManiHydroTable: energy density very big: ',ep
@@ -408,7 +535,7 @@ c-----------------------------------------------------------------------
       d2= (ymaxhy-yminhy) /(nyhy-1)
       d3= (zmaxhy-zminhy) /(nzhy-1)
       do ntau=1,ntauhy
-       tau=tauhy(ntau)
+       tau=getHydynTauhy(ntau)
        eetau=0
        do nz=1,nzhy
         do nx=1,nxhy
@@ -439,7 +566,7 @@ c-----------------------------------------------------------------------
       d3= (zmaxhy-zminhy) /(nzhy-1)
       !etausu=0
       do ntau=1,ntauhy
-       tau=tauhy(ntau)
+       tau=getHydynTauhy(ntau)
        eetau=0
        do nz=1,nzhy
         do nphi=2,nphihy
@@ -467,13 +594,13 @@ c-----------------------------------------------------------------------
 
       elseif(ii.eq.3)then! fixed radius for all times + fixed final time (agrees perfectly with tests in h.f)
 
-      d1=tauhy(2)-tauhy(1)
+      d1=getHydynTauhy(2)-getHydynTauhy(1)
       d2=phihy(2)-phihy(1)
       d3= (zmaxhy-zminhy) /(nzhy-1)
       etausu=0
       ! fixed radius for all times 
       do ntau=2,ntauhy
-       tau=(tauhy(ntau-1)+tauhy(ntau))/2
+       tau=(getHydynTauhy(ntau-1)+getHydynTauhy(ntau))/2
        eetau=0
        do nz=1,nzhy
         do nphi=2,nphihy
@@ -513,7 +640,7 @@ c-----------------------------------------------------------------------
       d2=phihy(2)-phihy(1)
       d3= (zmaxhy-zminhy) /(nzhy-1)
       ntau=ntauhy
-       tau=tauhy(ntau)
+       tau=getHydynTauhy(ntau)
        eetau=0
        do nz=1,nzhy
         do nphi=2,nphihy
@@ -544,20 +671,21 @@ c-----------------------------------------------------------------------
       elseif(ii.eq.4)then ! rad = rmax to zero  (cone) (agrees within 5% with tests in h.f, for the default grid)
                                          !   agrees perfectly with test kfrout = 3  in f.f  , for the same grid     
 
-      d1=tauhy(2)-tauhy(1)
+      d1=getHydynTauhy(2)-getHydynTauhy(1)
       d2=phihy(2)-phihy(1)
       d3= (zmaxhy-zminhy) /(nzhy-1)
       etausu=0
       ntaumax=12 ! arbitrary choice
       do ntau=1,ntaumax  !in principle the first step should only count 0.5, but contribution is anyway very small
-       tau=tauhy(ntau)
+       tau=getHydynTauhy(ntau)
        eetau=0
        do nz=1,nzhy
         eta=zminhy  +(nz-1)  *d3
         do nphi=2,nphihy
           phi=phihy(nphi)
           rad= radhy(nradhy) *
-     .    ( 1 - (tau-tauhy(1))/(tauhy(ntaumax)-tauhy(1)) )  
+     .         ( 1 - (tau-getHydynTauhy(1))/
+     .         (getHydynTauhy(ntaumax)-getHydynTauhy(1)) )  
           rad=max(0.,rad)
           nrad=2
           do while (radhy(nrad).lt.rad)
@@ -576,7 +704,8 @@ c-----------------------------------------------------------------------
           s(1)=tau*rad*cos(phi)
           s(2)=tau*rad*sin(phi) 
           s(3)=0
-          s(4)=tau*rad*radhy(nradhy)/(tauhy(ntaumax)-tauhy(1))
+          s(4)=tau*rad*radhy(nradhy)/
+     .         (getHydynTauhy(ntaumax)-getHydynTauhy(1))
           do i=1,4
            pf(i)=0
            do n=1,4
@@ -598,6 +727,11 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
       subroutine jetfluid
 c-----------------------------------------------------------------------
+c      use ArrayModule, only: getd
+c      use hocoModule, only: epsc, velc, barc
+c      use hocoModule, only: velc, barc
+      double precision getHydynEpsc, getHydynVelc, getHydynBarc
+      
 #include "aaa.h"
 #include "ho.h"
       common/cranphi/ranphi 
@@ -617,7 +751,7 @@ c-----------------------------------------------------------------------
       real velcxx(3,netahxx,ntauhxx,nxhxx,nyhxx)
       dimension velx(3,nxhxx,nyhxx),temx(nxhxx,nyhxx)
       dimension velxx(3,nxhxx,nyhxx),temxx(nxhxx,nyhxx)
-      common/cee1ico/ee1ico,eistico,ee1hll
+c      common/cee1ico/ee1ico,eistico,ee1hll
       common/ceefrac/eefrac
       real wk(2),wi(2),wj(2)
       parameter (nquark=3)  
@@ -657,14 +791,14 @@ c-----------------------------------------------------------------------
      .    .and.(ntau.eq.8.or.ntau.eq.10))lplot=.true.
           do ix=1,nxhy
           do iy=1,nyhy
-            eps=epsc(iz,ntau,ix,iy)
-            b1=barc(1,iz,ntau,ix,iy)
-            b2=barc(2,iz,ntau,ix,iy)
-            b3=barc(3,iz,ntau,ix,iy)
+            eps=getHydynEpsc(  iz,ntau,ix,iy)
+            b1 =getHydynBarc(1,iz,ntau,ix,iy)
+            b2 =getHydynBarc(2,iz,ntau,ix,iy)
+            b3 =getHydynBarc(3,iz,ntau,ix,iy)
             temx(ix,iy)=PiEos(5,eps,b1,b2,b3)
-            velx(1,ix,iy)=velc(1,iz,ntau,ix,iy)
-            velx(2,ix,iy)=velc(2,iz,ntau,ix,iy)
-            velx(3,ix,iy)=velc(3,iz,ntau,ix,iy)
+            velx(1,ix,iy)=getHydynVelc(1,iz,ntau,ix,iy)
+            velx(2,ix,iy)=getHydynVelc(2,iz,ntau,ix,iy)
+            velx(3,ix,iy)=getHydynVelc(3,iz,ntau,ix,iy)
             !tm=temx(ix,iy)
             !arxy(ix,iy)=0
             !if(lplot.and.tm.gt.tfo)arxy(ix,iy)=tm*1000
@@ -749,11 +883,11 @@ c-----------------------------------------------------------------------
         endif
       enddo
       if(abs(eecobf-eecobfx).gt.1e-4.and.
-     . abs(eecobf-eecobfx).gt.1e-4*eecobf)stop'\n\n ERROR 02012012 \n\n'
+     . abs(eecobf-eecobfx).gt.1e-4*eecobf)stop'ERROR 02012012'
       !write(ifmt,*)'+++++++++++++++ eecobf,x,xx',eecobf,eecobfx,eecobfxx
 
       !write(ifmt,'(6a)')'        n'
-      !.,'   eegain','   ee1hll','    eerem','   eefrac'
+      !.,'   eegain','   getIcoEe1hll()','    eerem','   eefrac'
 
 
       i888888=0
@@ -779,7 +913,7 @@ c-----------------------------------------------------------------------
         xo(3)=xorptl(3,n)
         xo(4)=xorptl(4,n)
         io=iorptl(n)
-        if(istptl(io).ne.29)stop'\n\n  ERROR 31122011 \n\n'
+        if(istptl(io).ne.29)stop'*****  ERROR 31122011  *****'
         ioo=iorptl(io)
         xoo(1)=xorptl(1,ioo)
         xoo(2)=xorptl(2,ioo)
@@ -972,10 +1106,10 @@ c-----------------------------------------------------------------------
           if(ish.ge.7)write(ifch,*)'etax=',etax,'   quamass=',quamass
           if(ish.ge.7)write(ifch,*)
      .     '+++++id,nq,na,ns ',idptl(n),nq,na,'     ',ns,nc,nb,nt
-          if(nc.ne.0)stop'\n\n ERROR 04112011b\n\n'
-          if(nb.ne.0)stop'\n\n ERROR 04112011c\n\n'
-          if(nt.ne.0)stop'\n\n ERROR 04112011d\n\n'
-          if(na.ne.2.and.na.ne.3)stop'\n\n ERROR 04112011e\n\n'
+          if(nc.ne.0)stop'***** ERROR 04112011b *****'
+          if(nb.ne.0)stop'***** ERROR 04112011c *****'
+          if(nt.ne.0)stop'***** ERROR 04112011d *****'
+          if(na.ne.2.and.na.ne.3)stop'***** ERROR 04112011e *****'
           ic(1)=0
           ic(2)=0
           nsqu=0
@@ -1059,15 +1193,15 @@ c-----------------------------------------------------------------------
           if(.not.(q(3).le.0..or.q(3).ge.0.))then
            write(ifch,*)'**** NaN catch q3 ****',n,q(3),gmtil,v3til**2
      .     ,v1til**2+v2til**2+v3til**2    
-           stop'\n\n  ERROR 14092012b \n\n'
+           stop'*****  ERROR 14092012b  *****'
           endif
           !~~~~~~~~~~~~~~~~~~~
           if(ish.ge.7)write(ifch,'(10x,4f7.3)')q
           if(na.ne.0)                                 goto 76
           !----------------------------------------------------------->
-          if(nq.ne.0)stop'\n\n ERROR 06072011\n\n'
-          if(ns.ne.0)stop'\n\n ERROR 06072011c\n\n'
-          if(nn.ne.2.and.nn.ne.3)stop'\n\n ERROR 06072011b\n\n'
+          if(nq.ne.0)stop'***** ERROR 06072011 *****'
+          if(ns.ne.0)stop'***** ERROR 06072011c *****'
+          if(nn.ne.2.and.nn.ne.3)stop'***** ERROR 06072011b *****'
           if(ish.ge.7)write(ifch,'(a,5f7.3)')'  qq:',qq
           if(ish.ge.7)write(ifch,'(a,5f7.3)')'  p: ',px
           !~~~~~
@@ -1088,7 +1222,7 @@ c-----------------------------------------------------------------------
           !~~~~~~~~~~~~~~~~~~~
           if(.not.(p(4).le.0..or.p(4).ge.0.))then
            write(ifch,*)'**** NaN catch p4 ****',n,p(4),amt,p(3)
-           stop'\n\n  ERROR 14092012 \n\n'
+           stop'*****  ERROR 14092012  *****'
           endif
           !~~~~~~~~~~~~~~~~~~~
           etap=getetap(p(1),p(2),p(3))
@@ -1103,9 +1237,9 @@ c-----------------------------------------------------------------------
           !????????????????????????????????????????????????????????????
           !~~~~~~~~~~~~~~~~~~~~~
           eegainxx=eegain+p(4)-px(4)
-          eeremxx=ee1hll-eegainxx
+          eeremxx=getIcoEe1hll()-eegainxx
           eefracxx=1
-          if(ee1hll.gt.0.)eefracxx=eeremxx/ee1hll          
+          if(getIcoEe1hll().gt.0.)eefracxx=eeremxx/getIcoEe1hll()          
           if(eefracxx.le.0.65)goto 199
           !~~~~~~~~~~~~~~~~~~~~~
           if(ityptl(n).ge.20.and.ityptl(n).le.29)ityptl(n)=29
@@ -1166,10 +1300,10 @@ c-----------------------------------------------------------------------
  97     continue
   
         eegain=eegain+p(4)-px(4)
-        eerem=ee1hll-eegain
+        eerem=getIcoEe1hll()-eegain
         eefrac=1
-        if(ee1hll.gt.0.)eefrac=eerem/ee1hll
-        !write(ifmt,'(i9,3f9.0,f9.5)')n,eegain,ee1hll,eerem,eefrac
+        if(getIcoEe1hll().gt.0.)eefrac=eerem/getIcoEe1hll()
+        !write(ifmt,'(i9,3f9.0,f9.5)')n,eegain,getIcoEe1hll(),eerem,eefrac
         
       endif
       enddo
@@ -1186,7 +1320,7 @@ c-----------------------------------------------------------------------
         eecotot=eecotot+pptl(4,n)
         if(.not.(eecotot.le.0..or.eecotot.ge.0.))then
          write(ifch,*)'**** NaN catch eecotot ****',n,eecotot,pptl(4,n)
-         stop'\n\n  ERROR 11072012 \n\n'
+         stop'*****  ERROR 11072012  *****'
         endif
         if(istptl(n).eq.0.and.ityptl(n).ge.20.and.ityptl(n).le.39)then
         eecoafxx=eecoafxx+pptl(4,n)
@@ -1194,10 +1328,10 @@ c-----------------------------------------------------------------------
         endif
       enddo
       !write(ifmt,*)'+++++++ eecoafxx,eegain',eecoafxx,eegain
-      eetot=eespec+eecotot+eefrac*ee1hll
+      eetot=eespec+eecotot+eefrac*getIcoEe1hll()
       !if(mod(nrevt+1,modsho).eq.0) 
       write(ifmt,'(a,f8.0,a,f6.3,a,f8.0,a,f8.0,a,2f8.0,i4,a,i3)')
-     . 'jetfluid Eflu',ee1hll,' f',eefrac
+     . 'jetfluid Eflu',getIcoEe1hll(),' f',eefrac
      . ,' Ecoro',eespec+eecotot
      . ,' Etot',eetot,' g',g1,g2,n2   !,' ctr',ikoevt (ONLY pp)
 
@@ -1339,6 +1473,10 @@ c----------------------------------------------------------------------------
 c-----------------------------------------------------------------------
       subroutine Pi2Hyt(xxx,eps,vv,iout)
 c-----------------------------------------------------------------------
+c      use ArrayModule, only: getd
+c      use hocoModule, only: epsc, velc
+c      use hocoModule, only: velc
+      double precision getHydynEpsc, getHydynVelc
 #include "aaa.h"
 #include "ho.h"
       real xxx(4),vv(3)
@@ -1388,10 +1526,10 @@ c-----------------------------------------------------------------------
           do n=1,2
            do m=1,2
             w=wi(i)*wj(j)*wn(n)*wm(m)
-            eps=eps  + epsc(  ne+n-1,nt+m-1,nx+i-1,ny+j-1) * w
-            vv(1)=vv(1)+ velc(1,ne+n-1,nt+m-1,nx+i-1,ny+j-1) * w
-            vv(2)=vv(2)+ velc(2,ne+n-1,nt+m-1,nx+i-1,ny+j-1) * w
-            vv(3)=vv(3)+ velc(3,ne+n-1,nt+m-1,nx+i-1,ny+j-1) * w
+            eps  =eps  + getHydynEpsc(  ne+n-1,nt+m-1,nx+i-1,ny+j-1) * w
+            vv(1)=vv(1)+ getHydynVelc(1,ne+n-1,nt+m-1,nx+i-1,ny+j-1) * w
+            vv(2)=vv(2)+ getHydynVelc(2,ne+n-1,nt+m-1,nx+i-1,ny+j-1) * w
+            vv(3)=vv(3)+ getHydynVelc(3,ne+n-1,nt+m-1,nx+i-1,ny+j-1) * w
            enddo
           enddo
          enddo

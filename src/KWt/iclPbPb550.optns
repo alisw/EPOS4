@@ -4,10 +4,9 @@ echo off
 #define  bimXX  20.00
 #define  bim00   0.00 
 
-#define  npo100  50000
 #define  npoXX  50000
 #define  npo100.00  50000
-#define  npo00  0
+#define  npo00.00  0
 
 #define2  bim01   1.52    1.50         2  
 #define2  bim02   2.18    1.50         2  

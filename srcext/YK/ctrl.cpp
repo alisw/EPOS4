@@ -27,16 +27,23 @@
 #include <signal.h>
 
 /*
-EoS functions 
-void initXXXX - initialization of the chosen EoS tables with the object „eos”, reading all the variables to the c++ arrays
-void geteosoriginal - the general function reading the variables directly from the tables ε, n B (T, μ B ) , the original ones, if the table is not available, it is printed
-void eoshlle - general function, returns all the EoS variables for given ε, n B
+  EoS functions
+
+     void initXXXX - initialization of the chosen EoS tables with the object „eos”,
+                    reading all the variables into the c++ arrays
+
+     void geteosoriginal - the general function reading the variables directly from
+                           the tables ε, n B (T, μ B ) , the original ones,
+                            if the table is not available, it is created
+
+     void eoshlle - general function, returns all the EoS variables for given ε, n B
 */
 
 using namespace std ;
 ofstream ofile ; // cout + cerr output
 
 EoS *eos ;
+
 TransportCoeff *trcoeff ;
 Fluid *fluidLarge, *fluidSmall ;
 IC_KW *ic_kw ;

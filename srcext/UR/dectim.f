@@ -24,14 +24,14 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       real*8 tmp,factor
 
 
-      if(ityp(ind).eq.134.and.iso3(ind).eq.-1)then
+      if(iabs(ityp(ind)).eq.134)then
        dectim=10.5d0*p0(ind)/fmass(ind)*hqc
        return
       endif
-      if(ityp(ind).eq.-134.and.iso3(ind).eq.1)then
-       dectim=10.5d0*p0(ind)/fmass(ind)*hqc
-       return
-      endif
+c      if(ityp(ind).eq.-134.and.iso3(ind).eq.1)then
+c       dectim=10.5d0*p0(ind)/fmass(ind)*hqc
+c       return
+c      endif
 
 c... keep unknown PYTHIA particles stable
       if(abs(ityp(ind)).gt.1000) then
