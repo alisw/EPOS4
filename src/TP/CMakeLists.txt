@@ -5,16 +5,17 @@
 #  (See COPYING file for the text of the licence)
 #
 
-# find_package(FastJet)
-# Define this directory's flags:
-set(${PROJECT_NAME}_TP_FORTRAN_FLAGS "-g -mcmodel=large -cpp -fbacktrace -ffpe-trap=invalid,zero  -Wall -fno-automatic -fcheck=bounds -O2 -Wtabs -Wno-conversion -Wuninitialized -fno-var-tracking-assignments" CACHE STRING "${PROJECT_NAME} TP FORTRAN FLAGS")
-# Enable this directory's flags:
-set(CMAKE_Fortran_FLAGS "${${PROJECT_NAME}_TP_FORTRAN_FLAGS}")
-
-# Define this directory's flags:
-set(${PROJECT_NAME}_TP_CXX_FLAGS "-g -O2 -Wall -fPIC" CACHE STRING "${PROJECT_NAME} JT CXX FLAGS")
-# Enable this directory's flags:
-set(CMAKE_CXX_FLAGS "${${PROJECT_NAME}_TP_CXX_FLAGS}")
+if (${CMAKE_Fortran_COMPILER_ID} STREQUAL "GNU")
+  if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64|aarch64")      
+    list(APPEND CXX_COMPILE_FLAGS "-Wno-deprecated-declarations")
+    list(JOIN CXX_COMPILE_FLAGS " " CXX_COMPILE_FLAGS)
+  else()
+    message(ERROR "EPOS: EPOS compilation only succeeds on x86_64 or aarch64 architecture")
+  endif()            
+else()
+  message(ERROR "EPOS: Compilation with any compiler other than GCC has not yet been tested")
+endif()
+  
 
 # Do the local stuff:
 set(TP_SRC 
@@ -25,7 +26,6 @@ set(TP_SRC
   ptb.f
   qsh.f
   qsh.cpp
-  sto.f
   xem.f
   xpr.f
   xsc.f
@@ -40,9 +40,17 @@ else()
 endif()
 
 add_library(TP OBJECT ${TP_SRC})
+separate_arguments(CXX_COMPILE_FLAGS UNIX_COMMAND ${CXX_COMPILE_FLAGS})
+separate_arguments(FORTRAN_COMPILE_FLAGS UNIX_COMMAND ${FORTRAN_COMPILE_FLAGS})
+target_compile_options(TP PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${CXX_COMPILE_FLAGS}>)
+target_compile_options(TP PUBLIC $<$<COMPILE_LANGUAGE:Fortran>:${FORTRAN_COMPILE_FLAGS}>)
 
 if(WITH_FASTJET)
-  target_include_directories(TP PRIVATE ${FASTJET_INCLUDE_DIR} ../KW)
+  target_include_directories(TP PRIVATE
+    ${FASTJET_INCLUDE_DIR}
+    ${PROJECT_SOURCE_DIR}/src/KW
+  )
 else()
-  target_include_directories(TP PRIVATE ../KW)
+  target_include_directories(TP PRIVATE
+    ${PROJECT_SOURCE_DIR}/src/KW)
 endif()

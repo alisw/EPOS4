@@ -1,14 +1,19 @@
 echo off
 
-#define  bim00   0.00 
+#define  bim00    0.00 
+#define  bimXX   20.00
+#define  bim100  20.00
 #define  bi100  20.00
-#define  bimXX  20.00
 
-#define  npo100  50000
-#define  npoXX  50000
-#define  npo00  0
+#define  npo100.00  50000
+#define  npo00.00  0
 
+#define  npn100.00  50000
+#define  npn00.00  0
+
+!#####################################################################################
 !========> After copy/paste, remove manually '.00' for bim <=========
+!#####################################################################################
 #define2  bim01   1.45    1.53        -8  
 #define2  bim02   2.13    2.0         13  
 #define2  bim025  2.39    2.40        -1  
@@ -36,6 +41,35 @@ echo off
 #define2  bim90  14.58   14.50         8  
 #define2  bim92  14.83   14.76         7  
 #define2  bim95  15.31   15.23         8  
+#define2  npo05.00   1.59    0.09       150  
+#define2  npo10.00   3.68    0.54       314  
+#define2  npo15.00   5.78    0.69       509  
+#define2  npo20.00   7.87    0.84       703  
+#define2  npo25.00  10.61    0.98       963  
+#define2  npo30.00  15.65    1.13      1452  
+#define2  npo35.00  21.40    1.28      2012  
+#define2  npo40.00  29.40    1.42      2798  
+#define2  npo45.00  40.28    1.65      3863  
+#define2  npo50.00  54.28    1.96      5232  
+#define2  npo55.00  71.75    2.26      6949  
+#define2  npo60.00  93.52    2.62      9090  
+#define2  npo65.00  119.8    3.15     11668  
+#define2  npo70.00  151.8    3.76     14799  
+#define2  npo75.00  190.4    4.57     18587  
+#define2  npo80.00  236.9    5.70     23121  
+#define2  npo85.00  292.5    7.23     28525  
+#define2  npo90.00  359.9    9.42     35045  
+#define2  npo95.00  444.7   12.93     43172  
+#define2  npo99.00  535.1   19.38     51575  
+#define2  npo99.90  584.8   26.12     55869  
+#define2  npn20.00   5.88    1.67       421  
+#define2  npn40.00  18.91    2.24      1667  
+#define2  npn60.00  46.17    3.14      4303  
+#define2  npn80.00  93.40    4.71      8869  
+#define2  npn90.00  126.7    5.99     12066  
+#define2  npn99.00  160.6    8.85     15173  
+#define2  npn99.90  165.3   10.76     15451  
+!#####################################################################################
 
 !++++++++++++++++++++++++++++++++++++++++++++++
 ! CHECK for 0.000 values, change them manually
@@ -188,20 +222,20 @@ CentralityClass 3    bim10 bim15  1 !2
 CentralityClass 4    bim15 bim20  1 !2
 CentralityClass 5    bim20 bim25  1 !2
 CentralityClass 6    bim25 bim30  1 !2
-CentralityClass 7    bim30 bim35  2 !4
-CentralityClass 8    bim35 bim40  2 !4
-CentralityClass 9    bim40 bim45  2 !4
-CentralityClass 10   bim45 bim50  2 !4
-CentralityClass 11   bim50 bim55  2 !4
-CentralityClass 12   bim55 bim60  4 !4
-CentralityClass 13   bim60 bim65  4 !4
-CentralityClass 14   bim65 bim70  4 !4
-CentralityClass 15   bim70 bim75  8 !8
-CentralityClass 16   bim75 bim80  8 !8
-CentralityClass 17   bim80 bim85  8 !8
-CentralityClass 18   bim85 bim90  8 !8
-CentralityClass 19   bim90 bim95  8 !8
-CentralityClass 20   bim95 bi100  8 !8
+CentralityClass 7    bim30 bim35  1 !4
+CentralityClass 8    bim35 bim40  1 !4
+CentralityClass 9    bim40 bim45  1 !4
+CentralityClass 10   bim45 bim50  1 !4
+CentralityClass 11   bim50 bim55  1 !4
+CentralityClass 12   bim55 bim60  1 !4
+CentralityClass 13   bim60 bim65  1 !4
+CentralityClass 14   bim65 bim70  1 !4
+CentralityClass 15   bim70 bim75  1 !8
+CentralityClass 16   bim75 bim80  1 !8
+CentralityClass 17   bim80 bim85  1 !8
+CentralityClass 18   bim85 bim90  1 !8
+CentralityClass 19   bim90 bim95  1 !8
+CentralityClass 20   bim95 bi100  1 !8
 
 CentralityLimit 0  0
 CentralityLimit 5  bim05
@@ -230,7 +264,9 @@ set bref80 bim80
 
 #define  bimrange0to10  "::bim00::bim10::"
 #define  bimrange0to20  "::bim00::bim20::"
+#define  bimrange10to30 "::bim10::bim30::"
 #define  bimrange20to40 "::bim20::bim40::"
+#define  bimrange30to50 "::bim30::bim50::"
 #define  bimrange40to60 "::bim40::bim60::"
 #define  bimrange60to80 "::bim60::bim80::"
 #define  bimrange60to92 "::bim60::bim92::"

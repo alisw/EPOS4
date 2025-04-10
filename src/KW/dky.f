@@ -14,7 +14,8 @@ c-----------------------------------------------------------------------
       common/cttaus/tpro,zpro,ttar,ztar,ttaus,detap,detat
       double precision tpro,zpro,ttar,ztar,ttaus,detap,detat
       common/cnptlbur/nptlbur /cij99/ij99
-      character*24 txt
+
+      integer getAccumJerr
       !-------------------------------
       !call ranfini(222222222,2,1) !to have same random nr for 
       !call ranfini(111111111,1,2) !  mx and mt run
@@ -113,7 +114,7 @@ c-----------------------------------------------------------------------
      .            ,'    idor=',idor
                   write(ifch,*)'***** mass=',p5
                endif
-               jerr(9)=jerr(9)+1
+               call setAccumJerr(9,getAccumJerr(9)+1)
                if(ntry.eq.2)then
                  write(ifmt,*)'####### ERROR 21072016 ; id ist ity = '
      .           ,idip,istip,ityip
@@ -142,11 +143,12 @@ c-----------------------------------------------------------------------
      . write(ifmt,'(a,i6)')'final numer of slots used:',nptl
       if(nptl.eq.nptlbd)goto 999
       if(ish.ge.2)then
-      txt=              ' &     '
-      if(i99.eq.99)txt= ' (99)& '
-      if(i99.eq.999)txt=' (999)& '
-      if(i99.eq.3)txt=' (3)& '
-      call alist('list after decayall'//txt,1,nptl)
+      if(i99.eq.99)
+     .call aalist('list after decayall&',nptlbd+1,nptl)
+      if(i99.eq.999)
+     .call aalist('list after decayall (999)&',1,nptl)
+      if(i99.eq.3)
+     .call aalist('list including 6/8 particles&',1,nptl)
       endif
       call clop(3)
   999 continue
@@ -157,6 +159,23 @@ c-----------------------------------------------------------------------
       if(ish.ge.4)write(ifmt,'(a,i8,i5)')
      .'end of decayall - n i99 = ',n,i99
       call utprix('decaya',ish,ishini,5)
+      !-----------------------
+      !do ip=1,nptl
+      !if(istptl(ip).eq.6)then
+      !if(i99.eq.3.and.(idptl(ip).eq.-140.or.idptl(ip).eq.-240))then
+      !idor=0
+      !idoror=0
+      !if(iorptl(ip).gt.0)then
+      ! idor=idptl(iorptl(ip))
+      ! if(iorptl(iorptl(ip)).gt.0)then
+      ! idoror=idptl(iorptl(iorptl(ip)))
+      ! endif
+      !endif 
+      !write(ifch,*)'UrQMD in++',nrevt,idptl(ip),istptl(ip),idor,idoror
+      !endif
+      !endif
+      !enddo
+      !-----------------------
       end
 
 c-----------------------------------------------------------------------
@@ -543,7 +562,8 @@ c only if mean mass is used
           endif
           amss=amss0+0.5*wi*tan((2.*rangen()-1.)
      &                          *atwimax) !maximum broadening
-c      write(*,*)'broadening:',ip,idlv1,abs(pptl(5,ip)-amss)/wi,amss,ntry
+       !if(idlv1.eq.1111)
+       !&write(*,*)'broadening:',ip,idlv1,(pptl(5,ip)-amss)/wi,amss,ntry
         endif
       endif
 
@@ -719,16 +739,18 @@ c     --------------------------------------
            endif
       rnd(1)=1.
       jsave=1
-      do 310 i=2,naddptl1
-      rnew=rangen()
-      i1=i-1
-      do 320 jj1=1,i1
-      j=i-jj1
-      jsave=j+1
-      if(rnew.le.rnd(j)) goto310
-      rnd(jsave)=rnd(j)
-320   continue
-310   rnd(jsave)=rnew
+      do i=2,naddptl1
+        rnew=rangen()
+        i1=i-1
+        do jj1=1,i1
+          j=i-jj1
+          jsave=j+1
+          if(rnew.le.rnd(j)) goto310
+          rnd(jsave)=rnd(j)
+        enddo
+310     continue
+        rnd(jsave)=rnew
+      enddo
       rnd(naddptl)=0.
       wt=1.
       sum1=sum
@@ -1176,12 +1198,15 @@ c      cosw=sqrt(1.-sin2w)           !?????????????????unused
 
       data iblank/' '/
       ird=0
-      do 1 i=1,mxlook
-1     look(i)=0
-      do 2 i=1,mxdky
-      do 3 j=1,5
-3     mode(j,i)=0
-2     cbr(i)=0.
+      do i=1,mxlook
+        look(i)=0
+      enddo
+      do i=1,mxdky
+        do j=1,5
+          mode(j,i)=0
+        enddo
+        cbr(i)=0.
+      enddo
       nodcay=.false.
       noeta=.false.
       nopi0=.false.
@@ -1209,8 +1234,9 @@ c      cosw=sqrt(1.-sin2w)           !?????????????????unused
 c      if(ird.gt.1171)return   ! ??????????????????????????
       ires=nint(dectab(1,ird))
       br=dectab(2,ird)
-      do 215 i=1,5
-215   imode(i)=nint(dectab(2+i,ird))
+      do i=1,5
+        imode(i)=nint(dectab(2+i,ird))
+      enddo
       if(nopi0.and.ires.eq.110) goto220
       if(noeta.and.ires.eq.220) goto220
       if(ires.eq.iold) goto230

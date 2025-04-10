@@ -11,8 +11,9 @@ c---------------------------------------------------------------------------
 
       integer   mmry,mxptl,nmxhep,myptl,nzeta,nflav,mxstr,mystr,mxtau
      *         ,mxtrig,mxpri,mxbins,matau,mxnucl,mxhisarg,idxD0,idxD1
-     *         ,idxD,nclha,nclegy,mamxx,mxjerr,mxvol,mxeps,mxidco,mxcoox
-     *         ,mxcooy,mycoti,mxcoti
+     *         ,idxD,nclha,nclegy,mamxx,mxvol,mxeps,mxidco,mxcoox
+     *         ,mxcooy
+c     *         ,mxcooy,mycoti,mxcoti
       parameter (mmry=1)   !memory saving factor
 
       parameter (mxptl=190000/mmry) !max nr of particles in epos ptl list
@@ -31,8 +32,7 @@ c---------------------------------------------------------------------------
       parameter (mxhisarg=100)
       parameter (idxD0=0,idxD1=3,idxD=1,nclha=3,nclegy=100)
       parameter (mamxx=210)
-      parameter (mxjerr=30)
-      parameter (mycoti=5,mxcoti=20)
+c      parameter (mycoti=5,mxcoti=20)
 
 c---------------------------------------------------------------------------
 c                   epos event common block
@@ -339,7 +339,7 @@ c------------------------------------------------------------------------
       common/nucl8/s0min,ioangord
       integer      izmode,maxsurf,iofrout,jzmode
       real         zclass
-      common/hydr4/zclass(5,100),izmode,maxsurf,iofrout,jzmode(7)
+      common/hydr4/zclass(5,100),izmode,maxsurf,iofrout,jzmode(8)
       real         zlimit
       integer      jtable
       common/hydr5/zlimit(0:100),jtable(7)
@@ -405,13 +405,14 @@ c------------------------------------------------------------------------
       common/cnsta/pi,pii,hquer,prom,piom,ainfin
       integer      iversn,iverso
       common/versn/iversn,iverso
-      integer      imsg,jerr,ntevt,nrevt,naevt,nrstr,nrptl
-      common/accum/imsg,jerr(mxjerr),ntevt,nrevt,naevt,nrstr,nrptl
+      integer      imsg,ntevt,nrevt,naevt,nrstr,nrptl
+      common/accum/imsg,ntevt,nrevt,naevt,nrstr,nrptl
       integer       nglacc
       common/accum2/nglacc
       double precision cotid
-      real coti
-      common/ccoti/cotid(2),coti(mycoti,mxcoti)
+c      real coti
+c      common/ccoti/cotid(2),coti(mycoti,mxcoti)
+      common/ccoti/cotid(2)
       integer      ikolmn,ikolmx,nglmin,nglmax
       real         segmin,segmax
       common/musct/ikolmn,ikolmx,nglmin,nglmax,segmin,segmax
@@ -458,6 +459,11 @@ c------------------------------------------------------------------------
       integer      mxnody,nrnody,nody
       parameter(mxnody=200)
       common/nodcy/nrnody,nody(mxnody)
+      integer      hepmc_record_id_nb_max,hepmc_record_id_nb,
+     .             hepmc_record_id_list
+      parameter(hepmc_record_id_nb_max=200)
+      common/hepmc_record_id/hepmc_record_id_nb,
+     .             hepmc_record_id_list(hepmc_record_id_nb_max)
       real         ctaumin
       common/ctdcy/ctaumin
       integer ifoele
@@ -640,8 +646,10 @@ c------------------------------------------------------------------------
       common/cisyst/isyst
       integer            irootcproot,iboein
       common/crootcproot/irootcproot,iboein
-      integer      ihepmc,ihepframe
-      common/chepmc/ihepmc,ihepframe
+      integer      hepmc,hepmc_record_mode,ihepmc3
+      real         hepmc_tau_decay,hepmc_rapcms
+      common/chepmc/hepmc,hepmc_record_mode,hepmc_tau_decay,
+     *              hepmc_rapcms,ihepmc3
       integer          ihyskip
       common /cihyskip/ihyskip
 

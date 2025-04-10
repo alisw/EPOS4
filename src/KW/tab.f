@@ -594,7 +594,7 @@ c-----------------------------------------------------------------------
         if(ncount.eq.1.or.ncount.eq.10.or.ncount.eq.100
      .    .or.ncount.eq.1000)then
           lcount=log10(1.*ncount)+1
-          write(ifmtx,'(a,i1,2a,i2)')'WARNING ',lcount
+          write(*,'(a,i1,2a,i2)')'WARNING ',lcount
      .    ,' tab Negative sTYP(4)'
      .    ,'  (tabulation?)  iDebug =',iDebug
         endif
@@ -1601,9 +1601,21 @@ c        endif
             do jl=ml1,ml2   !at least once check all !!!
               call eolpi( jl , j1 , l1 ) !KW1808
               call eolpic( j1 , l1 , j2 , l2 ) 
-              qqref=q2zmin
-              call getSminEoL(jl,qqref,spminx)
-              qmin=1.5*q2zmin
+              !~~~~~~~~~~~~~~~~~~
+              if(abs(coelaf).lt.1e-5.and.abs(coekaf-1).lt.1e-5)then !default EPOS4 
+                qqref=q2zmin
+                call getSminEoL(jl,qqref,spminx)
+                qmin=1.5*q2zmin
+             elseif(abs(coelaf-1).lt.1e-5.and.abs(coekaf-1).lt.1e-5)then
+                ml=jl
+                call getQminEoL(ml,qref1,qref2,qqref)
+                call getSminEoL(ml,qqref,spminx)
+                spminx=spminx*1.10
+                qmin=qqref
+              else
+                stop'ERROR 230712c'
+              endif 
+              !~~~~~~~~~~~~~~~~~~
               ki=0
               iret=1
               do while(iret.eq.1)
@@ -1883,32 +1895,40 @@ cc     *,qi,qq,sk,i,j,k1,csipo1,csord(i,j,k1)
      .        ,'        ord      ord-i  '
               call eolpi( ml , m1 , l1 ) 
               call eolpic( m1 , l1 , m2 , l2 ) 
-              qqref=q2zmin
+              !qqref=q2zmin
+              call getQminEoL(ml,qref1,qref2,qqref)
               call getSminEoL(ml,qqref,spminx)
               qmin=1.5*q2zmin
-              ki=0
-              iret=1
-              do while(iret.eq.1)
-                ki=ki+1
-                sk=spminx*(epmax/2./spminx)**((ki-1)/19.) 
-                call getLimitsEoL(ml,sk,qmin , dy1,dy2,dy3,iret)
-              enddo
+              ki=3!0
+              !iret=1
+              !do while(iret.eq.1)
+              !  ki=ki+1
+              !  sk=spminx*(epmax/2./spminx)**((ki-1)/19.) 
+              !  call getLimitsEoL(ml,sk,qmin , dy1,dy2,dy3,iret)
+              !enddo
             do k=1,6
-              if(mod(k,2).eq.1)akk=ki+5*(k/2)  !nodes
-              if(mod(k,2).eq.0)akk=ki+5*(k/2-1)+0.5 
+              if(mod(k,2).eq.1)akk=ki+7*(k/2)  !nodes
+              if(mod(k,2).eq.0)akk=ki+7*(k/2-1)+0.5 
               sk=spminx*(epmax/2./spminx)**((akk-1)/19.) 
             do n=1,1
               qmax1=sk/4
               qmax2=sk/4
               if(n.eq.2)qmax2=qmax2*4
             do i=1,4
+              !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+              ! We test only small q values, they are most important 
+              !   (gives zero for EoL bottom, but this contribution is not very important)
+              ! TODO: 
+              !  fix problems close to the q edges (where fct becomes zero) 
+              !    in particular for coelaf=1
+              !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
               if(i.eq.1)qi=2
               if(i.eq.2)qi=6.5
               if(i.eq.3)qi=25
               if(i.eq.4)qi=100
             do j=1,4
               q2cmin(1)=4.
-              if(j.eq.1)qj=1.5
+              if(j.eq.1)qj=2
               if(j.eq.2)qj=6.5
               if(j.eq.3)qj=25
               if(j.eq.4)qj=100
@@ -2177,6 +2197,7 @@ cc     *,qi,qq,sk,i,j,k1,csipo1,csord(i,j,k1)
               sk=spmin*(epmax/2./spmin)**((yk-1)/19.)  
               call getQmaxEoL(jl,sk,qmax1)
             do i=1,4
+              !test only important small q values (gives zero for bottom)
               if(i.eq.1)qi=2
               if(i.eq.2)qi=6.5
               if(i.eq.3)qi=25
@@ -3319,8 +3340,9 @@ c      Wp=W
         if(klas.gt.0.and.rr.lt.0d0)goto 888
         ttt=2*ppp/(1+sqrt(rr))
       elseif(W.le.0.d0)then
-        write(ifmt,*)'Error in getBornKin2',klas,W,s,m2,ppp,smin
-        call utstop("Error in getBornKin2 (2) !&")
+        !write(ifmt,*)'Error in getBornKin2',klas,W,s,m2,ppp,smin
+        !call utstop("Error in getBornKin2 (2) !&")
+        goto 888
       endif
       if(klas.gt.0)goto 999
       tttmin=min(tttmin,ttt)
@@ -3618,7 +3640,7 @@ c     scale means mu_F^2 = factorization scale
 c-----------------------------------------------------------------------
 #include "aaa.h"
 #include "sem.h"
-      double precision scale,pt2,coelaf
+      double precision scale,pt2
       real m2 
       real crash(2)
       icrash=3
@@ -3664,12 +3686,11 @@ c-----------------------------------------------------------------------
  12   continue ! (mc mb mc mb)
       m2=qbmass**2
  999  continue
-      coelaf=0.d0
       if(ii.eq.1)then
-        pt2=coekaf*scale-coelaf*dble(m2)
+        pt2=coekaf*scale-coelaf*m2
         pt2=max(0.d0,pt2)
       elseif(ii.eq.2)then
-        scale=(pt2+coelaf*dble(m2))/coekaf
+        scale=(pt2+coelaf*m2)/coekaf
       else
         stop'ERROR 07032019b'
       endif
@@ -3764,10 +3785,19 @@ c-------------------------------------------------------------------------------
       qref2=q2zmin
       qref1=max(qref1,1.5)
       qref2=max(qref2,1.5)
-      if(iabs(j2).eq.4)qref1=max(qref1,qcmass**2)
-      if(iabs(j2).eq.5)qref1=max(qref1,qbmass**2)
-      if(iabs(l2).eq.4)qref2=max(qref2,qcmass**2)
-      if(iabs(l2).eq.5)qref2=max(qref2,qbmass**2)
+      if(abs(coelaf).lt.1e-5.and.abs(coekaf-1).lt.1e-5)then !default EPOS4 
+       if(iabs(j2).eq.4)qref1=max(qref1,qcmass**2)
+       if(iabs(j2).eq.5)qref1=max(qref1,qbmass**2)
+       if(iabs(l2).eq.4)qref2=max(qref2,qcmass**2)
+       if(iabs(l2).eq.5)qref2=max(qref2,qbmass**2)
+      elseif(abs(coelaf-1).lt.1e-5.and.abs(coekaf-1).lt.1e-5)then
+       if(iabs(j2).eq.4)qref1=max(qref1,1.5+qcmass**2)
+       if(iabs(j2).eq.5)qref1=max(qref1,1.5+qbmass**2)
+       if(iabs(l2).eq.4)qref2=max(qref2,1.5+qcmass**2)
+       if(iabs(l2).eq.5)qref2=max(qref2,1.5+qbmass**2)
+      else
+        stop'ERROR 230712b'
+      endif 
       qqref=max(qref1,qref2)
       return
       end

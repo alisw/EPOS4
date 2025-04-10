@@ -1,0 +1,94 @@
+#!/usr/bin/env bash 
+
+ext1='-'
+ext3='-'
+ext4='-'
+end=0
+
+# check if the following environement variables have been defined
+# check if the following environement variables have been defined
+if [ -z ${EPO} ]; then
+    export EPO=@CMAKE_SOURCE_DIR@/
+       echo "For compatibility reason with older versions, EPO has to be defined by default as the EPOS source directory: " $EPO
+fi
+
+if [ -z ${DAT} ]; then
+    # this directory is needed to retrieve the files README.md and VERSION.txt
+    export DAT=@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_DATADIR@/
+    echo "DAT will be defined by default as: " $DAT
+fi
+
+if [ -z ${OPT} ]; then
+    export OPT=@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_DATADIR@/examples/
+    echo "OPT will be defined by default as: " $OPT
+    # create directory if needed, no error if existing
+    mkdir -p ${OPT}
+fi
+
+if [ -z ${HTO} ]; then
+    export HTO=@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_DATADIR@/histo/
+    echo "HTO will be defined by default as: " $HTO
+    # create directory if needed, no error if existing
+    mkdir -p ${HTO}
+fi
+
+if [ -z ${CHK} ]; then
+    export CHK=@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_DATADIR@/check/
+    echo "CHK will be defined by default as: " $CHK
+    # create directory if needed, no error if existing    
+    mkdir -p ${CHK}
+fi
+
+while [ $end -eq 0 ];
+do
+   end=1
+   case "$1"
+   in
+   -e1) shift 
+         ext1="$1"
+         shift
+         end=0
+         ;;
+   -e3) shift 
+         ext3="$1"
+         shift
+         end=0
+         ;;
+   -e4) shift 
+         ext4="$1"
+         shift
+         end=0
+         ;;
+   esac
+done
+
+if [ ! -f ${OPT}$1.optns ]; then
+echo ${OPT}$1.optns "does not exist"
+exit
+fi
+
+pref=""
+
+if [ "$OPT" = "./" ]; then 
+    odir=`pwd`/
+else
+    odir="$OPT"
+fi
+
+clinput=$1'.clinput'
+ echo "system $2"    > $clinput
+ echo "ext1 $ext1"    >> $clinput
+ echo "ext3 $ext3"    >> $clinput
+ echo "ext4 $ext4"    >> $clinput
+ echo "rootcproot $3"    >> $clinput
+ echo "fname pathep ${EPX}"    >> $clinput
+ echo "fname data   ${CHK}${pref}$1.dataX"    >> $clinput
+ echo "input ${odir}$1.optns"    >> $clinput
+ echo "runprogram"    >> $clinput
+
+ ############ dont change the following line, cepos greps for /bin/
+@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_BINDIR@/XeposC -n <<EOF
+$clinput
+EOF
+rm $clinput
+

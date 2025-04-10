@@ -74,7 +74,37 @@ c---------------------------------------------------------------------
       common/nl/noplin  /cnnnhis/nnnhis
       character*1000 cline
       common/cjjj/jjj,cline
+      
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     variables used for analysis spectra
+      character,allocatable :: analysisName(:)      
+      integer nameLength
+      character,allocatable :: analysisObservable(:)      
+      integer observableLength
+      character,allocatable :: analysisBinning(:)      
+      integer histofileLength
+      character,allocatable :: analysisHistofile(:)      
+      integer histogramLength
+      character,allocatable :: analysisHistogram(:)      
+      integer binningLength
+      character,allocatable :: subanalysisMeaning(:)      
+      integer meaningLength
+      integer ierr, nbOfSubAnalyses, nbOfMoreParameters,
+     *     nbOfSubParameters
+      integer numberOfBins, normalization
+      real moreParameter, subParameter
+      real minValue, maxValue
+      real, allocatable :: moreParameterArray(:)
+      real, allocatable :: subParameterArray(:)
 
+      observableLength=0
+      meaningLength=0
+      binningLength=0
+      nbOfSubAnalyses=0
+      nbOfMoreParameters=0
+      nbOfSubParameters=0      
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+      
       call utpri('xini  ',ish,ishini,5)
 
       i=1
@@ -96,6 +126,7 @@ c---------------------------------------------------------------------
       ionoerr=0
 c      newfra=0
       indfra=1
+c      print*,'src/KW/xan.f::xini indfra: ',indfra
 c      nepfra=0
       inpfra=1
  1    call utword(line,i,j,0)
@@ -171,7 +202,15 @@ c          newfra=nfp
 c          nepfra=nfp
         endif
       elseif(line(i:j).eq.'binning')then !-----------
-        call utword(line,i,j,1)
+         call utword(line,i,j,1)
+c-----binning lin
+c-----        ^ ^
+c-----        i j
+         binningLength = j-i+1
+         allocate(analysisBinning(binningLength))
+         do l=1,binningLength
+            analysisBinning(l)=line(i+l-1:i+l-1)
+         end do
         if(line(i:j).eq.'lin')then
           iologb=0
           iocnxb=0
@@ -277,6 +316,172 @@ c          nepfra=nfp
         noweak(nhis)=2
       elseif(line(i:j).eq.'noweak3')then !-----------
         noweak(nhis)=3
+      elseif(line(i:j).eq.'#ifBigSystem')then
+        call setIfBigSystem(line,i,j,igo1)
+        if(igo1.eq.1)goto 1
+      elseif(line(i:j).eq.'#ifSmallSystem')then
+        call setIfSmallSystem(line,i,j,igo1)
+        if(igo1.eq.1)goto 1
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     BEGIN READ NAMED ANALYSIS CONFIGURATION
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     parse information like        
+c     beginanalysis
+c       name PtSpectra
+c         minvalue p1 !min pt
+c         maxvalue p2 !max pt
+c         nrbins   n  !number of bins
+c         normalization n !normalization
+c       moreparameters 3
+c         value1
+c         value2
+c         value3        
+c       subanalyses 2 !which allows to make similar analyses in parallel
+c       subparameters 3
+c         !First set
+c         p11 !particle id
+c         p21 !min rapidity
+c         p31 !max rapidity
+c         !Second set
+c         p12 !particle id
+c         p22 !min rapidity
+c         p32 !max rapidity
+c     endanalysis        
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc        
+      elseif(line(i:j).eq.'name')then !-----------
+      nhis=nhis-1
+      call utword(line,i,j,1) !name
+c-----name PtSpectra
+c-----     ^       ^
+c-----     i       j
+      nameLength = j-i+1
+      allocate(analysisName(nameLength))
+      do l=1,nameLength
+         analysisName(l)=line(i+l-1:i+l-1)
+      end do   
+      elseif(line(i:j).eq.'observable')then !-----------
+      call utword(line,i,j,1) !name
+c-----name pseudorapidity
+c-----     ^            ^
+c-----     i            j
+      observableLength = j-i+1
+      allocate(analysisObservable(observableLength))
+      do l=1,observableLength
+         analysisObservable(l)=line(i+l-1:i+l-1)
+      end do   
+      elseif(line(i:j).eq.'minvalue')then !-----------
+      call utword(line,i,j,1) !minvalue
+c-----minvalue real
+      read(line(i:j),fmt=*,iostat=ierr) minvalue
+      elseif(line(i:j).eq.'maxvalue')then !-----------
+      call utword(line,i,j,1) !maxvalue
+c-----maxvalue real
+      read(line(i:j),fmt=*,iostat=ierr) maxvalue
+      elseif(line(i:j).eq.'nrbins')then !-----------
+      call utword(line,i,j,1) !nrbins
+c-----nrbins integer
+      read(line(i:j),fmt=*,iostat=ierr) numberOfBins
+      elseif(line(i:j).eq.'normalization')then !-----------
+      call utword(line,i,j,1) !normalization
+c-----normalization integer
+      read(line(i:j),fmt=*,iostat=ierr) normalization
+      elseif(line(i:j).eq.'importarray')then !-----------
+      call utword(line,i,j,1) !histogram
+c-----histoname
+      histogramLength = j-i+1
+      allocate(analysisHistogram(histogramLength))
+      do l=1,histogramLength
+         analysisHistogram(l)=line(i+l-1:i+l-1)
+      end do
+      call utword(line,i,j,1) !histofile
+c-----histofile         
+      histofileLength = j-i+1
+      allocate(analysisHistofile(histofileLength))
+      do l=1,histofileLength
+         analysisHistofile(l)=line(i+l-1:i+l-1)
+      end do
+      elseif(line(i:j).eq.'moreparameters')then !-----------
+      call utword(line,i,j,1)   !number of more parameters         
+      read(line(i:j),fmt=*,iostat=ierr) nbOfMoreParameters
+c     allocate memory to store the more parameters            
+      allocate(moreParameterArray(nbOfMoreParameters))
+      do k=1,nbOfMoreParameters
+      call utword(line,i,j,1) 
+      read(line(i:j),fmt=*,iostat=ierr) moreParameter
+      moreParameterArray(k)=moreParameter
+      enddo
+      elseif(line(i:j).eq.'subanalyses')then !-----------
+      call utword(line,i,j,1)   !number of subanalyses
+      read(line(i:j),fmt=*,iostat=ierr) nbOfSubAnalyses
+c-----create a named analysis...      
+      call createNamedAnalysis(analysisName, nameLength,
+     *     analysisObservable, observableLength, minvalue, maxvalue,
+     *     numberOfBins, analysisBinning, binningLength, normalization,
+     *     analysisHistofile, histofileLength,
+     *     analysisHistogram, histogramLength,
+     *     nbOfMoreParameters, moreParameterArray, nbOfSubAnalyses)
+c-----deallocate all character strings     
+      if(allocated(analysisName)) deallocate(analysisName)
+      if(allocated(analysisObservable)) deallocate(analysisObservable)
+      if(allocated(analysisBinning)) deallocate(analysisBinning)
+      if(allocated(moreParameterArray)) deallocate(moreParameterArray)
+      
+      elseif(line(i:j).eq.'meaning')then !-----------
+      call utword(line,i,j,1) !meaning
+c-----meaning PtRange
+c-----        ^     ^
+c-----        i     j
+      meaningLength = j-i+1
+      allocate(subanalysisMeaning(meaningLength))
+      do l=1,meaningLength
+         subanalysisMeaning(l)=line(i+l-1:i+l-1)
+      end do         
+      elseif(line(i:j).eq.'subparameters')then !-----------
+      call utword(line,i,j,1)   !number of subparameters
+      read(line(i:j),fmt=*,iostat=ierr) nbOfSubParameters
+c     allocate memory to store the subparameters
+      allocate(subParameterArray(nbOfSubParameters))
+c     for each subAnalysis
+      do l=1,nbOfSubAnalyses
+c     fill subParameterArray with subParameter
+      do k=1,nbOfSubParameters
+      call utword(line,i,j,1)
+c     if line is endanalysis, some values are missing
+      if(line(i:j).eq.'endanalysis')then
+        write(ifmt,'(78a1/a/a/a/78a1)')('-',idash=1,78)
+     * ,'ERROR in analysis ... endanalysis environment'
+     * ,'Check value for number of subanalyses'
+     * ,'  and value for number or subparameters'
+     * ,('-',idash=1,78)
+        call EXIT(1)
+      endif
+      read(line(i:j),fmt=*,iostat=ierr) subParameter
+      subParameterArray(k)=subParameter      
+      enddo
+c     fill the C++ structure
+c     void addSubParameters_(int *subAnalysisIndex,
+c			      char* meaningValue,
+c			      int* meaningLength,
+c                              int *nbOfSubParameters,
+c                              float *subParameters)
+      
+      call addSubParameters(l-1,
+     *     subanalysisMeaning,
+     *     meaningLength,
+     *     nbOfSubParameters,
+     *     subParameterArray)
+      enddo
+c     free allocated memory
+      if(allocated(subParameterArray)) then
+         deallocate(subParameterArray)
+      endif
+      if(allocated(subanalysisMeaning)) then
+         deallocate(subanalysisMeaning)
+      endif
+      goto 1
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     END READ ANALYSIS CONFIGURATION
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc              
       elseif(line(i:j).eq.'histogram'
      *       .or.line(i:j).eq.'hi')then !-----------
         nac(nhis)=1
@@ -599,7 +804,7 @@ c          nepfra=nfp
                 if(line(k:k).eq.'%')kk=k
               enddo
               if(kk.eq.0)then
-                read(line(i:j),*)xmitri(ntri(nhis),nhis)
+                read(line(i:j),*,err=1007)xmitri(ntri(nhis),nhis)
               else
                 read(line(i:kk-1),*)xmitrp(ntri(nhis),nhis)
                 read(line(kk+1:j),*)xmitri(ntri(nhis),nhis)
@@ -685,7 +890,18 @@ c          nepfra=nfp
       elseif(line(i:j).eq.'write')then !-----------
         stop'write should not be in bh...eh environment. missing eh?'
       elseif(line(i:j).eq.'writearray'.or.line(i:j).eq.'wa')then !----
-        call utword(line,i,j,1)
+         ! read next word
+         call utword(line,i,j,1)
+         ! if -name option is specified : writearray from a named analysis
+         ! writearray -name analysis_name number_of_columns
+         if (line(i:j).eq.'-name')then
+            ! in this case we have something like writearray -name PtSpectra 3
+            ! read analysis_name
+            call utword(line,i,j,1)
+            ! real number_of_columns
+            call utword(line,i,j,1)
+         endif
+         ! else we have something like writearray 3
         iologb=0
         iocnxb=0
       elseif(line(i:j).eq.'writehisto')then !-----------
@@ -693,24 +909,35 @@ c          nepfra=nfp
         iologb=0
         iocnxb=0
       elseif(line(i:j).eq.'endhisto'.or.line(i:j).eq.'endanalysis'
-     .      .or.line(i:j).eq.'eh')then   !-----------
-        ilog(nhis)=.false.
-        icnx(nhis)=.false.
-        if(iologb.eq.1)ilog(nhis)=.true.
-        if(iocnxb.eq.1)icnx(nhis)=.true.
-        if(ilog(nhis))then
-          xinc(nhis)=1./log(xmax(nhis)/xmin(nhis))*nbin(nhis)
-        else
-          xinc(nhis)=float(nbin(nhis))/(xmax(nhis)-xmin(nhis))
-        endif
-        iologb=0
-        iocnxb=0
-        jjj=j
-        cline=line
-        goto 9999
+     .       .or.line(i:j).eq.'eh')then !-----------
+         ! nhis : number of histogram for unnamed analysis
+         ! in case of a named analysis, skip this part
+         if (nhis.gt.0) then
+            ilog(nhis)=.false.
+            icnx(nhis)=.false.
+            if(iologb.eq.1)ilog(nhis)=.true.
+            if(iocnxb.eq.1)icnx(nhis)=.true.
+            if(ilog(nhis))then
+               xinc(nhis)=1./log(xmax(nhis)/xmin(nhis))*nbin(nhis)
+            else
+               xinc(nhis)=float(nbin(nhis))/(xmax(nhis)-xmin(nhis))
+            endif
+         end if
+         iologb=0
+         iocnxb=0
+         jjj=j
+         cline=line
+         if(allocated(analysisBinning)) deallocate(analysisBinning)               
+         goto 9999
+c      else
+c         write(*,*)"unable to parse following line: ",trim(line)
+c         stop"please check your options file : command, value of "//
+c     .       "moreparameters, subanalyses and subparameters"
       endif
       goto 1
 
+ 1007 ierror=1007
+      goto 99000
  1006 ierror=1006
       goto 99000
 99001 ierror=99001
@@ -742,6 +969,7 @@ c          nepfra=nfp
         write (ifch,*) (ifra(j),j=1,nfra)
       endif
       call utprix('xini  ',ish,ishini,5)
+
       return
       end
 
@@ -911,7 +1139,7 @@ c---------------------------------------------------------------------
 
       call xanatest8
 
-      if(ish.ge.2)then
+      if(ish.ge.3)then
           call alist('fill histograms&',0,0)
       endif
 
@@ -1231,6 +1459,7 @@ c...........................loop nptl...................................
     ! .,idptl(iorptl(iorptl(j))),istptl(iorptl(iorptl(j)))
     !~~~~~~~~~~~~~~~~~~
         if(i1.eq.0.and.i2.ne.0.and.i3.ne.0)imes=1
+        if(abs(idepos).eq.20)imes=1
         if(i1.ne.0.and.i2.ne.0.and.i3.ne.0)ibar=1 
         if(i1.gt.0.and.i2.gt.0.and.i3.gt.0)jbar=1 
         if(i1.lt.0.and.i2.lt.0.and.i3.lt.0)jbar=-1 
@@ -1306,7 +1535,8 @@ c...........check triggers
             do i=1,ntri(n)
               if(ish.ge.7)write(ifch,*)'  trigger variable: ',itri(i,n)
               if(itri(i,n).lt.100)then
-                call xval(n,icast(i,n),itri(i,n),itfra(i,n),j,x)
+c                 write(*,*)'1419 itfra(1,n)',ivfra(1,n)                                  
+                 call xval(n,icast(i,n),itri(i,n),itfra(i,n),j,x)
                 if(ntrc(i,n).ne.-1)then
                   call triggercondition(i,n,x,go)
                   !if(go)print*,'XAN ptltrg ',i,j,idepos,x,go
@@ -1330,23 +1560,26 @@ c...........check triggers
                     print*,'! in connection with "trigger contr ..."  '
                     print*,'!-----------------------------------------'
                     stop'in xana (2).                      '
-                endif
+                 endif
                 call xval(n,icast(i,n),itri(i,n),itfra(i,n),j,x)
                 valtri(i,n)=valtri(i,n)+x
               endif
             enddo
           endif
-            
+
+          !if(go)print*,'TESTxan ',j,idepos
+
 c............fill histogram
           if(go)then
             if(ish.ge.6)write(ifch,*)'  fill histogram '
      &            ,n,ivar(1,n),ivar(2,n),ivfra(2,n)
             cont=.false.
             if(ivar(1,n).lt.100.or.ivar(2,n).lt.100)then
-              if(ivar(2,n).lt.100)then
+               if(ivar(2,n).lt.100)then
                 call xval(n,icasv(2,n),ivar(2,n),ivfra(2,n),j,y)
                 sval(2,n)=y
                 cont=.true.
+                !print*,'TESTxan ',j,idepos,y,icasv(2,n),ivar(2,n)
               endif
               if(ivar(1,n).lt.100)then
                 call xval(n,icasv(1,n),ivar(1,n),ivfra(1,n),j,x)
@@ -1702,11 +1935,19 @@ c---------------------------------------------------------------------
       common/cyield/yield
       common/csigma/sigma
       common/geom/rmproj,rmtarg,bmax,bkmx
+      common/events2/nskippedevents
       save cnormx
 
       if(ivar(1,n).eq.-1)then
         nrbins=0
         goto 9999
+      endif
+        
+      numm=1  
+      if(iphsd.eq.1.or.iphsd.eq.9)then 
+        if(irootcproot.eq.0)then !concerns phsd
+          numm=iabs(ninicon)
+        endif 
       endif
 
 c.......here normalization.......................................
@@ -1770,10 +2011,13 @@ c.................................................................
       if(norm1.eq.1.or.norm1.eq.2)cnorm=0 
       if(norm1.eq.5.or.norm1.eq.6)cnorm=0 
       if(norm1.eq.1)then
-        if(nevent.ne.0)cnorm=1./float(nevent)
+        if(nevent.ne.0)cnorm=1./float(nevent*numm)
       endif
       if(norm1.eq.2)then
         if(ncevt(n).ne.0)cnorm=1./float(ncevt(n))
+        if(nskippedevents.gt.0)then
+          cnorm=cnorm * (nevent-nskippedevents) / nevent
+        endif
       endif
       if(norm1.eq.5.and.sumbin.ne.0.)cnorm=1./sumbin
       if(norm1.eq.6.and.nctbin.ne.0)cnorm=1./float(nctbin)
@@ -1896,7 +2140,7 @@ c.................................................................
       histoweight=dble(ncevt(n))
       if(norm1.eq.1)histoweight=dble(nevent)
       if(norm1.eq.4)histoweight=0d0
- 
+      
  9999 hisfac=1.
       xshift=0
       end
@@ -2065,6 +2309,12 @@ ckw         if(nsdi(insdif).lt.0)then
         if(insdif.ne.7.and.insdif.ne.14.and.insdif.ne.15)then
           if(abs(ch).lt.0.1)goto 60
         endif
+        ihad=0
+        call idflav(id,i1,i2,i3,j4,j)
+        if(i1.eq.0.and.i2.ne.0.and.i3.ne.0)ihad=1
+        if(abs(idepos).eq.20)ihad=1
+        if(i1.ne.0.and.i2.ne.0.and.i3.ne.0)ihad=1
+        if(ihad.eq.0)goto 60
 
         cont=   idptl(npts).ne.120 .and.idptl(npts).ne.-120
      *   .and.idptl(npts).ne.130 .and.idptl(npts).ne.-130
@@ -2758,7 +3008,7 @@ c----------------------------------------------------------------------
         ifr=34                  !set sph2-frame
       elseif(cvar.eq.'npoevt')then
         inom=234
-      elseif(cvar.eq.'npnevt')then
+      elseif(cvar.eq.'npnevt')then !identical to 'ng1evt'
         inom=235
       elseif(cvar.eq.'ikoevt')then
         inom=236
@@ -3271,6 +3521,8 @@ c----------------------------------------------------------------------
         if(cvar(4:7).eq.'zevt')read(cvar(2:3),*)ij
         if(cvar(1:1).eq.'x')icas=-ij
         if(cvar(1:1).eq.'z')icas=ij
+      elseif(cvar.eq.'dipevt')then
+        inom=552
       else
         print *,' '
         print *,'              xtrans: unknown variable ',cvar
@@ -3336,9 +3588,9 @@ c----------------------------------------------------------------------
 
       if(j.gt.0)then
         idepos=ideposf( 3 ,j)
+       if(istptl(j).ne.2)
+     . call getItyJor25(j,ityxx,jorxx) !ity,jor of 25 parton
       endif
-
-      call getItyJor25(j,ityxx,jorxx) !ity,jor of 25 parton
 
       phinll=phievt+ranphi
       if(phinll.lt.-pi)phinll=phinll+2*pi
@@ -3657,7 +3909,7 @@ c        if(idepos.le.-1000)eef=eef+prom
         select case (icas)
         case(1) 
           x=0.
-          if(iorptl(j).ne.0) x=idptl(iorptl(j))
+          if(iorptl(j).gt.0) x=idptl(iorptl(j))
         case(2) 
           x=0.
           if(.not.NoLongLivParent(2,j))x=1.
@@ -4074,7 +4326,7 @@ c        x=acos(1-qsqevt/2./elepti/eloevt)/pi*180.
          call getpptl(i,p1,p2,p3,p4,p5)
          if(istx.eq.30.or.istx.eq.31)x=x+1
         enddo
-      elseif(inom.eq.235)then                       !'npnevt'
+      elseif(inom.eq.235)then                       !'npnevt' identical to 'ng1evt'
         x=ng1evt   !npjevt+ntgevt   !npnevt
       elseif(inom.eq.236)then                       !'ikoevt'
         x=ikoevt
@@ -5080,6 +5332,8 @@ c laboratory momentum)
             stop'ERROR 210115'
           end select
         endif
+      elseif(inom.eq.552)then                       !'dipevt' 
+        x=disize
       endif 
       end
 
@@ -5288,7 +5542,7 @@ c----------------------------------------------------------------------
         n56=n5*10+n6
         call setIstXY(n56,istuse(n),istxxx,istyyy)
         if(io1.eq.3.and.
-     .   istptl(i).eq.istxxx.or.istptl(i).eq.istyyy)then
+     .   (istptl(i).eq.istxxx.or.istptl(i).eq.istyyy))then
           go=.true.
         else 
           if(istptl(i).eq.istxxx)go=.true.
@@ -5332,7 +5586,7 @@ c----------------------------------------------------------------------
           !.    print*,'XAN mux ',ida,eta,pt
           if(nint(xpara(ishift+7,n)).eq.1.)eta=abs(eta)
           call idflav(id,i1,i2,i3,jdu,i)
-          if(i2.ne.0.and.i3.ne.0)then !hadrons
+          if((i2.ne.0.and.i3.ne.0).or.(abs(id).eq.20))then !hadrons
             call idchrg( 12 ,id,ch)
             igo=0
             if(io1.eq.0.and.abs(ch).gt.0.1.or.io1.eq.2)igo=1
@@ -5901,7 +6155,10 @@ c----------------------------------------------------------------------
         endif
 
         j=i 
-        call getItyJor25(j,ityxx,jorxx) !ity,jor of 25 parton
+        ityxx=0
+        jorxx=0
+        if(istptl(j).ne.2)
+     .  call getItyJor25(j,ityxx,jorxx) !ity,jor of 25 parton
 
         IOK1 = ist12.eq.0 .or. (ist12.gt.0.and.istptl(i).eq.ist12)
         IOK2 = ity12max.eq.0 .or. (ity12max.gt.0
@@ -7479,22 +7736,23 @@ c--- qvnsp(): q-vectors for vn scalar product method
                   do m=1,5
                     qvnsp(1,m,1) = qvnsp(1,m,1) + cos(m*a)
                     qvnsp(1,m,2) = qvnsp(1,m,2) + sin(m*a)
-                    jvnsp(1)     = jvnsp(1) + 1
                   enddo
+                  jvnsp(1)     = jvnsp(1) + 1
                 endif  
                 if(eta.gt.-0.8.and.eta.lt.0.8)then !sub-evt B = ITS,TPC
                   do m=1,5
                     qvnsp(2,m,1) = qvnsp(2,m,1) + cos(m*a)
                     qvnsp(2,m,2) = qvnsp(2,m,2) + sin(m*a)
-                    jvnsp(2)     = jvnsp(2) + 1
                   enddo
+                  jvnsp(2)     = jvnsp(2) + 1
+                  !print*,'TESTSP_xan',i,a,cos(3*a),qvnsp(2,3,1),jvnsp(2)
                 endif  
                 if(eta.gt.2.8.and.eta.lt.5.1)then !sub-evt C = VZERO A
                   do m=1,5
                     qvnsp(3,m,1) = qvnsp(3,m,1) + cos(m*a)
                     qvnsp(3,m,2) = qvnsp(3,m,2) + sin(m*a)
-                    jvnsp(3)     = jvnsp(3) + 1
                   enddo
+                  jvnsp(3)     = jvnsp(3) + 1
                 endif
               endif
 c--- endif charged
@@ -7557,12 +7815,15 @@ c--- qvnsp(): q-vectors for vn scalar product method / normalization
           if(jvnsp(k).gt.0.)then
             do m=1,5
               do n=1,2
-                qvnsp(3,m,n) = qvnsp(3,m,n) / jvnsp(k)
+                qvnsp(k,m,n) = qvnsp(k,m,n) / jvnsp(k)
               enddo
             enddo
           endif
         enddo
       endif
+c      print*,'TESTSP'
+c     .,qvnsp(1,2,1),qvnsp(1,2,2),qvnsp(2,2,1),qvnsp(2,2,2),'     '
+c     .,qvnsp(1,2,1)*qvnsp(2,2,1)+qvnsp(1,2,2)*qvnsp(2,2,2)
       end
 
 c----------------------------------------------------------------------

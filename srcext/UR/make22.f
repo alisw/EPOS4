@@ -289,36 +289,96 @@ c...masses
 
       if(e-m3-m4.lt.0d0)goto 13
 
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c...itype3
-      if(i1m.lt.i1p.and.widit(i1m).lt.1d-3.and.
-     .    m3.le.massit(i1m+1)-0.5*widit(i1m+1))then
+c      if(i1m.lt.i1p.and.widit(i1m).lt.1d-3.and.
+c     .    m3.le.massit(i1m+1)-0.5*widit(i1m+1))then
 c...lowest itype of this kind of particles is stable
 c & mass .lt. approximate minimal mass of lowest itype + 1
-        m3=massit(i1m)
-        i3=i1m
-      else if(i1m.eq.i1p.and.widit(i1m).lt.1d-3) then
+c        m3=massit(i1m)
+c        i3=i1m
+c      else if(i1m.eq.i1p.and.widit(i1m).lt.1d-3) then
 c...class with only one narrow particle
-        i3=i1
-        m3=massit(i3)
-      else
+c        i3=i1
+c        m3=massit(i3)
+c      else
 c...itypes of this kind are all unstable
-        call whichi(i3,i1m,i1p,m3)
-      end if
+c        call whichi(i3,i1m,i1p,m3)
+c      end if
 
-c...itype4
-      if(i2m.lt.i2p.and.widit(i2m).lt.1d-3.and.
-     .    m4.le.massit(i2m+1)-0.5*widit(i2m+1))then
-c...lowest itype of this kind of particles is stable
-        m4=massit(i2m)
-        i4=i2m
-      else if(i2m.eq.i2p.and.widit(i2m).lt.1d-3) then
-c...class with only one narrow particle
-        i4=i2
-        m4=massit(i4)
+      if(i1m.lt.i1p) then
+         if(widit(i1m).lt.1d-3) then
+            if(m3.le.(massit(i1m+1)-0.5*widit(i1m+1))) then
+               m3=massit(i1m)
+               i3=i1m
+            else
+               call whichi(i3,i1m,i1p,m3)
+            endif
+         else
+            call whichi(i3,i1m,i1p,m3)
+         endif
+      else if(i1m.eq.i1p) then
+         if (widit(i1m).lt.1d-3) then
+            i3=i1
+            m3=massit(i3)
+         else
+            call whichi(i3,i1m,i1p,m3)
+         endif
       else
+         call whichi(i3,i1m,i1p,m3)         
+      endif
+
+
+      
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c...itype4                                                                                                                                                                                                 
+c      if(i2m.lt.i2p.and.widit(i2m).lt.1d-3.and.
+c     .    m4.le.massit(i2m+1)-0.5*widit(i2m+1))then
+c...lowest itype of this kind of particles is stable                                                                                                                                                       
+c        m4=massit(i2m)
+c        i4=i2m
+c      else if(i2m.eq.i2p.and.widit(i2m).lt.1d-3) then
+c...class with only one narrow particle                                                                                                                                                                    
+c        i4=i2
+c        m4=massit(i4)
+c      else
+c...itypes of this kind are all unstable                                                                                                                                                                   
+c        call whichi(i4,i2m,i2p,m4)
+c      end if
+
+
+
+      
+c...itype4
+      if(i2m.lt.i2p) then
+         if(widit(i2m).lt.1d-3) then
+            if (m4.le.(massit(i2m+1)-0.5*widit(i2m+1))) then
+c...  lowest itype of this kind of particles is stable
+               m4=massit(i2m)
+               i4=i2m
+            else
+               call whichi(i4,i2m,i2p,m4)
+            endif
+         else
+            call whichi(i4,i2m,i2p,m4)
+         endif   
+      else if(i2m.eq.i2p) then
+         if (widit(i2m).lt.1d-3) then
+c     else if(i2m.eq.i2p.and.widit(i2m).lt.1d-3) then
+c...  class with only one narrow particle               
+            i4=i2
+            m4=massit(i4)
+         else
+            call whichi(i4,i2m,i2p,m4)
+         endif
 c...itypes of this kind are all unstable
-        call whichi(i4,i2m,i2p,m4)
+      else
+         call whichi(i4,i2m,i2p,m4)
       end if
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
 c...no charge transfer
       iz3=iz1
@@ -675,7 +735,6 @@ c after their first collision
       if(m3.lt.mminit(i3))m3=mminit(i3)
       if(m4.lt.mminit(i4))m4=mminit(i4)
 
-
       goto 2001
 
  20   continue
@@ -701,6 +760,14 @@ c forward time-delay
          i4=itypnew(2)
          iz4=i3new(2)
          m4=pnew(5,2)
+c-------------------
+c From JS (09/04/24)  
+c make the D0* always decay into D0+pi0 (there is no gamma decay included) and similarly for the anti-D0*
+      if(abs(i1).eq.134.and.i1*iz1.eq.-134)then 
+       iz3=0
+       iz4=iz1
+      endif
+c-------------------
          goto 2001
       else
 c three or four body decay

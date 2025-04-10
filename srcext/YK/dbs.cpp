@@ -120,27 +120,31 @@ Bool_t                      DatabasePDG2::LoadParticles()
   Char_t s_minusbar [] = "-bar" ;
   Char_t s_minusminusbar [] = "--bar" ;
   Char_t s_bar [] = "bar" ;
-
+  Int_t particuleNb = 0;
 //  cout << "Info in DatabasePDG::LoadParticles() : Start loading particles with the following criteria:" << endl
 //       << "       Use particles containing charm quarks (1-yes;0-no) : " << fUseCharmParticles << endl
 //       << "       Mass range                                         : (" << fMinimumMass << "; " << fMaximumMass << ")" << endl
 //       << "       Width range                                        : (" << fMinimumWidth << "; " << fMaximumWidth << ")" << endl;
-  
+
   particleFile.exceptions(ios::failbit);
-  while(!particleFile.eof()) {
+  while(particleFile) {
     try {
       particleFile >> mass >> width >> isospin >> gparity >> spin >> pparity >> cparity >> antiparticle >> pdg >> charge >> status >> name >> recipt ;
       mass = mass/1000. ;
       width = width/1000. ;
       if(width<0.) width = 0. ;
-//      cout << setw(15) << name << setw(12) << mass << setw(12) << width << setw(5) << spin << setw(5) << isospin << setw(12) << pdg ;
+      particuleNb++;
+      // cout << setw(15) << name << setw(12) << mass << setw(12) << width << setw(5) << spin << setw(5) << isospin << setw(12) << pdg << endl ;
     }
     catch (ios::failure const &problem) {
-      //cout << "reading particle file:\n" ;
-      cout << problem.what() << endl;
+      // this exception is catched in case of problem in the file read or when the end of file is reached
+      if (!particleFile.eof()){
+	cout << "error when reading particle file : " << fParticleFilename << endl; ;
+	cout << problem.what() << endl;
+      }
       break;
     }
-        
+    
     fParticles[fNParticles]->SetName(name);
     fParticles[fNParticles]->SetPDG(pdg);
     fParticles[fNParticles]->SetMass(mass);
@@ -343,7 +347,7 @@ Bool_t                    DatabasePDG2::LoadDecays()
   Int_t isCG ;
   
   decayFile.exceptions(ios::failbit);
-  while(!decayFile.eof()) {
+  while(decayFile) {
     mother_pdg = 0;
     for(Int_t i=0; i<3; i++) daughter_pdg[i] = 0;
     for(Int_t i=0; i<3; i++) daughter_found[i] = 1;
@@ -355,10 +359,14 @@ Bool_t                    DatabasePDG2::LoadDecays()
       decayFile >> branching >> isCG ;
     }
     catch (ios::failure const &problem) {
-    //cout << "reading decays file:\n" ;
-      cout << problem.what() << endl;
+      // this exception is catched in case of problem in the file read or when the end of file is reached
+      if(!decayFile.eof()){
+	cout << "reading decays file: " << fDecayFilename << endl;
+	cout << problem.what() << endl;
+      }
       break;
     }
+    
     if((mother_pdg!=0) && (daughter_pdg[0]!=0) && (branching>=0)) {
       Int_t nDaughters = 0;
       for(Int_t i=0; i<3; i++)

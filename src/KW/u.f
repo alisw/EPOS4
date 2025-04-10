@@ -45,7 +45,7 @@ C
       integer kcollmax
       common/ckcollmax/kcollmax
       common/cdir/edir /cishuuu/ishuuu
-      ishuuu=ish
+      ishuuu=0 !=ish
       call utpri('hacas ',ish,ishini,4)
       edir=fnnx(1:nfnnx)//' '
       kcollmax=0
@@ -312,9 +312,8 @@ c spectator arrays
       integer icinpu
       real engy,elepti,elepto,angmue
       common/lept1/engy,elepti,elepto,angmue,icinpu
-      integer mxjerr,imsg,jerr,ntevt,nrevt,naevt,nrstr,nrptl
-      parameter (mxjerr=30)
-      common/accum/imsg,jerr(mxjerr),ntevt,nrevt,naevt,nrstr,nrptl
+      integer imsg,ntevt,nrevt,naevt,nrstr,nrptl
+      common/accum/imsg,ntevt,nrevt,naevt,nrstr,nrptl
       !---------------------------------------------------------------
       integer i,nn,idtmp,ityptmp,iso3tmp,itmp
       integer idtrafo
@@ -355,6 +354,10 @@ c spectator arrays
       integer phiid(nmax)
       common /phitrack/ phiid
 
+      real amss,amss0,ctau,ctau0,wi,rangen
+      integer      infragm,ibreit
+      common/nucl9/infragm,ibreit
+
       integer nptlbur
       common/cnptlbur/nptlbur
 
@@ -372,13 +375,15 @@ c spectator arrays
       integer ishini,ishuuu
       common/cishuuu/ishuuu
 
+      integer getAccumJerr
+
 c#####################################################################
 c##############################     subroutine uinitial
 c#####################################################################
 
       call utpri('uiniti',ishuuu,ishini,4)
 
-      if(ishuuu.ge.2)write(ifch,'(a)')'******** start uinitial ********'
+      if(ishuuu.ge.3)write(ifch,'(a)')'******** start uinitial ********'
 
       iutest=1  !0 or 1
 
@@ -560,7 +565,7 @@ c      write(ifch,*)' ~~~~~~~ decay'
       !  nptl=nw
       !  call decayall(nwi,999)
       !  nptlbd=nptl
-      !  !call alist(' ~~~~~~~ list from unknown hadrons&',nwi,nptl)
+      !  !call aalist(' ~~~~~~~ list from unknown hadrons&',nwi,nptl)
       !  do nn=nwi,nptl
       !    if(istptl(nn).eq.0)then
       !      call idcorrect(ityptl(nn),idptl(nn),idtmp)
@@ -577,7 +582,7 @@ c fill in the baryons first
       !jca(i)=0
       !enddo
       if(ihacas.eq.2)call openNewTestFile
-      if(ish.ge.2)call alist('(u) initial baryons&',0,0)
+      if(ish.ge.2)call aalist('(u) baryons from EPOS&',0,0)
       if(ish.ge.2)write(ifch,*)'check between ',nptlpt+1,' and ',nptlbd
       if(ish.ge.2)write(ifch,*)' '
       nbar = 0
@@ -592,14 +597,14 @@ c fill in the baryons first
           if(abs(idtmp).lt.11.or.abs(idtmp).gt.16)then
             call pdg2id(ityptmp,iso3tmp,idtmp)
             if(abs(ityptmp).gt.1000)then
-              jerr(10)=jerr(10)+1
+              call setAccumJerr(10,getAccumJerr(10)+1)
               if(ish.ge.2)then
                 write(ifch,*)' ~~~~~~~ ERROR: unknown hadron'
      .          ,ityptl(nn),idtmp,ityptmp,iso3tmp,nn
               endif
             endif
             if(abs(ityptmp).le.maxbar) then
-              if(ish.ge.2)call alistc('&',nn,nn)
+              if(ish.ge.2)call aalist('&',nn,nn)  !alistc
               !ia=abs(idptl(nn))
               !if(ia.eq.2130.or.ia.eq.1230.or.ia.eq.1130.or.ia.eq.2230
               !.         .or.ia.eq.1131.or.ia.eq.1231.or.ia.eq.2231)
@@ -629,6 +634,26 @@ c fill in the baryons first
                 endif
               endif
               !#########################
+c Start Breit-Wigner
+      if(ibreit.ge.1)then 
+       amss=pptl(5,nn)
+       id=idptl(nn)
+       ctau=tivptl(2,nn)-tivptl(1,nn)     !ctau*gamma (fm)
+       if(ctau.gt.0..and.ctau.lt.1.e16)then
+         call idtau(id,1.,1.,ctau0)       !nominal ctau in fm
+         wi=0.197/ctau0                !width (GeV)
+         call idmass(id,amss0) !nominal mass
+         if(abs(id).eq.20.or.id.eq.111.or.id.eq.221)amss=amss0  
+         if(abs(amss-amss0).lt.1.e-5)then
+           amss=amss0+0.5*wi*tan((2.*rangen()-1.) * atan(20.)) !approxi (small width)
+           if(ibreit.ge.2)then 
+             if(id.eq.1111)write(*,*)'BW',id,pptl(5,nn),' --> ',amss
+           endif 
+           pptl(5,nn)=amss
+         endif
+       endif
+      endif
+c end Breit-Wigner
               call DelayFormation(nn)
               r0(nbar)=xorptl(4,nn)
               rx(nbar)=xorptl(1,nn)
@@ -674,7 +699,7 @@ c fill in the baryons first
               !.        ,sqrt(px(nbar)**2+py(nbar)**2)
               !endif
               !????????????????????????????
-              iorpart(nbar)=0
+              iorpart(nbar)=-999
               lstcoll(nbar)=0
               ncoll(nbar)=0
               origin(nbar)=0
@@ -691,7 +716,7 @@ c     *        ,rx(nbar),ry(nbar),rz(nbar),px(nbar),py(nbar),pz(nbar)
       enddo
 
 c then fill in the mesons
-      if(ish.ge.2)call alist('(u) initial mesons&',0,0)
+      if(ish.ge.2)call aalist('(u) mesons from EPOS&',0,0)
       if(ish.ge.2)write(ifch,*)'check between ',nptlpt+1,' and ',nptlbd
       if(ish.ge.2)write(ifch,*)' '
       nmes = 0
@@ -702,18 +727,23 @@ c then fill in the mesons
           else
             idtmp=idtrafo('nxs','pdg',idptl(nn))
           endif
+          !--------------------------
+          !if(idptl(nn)/10.eq.-14.or.idptl(nn)/10.eq.-24)then
+          !write(ifch,*)'UrQMD in',nrevt,idptl(nn),istptl(nn)
+          !endif
+          !--------------------------
           if(abs(idtmp).lt.11.or.abs(idtmp).gt.16)then
             call pdg2id(ityptmp,iso3tmp,idtmp)
             if(abs(ityptmp).gt.1000)then
-              jerr(10)=jerr(10)+1
+              call setAccumJerr(10,getAccumJerr(10)+1)
               if(ishuuu.ge.2)then
                write(ifch,*)' ~~~~~~~ ERROR: unknown hadron'
      .         ,ityptl(nn),idtmp,ityptmp,iso3tmp,nn
               endif
             endif
             if(abs(ityptmp).ge.minmes) then
-              !if(ishuuu.ge.3)call alistc('&',nn,nn)
-              if(ish.ge.2)call alistc('&',nn,nn)
+              !if(ishuuu.ge.3)call aalist('&',nn,nn)  !alistc
+              if(ish.ge.2)call aalist('&',nn,nn)    !alistc
               nmes=nmes+1
               etot=etot+pptl(4,nn)
               itmp=nbar+nmes
@@ -734,6 +764,26 @@ c then fill in the mesons
                 endif
               endif
               !#########################
+c Start Breit-Wigner
+      if(ibreit.ge.1)then 
+       amss=pptl(5,nn)
+       id=idptl(nn)
+       ctau=tivptl(2,nn)-tivptl(1,nn)     !ctau*gamma (fm)
+       if(ctau.gt.0..and.ctau.lt.1.e16)then
+         call idtau(id,1.,1.,ctau0)       !nominal ctau in fm
+         wi=0.197/ctau0                !width (GeV)
+         call idmass(id,amss0) !nominal mass
+         if(abs(id).eq.20.or.id.eq.111.or.id.eq.221)amss=amss0  
+         if(abs(amss-amss0).lt.1.e-5)then
+           amss=amss0+0.5*wi*tan((2.*rangen()-1.) * atan(20.)) !approxi (small width)
+           if(ibreit.ge.3)then 
+             if(id.eq.111)write(*,*)'BW',id,pptl(5,nn),' --> ',amss
+           endif
+           pptl(5,nn)=amss
+         endif
+       endif
+      endif
+c end Breit-Wigner
               call DelayFormation(nn)
               r0(itmp)=xorptl(4,nn)
               rx(itmp)=xorptl(1,nn)
@@ -781,7 +831,7 @@ c then fill in the mesons
               itypart(itmp)=ityptl(nn)
               itrace(1,itmp)=itmp
               itrace(2,itmp)=itmp
-              iorpart(itmp)=0
+              iorpart(itmp)=-999
               lstcoll(itmp)=0
               ncoll(itmp)=0
               origin(itmp)=0
@@ -861,20 +911,20 @@ c      write(*,*)'DEBUG INFO (epos.f): ',mintime,npart,istmax,nbar,nmes
 
 c keep  epos ptl list
       nptl=nptlpt
-      if(ish.ge.2)call alist('(u) kept EPOS list&',0,0)
+      if(ish.ge.2)call aalist('(u) kept EPOS list&',0,0)
       do nn=nptlpt+1,nptlbd
         if(istptl(nn).eq.0.and.ityptl(nn).lt.70)istptl(nn)=3
         nptl=nptl+1
-        if(ish.ge.2)call alist('&',nn,nn)
+        if(ish.ge.2)call aalist('&',nn,nn)
       enddo
-      if(ish.ge.2)call alist('(u) copied unknowns&',0,0)
+      if(ish.ge.2)call aalist('(u) copied unknowns&',0,0)
       do nn=nptlpt+1,nptlbd
         if(istptl(nn).eq.4.and.ityptl(nn).lt.70)then
           nptl=nptl+1
           call utrepl(nptl,nn)
           istptl(nptl)=0
           iorptl(nptl)=nn
-          if(ish.ge.2)call alist('&',nptl,nptl)
+          if(ish.ge.2)call aalist('&',nptl,nptl)
         endif 
       enddo
 
@@ -1056,6 +1106,11 @@ c spectator arrays
       common/cishuuu/ishuuu
       real p1,p2,p3,p4,p5,x1,x2,x3,x4,t1
 
+      !----------------------------
+      !integer      imsg,ntevt,nrevt,naevt,nrstr,nrptl
+      !common/accum/imsg,ntevt,nrevt,naevt,nrstr,nrptl
+      !----------------------------
+
 c####################################################################################
 c######################################   subroutine uexit      !transfer -> EPOS
 c####################################################################################
@@ -1071,8 +1126,7 @@ c###############################################################################
          endif
       enddo
 
-      if(ish.ge.2)call alist('(u) final ptls&',0,0)
-      if(ish.ge.2)write(ifch,*)' '
+      if(ish.ge.2)call aalist('(u) ptls back to EPOS&',0,0)
 
       do j=1,npart
             if(frp0(j).ne.frp0(j))then
@@ -1096,6 +1150,11 @@ c###############################################################################
         idpdgg=pdgid(ityp(nn),iso3(nn))
         idepos=idtrafo('pdg','nxs',idpdgg)
         nptl=nptl+1
+        !---------------------------
+        !if(idepos/10.eq.-14.or.idepos/10.eq.-24)then
+        !write(ifch,*)'UrQMD out',nrevt,idepos,0
+        !endif
+        !---------------------------
         call setnptl(nptl)
         if(idepos.eq.0)call utstop('uexit: id not recognized&')
         call setiorptl(nptl,0)
@@ -1145,8 +1204,8 @@ c###############################################################################
         t1=x4
         call idtau(idepos,p4,p5,taugm)
         call settivptl(nptl,t1,t1+taugm*(-alog(rangen())))
-        if(ish.ge.2)call alist('&',nptl,nptl)
-        if(ish.ge.2.and.abs(idepos).eq.230)
+        if(ish.ge.2)call aalist('&',nptl,nptl)
+        if(ishuuu.ge.2.and.abs(idepos).eq.230)
      .   write(ifch,*)'KKK',nptl,nn
         if(idepos.eq.441)
      .    write(ifmt,*)'JPSI out: ',ityp(nn),iso3(nn),frpz(nn)
@@ -1158,10 +1217,12 @@ c###############################################################################
         endif
       enddo
 
+      if(ish.ge.2)call aalist('(u) resonance info back to EPOS&',0,0)
+
       do nn=1,phinum
         nptl=nptl+1
         call setnptl(nptl)
-        call setiorptl(nptl,0)
+        call setiorptl(nptl,-666)
         call setjorptl(nptl,0)
         call setistptl(nptl,9)
         call setifrptl(nptl,0,0)
@@ -1180,6 +1241,7 @@ c###############################################################################
         call getidptl(nptl,idyy)
         call idtau(sign( abs(idyy)/100 , idyy ) ,p4,p5,taugm)
         call settivptl(nptl,t1,t1+taugm*(-alog(rangen())))
+        if(ish.ge.2)call aalist('&',nptl,nptl)
       enddo
 
       !????????????????????????????
@@ -3372,9 +3434,9 @@ c------------------------------------------------------------------------
           endif
           if(ninit.eq.1)then
             itypart(i)=ityii(1)
-            iorpart(i)=-999
+            iorpart(i)=-777
           else
-            iorpart(i)=0
+            iorpart(i)=-888
             if(ityexot.gt.0)then
              itypart(i)=ityexot
             elseif(itybulk.gt.0)then
@@ -3618,7 +3680,7 @@ c----------------------------------------------------------
 
 c      integer ios, nsp, i, io, ver
       character*40 pwdcmd
-      character*150 deftab
+      character*500 deftab
       character*8 defexe
       logical b
       integer ios, nsp,i, io, ver
@@ -3630,15 +3692,14 @@ c      logical b
       logical fex
 
       parameter (defexe='uqmd.exe')
-
       deftab(1:nfnhpf+1)=fnhpf(1:nfnhpf)//' '  !tables.dat including path
       b=io.eq.1
 
 c set the name of the table
 
-      tabname=edir(1:index(edir,' ')-1)
-     .     //deftab(1:index(deftab,' '))
-
+c      tabname=edir(1:index(edir,' ')-1)
+c     .     //deftab(1:index(deftab,' '))
+      tabname=deftab(1:index(deftab,' '))
       inquire(file=tabname(1:index(tabname,' ')-1),exist=fex)
       if(.not.fex)then
         write (6,*) 'No file ',tabname(1:index(tabname,' ')-1)
@@ -3678,8 +3739,6 @@ c      open (unit=75,iostat=ios,file=tabname,form='unformatted',
 c     .      status='old')
 c if it fails ...
       if (ios.ne.0) then
-         write(6,*)"Tables file is ", deftab(1:index(deftab,' '))
-         write(6,*)"IOS is", ios
          write(6,*)"error 1 in reading tables.dat"
          stop
 c     close the file handle

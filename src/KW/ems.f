@@ -43,6 +43,8 @@ c      logical modu
       data ncount/0/
       save ncount
 
+      integer getAccumJerr
+
       call utpri('emsaa ',ish,ishini,4)
 
       call timer(iutime)
@@ -342,7 +344,7 @@ c --- check ---
       tiu3=iutime(3)
       tiu4=iutime(4)
 
-      if(ish.ge.2)then
+      if(ish.ge.3)then
         do k=1,koll
           kk=min(80,nprt(k))
           mm=0
@@ -769,7 +771,7 @@ c --- Treat hard Pomerons
                 ivi=16
                 call VirPom(k,n,ivi)
                 if(ivi.lt.0)then
-                  jerr(7)=jerr(7)+1
+                  call setAccumJerr(7,getAccumJerr(7)+1)
                   iret=1
                   goto 1000
                 endif
@@ -780,7 +782,7 @@ c --- Treat hard Pomerons
                 ivi=17
                 call VirPom(k,nn,ivi)
                 if(ivi.lt.0)then
-                  jerr(7)=jerr(7)+1
+                  call setAccumJerr(7,getAccumJerr(7)+1)
                   iret=1
                   goto 1000
                 endif
@@ -811,7 +813,7 @@ c --- Set string end flavor for soft ---
                 ivi=18
                 call VirPom(k,n,ivi)
                 if(ivi.lt.0)then
-                  jerr(7)=jerr(7)+1
+                  call setAccumJerr(7,getAccumJerr(7)+1)
                   iret=1
                   goto 1000
                 endif
@@ -833,7 +835,7 @@ c --- Diffractive Pt
         call ProDiPt(k,1,iret)
       enddo
       if(iret.ne.0)then
-        jerr(8)=jerr(8)+1
+        call setAccumJerr(8,getAccumJerr(8)+1)
         ivi=99
         if(ish.ge.2)then
           write(ifch,*)'All Pomeron lost, redo event !'
@@ -1071,14 +1073,16 @@ c --- Correct energy
      .      'WARNING ',lcount,' ems Energy check'
      .      ,einit,esux,esu,idfx,idf,iretshu
           endif
-          if(ish.ge.2)then
+          if(ish.ge.3)then
             write(ifch,'(a,5x,3f10.1,2i6,2i7)')
-     .    'ems - energy check',einit,esux,esu,idfx,idf,iretshu,nrevt
-            call blist('list after MC&',1,nptl)
+     .      'ems - energy check',einit,esux,esu,idfx,idf,iretshu,nrevt
+            !call blist('list after ems energy check issue&',1,nptl)
+            write(ifch,'(a)')
+     .      '"list after ems energy check issue" not activated' 
           endif
         endif
         if(loo.eq.1.and.irescl.gt.0)then
-          call utrescxx(iret,0) 
+          call utrescxx(iret,0,103) 
           !call utresc(iret,2.0)  !taking the default 1.02 will reject almost all
                                  !events for AuAu at 7 GeV
                                  !With 2.0 doable, but still many rejections
@@ -1718,8 +1722,6 @@ c-------------------------------------------------------------------------
         npr(idpr(n,k),k)=npr(idpr(n,k),k)-1
         idpr(n,k)=3
         npr(3,k)=npr(3,k)+1
-        ptiproj(n,k)=ptipom
-        ptitarg(n,k)=ptipom
         return
       endif
 
@@ -2019,9 +2021,9 @@ c-----------------------------------------------------------------------
       common/col3/ncol,kolpt,ncoli
       double precision om5Jk,w(-2:9),xp,xm,xh,yp,ww,omt,wsh,w0
      & ,cgcQ2s,eps,xvpr,fxxx,wdd
-     & ,facintpt,w1
+     & ,w1
      & ,PomIncXExactk,PomIncPExactk,PomIncMExactk,PomIncExactk,PomInc
-     & ,PomIncExact,fptint
+     & ,PomIncExact
       real binfac,binfun
       common/cems13/xvpr(0:3)
       common/geom/rmproj,rmtarg,bmax,bkmx
@@ -2036,9 +2038,8 @@ c-----------------------------------------------------------------------
       data ncount/0/
       save ncount
 
-      fptint(p1,p2)=max(0.1d0,1d0-vparam(4)*max(p1,p2))
       dummy=PomIncExact(1d0,1d0,0.)
-      call getSystemType(isys)
+      call  getSystemType(isys,amassMax,amassAsy)
 
       call setOptionsWom() 
       call deformoptget(1,iodeform)  !2 = new deformation function method (DFM2)
@@ -2053,7 +2054,6 @@ c-----------------------------------------------------------------------
       xp=xppr(nmx,k)
       xm=xmpr(nmx,k)
       rho=zparpnx(2,k)+zpartnx(2,k)
-      facintpt=0d0
       cgcq2s=1d0
       binfun=1.0
       con1=xnpp(k)
@@ -2164,15 +2164,6 @@ c-----------------------------------------------------------------------
         call ipoli(log(max(1e-6,q2pmin(1))),nq1,frac) 
         nq2=nq1
         inh=4       
-        if(noptTestFact.eq.0)then
-          ptiproj(n,k)=ptipom
-          ptitarg(n,k)=ptipom
-          facintpt=fptint(ptiproj(n,k),ptitarg(n,k))
-          binfac=binfac*1.0 !no 'pti correction'
-        else
-          ptiproj(n,k)=0.
-          ptitarg(n,k)=0.
-        endif
 
       else   ! ============================= iqq=2 ============================= !Pom type already defined, recompute Q2s with Nhard
 
@@ -2189,18 +2180,6 @@ c-----------------------------------------------------------------------
         call ipoli(log(max(1e-6,max(q2pmin(1),q2pmin(2)))),nq1,frac) 
         nq2=nq1
         ww=wwnk(2,n,k)            !probability used to select hard pomeron
-        if(noptTestFact.eq.0)then
-          if(ptipomi.gt.0.)then
-            if(idf(1).or.idf(2))then
-              ptiproj(n,k)=ptipom + ptipomi * sqrt(npr(3,k)-1.) !randow walk !ckw21
-            endif 
-            if(idf(1).or.idf(3))then
-              ptitarg(n,k)=ptipom + ptipomi * sqrt(npr(3,k)-1.) !randow walk !ckw21
-            endif
-          endif
-          facintpt=fptint(ptiproj(n,k),ptitarg(n,k))
-          binfac=binfac*1.0 !no 'pti correction'
-        endif
 
       endif  ! =================================== iqq ====================================
 
@@ -2335,18 +2314,20 @@ c look for Q2s which fit best the used omega
         endif
         if(ish.ge.8)
      .  write(ifch,*)'1 skip'
+        call incrementNskipNpassWomTy(1)
       else ! wsh.ge.ww
        do while (wsh.gt.ww*(1d0-eps).and.nq2.lt.maxq2mx)
         lpass=.true.
+        call incrementNskipNpassWomTy(2)
         nq1=nq2
         nq2=nq2+1
         q2pmin(iqp)=max(q2nmin,q2mnval(nq2))
         q2pmin(iqt)=max(q2nmin,sngl(cgcQ2s)*q2pmin(iqp))
         call ipoOm5Tab(xp,xm,bk(k))
         omt=0d0
-        if(idf(1))omt=omt+om5Jk(nmx,k,1)*binfun
-        if(idf(2))omt=omt+om5Jk(nmx,k,2)*binfun
-        if(idf(3))omt=omt+om5Jk(nmx,k,3)*binfun
+        if(idf(1))omt=omt+om5Jk(nmx,k,1)*binfun  !---------------------------------------!
+        if(idf(2))omt=omt+om5Jk(nmx,k,2)*binfun  !om5Jk depends on global variable q2pmin!
+        if(idf(3))omt=omt+om5Jk(nmx,k,3)*binfun  !---------------------------------------!
         if(idf(4))omt=omt+om5Jk(nmx,k,4)*binfun
         w1234=omt*binfac
         if(idf(-1))omt=omt+om5Jk(nmx,k,11) 
@@ -2387,9 +2368,9 @@ c fine tune value of Q2s between q2mnval(nq1) and q2mnval(nq2)
         q2pmin(iqt)=max(q2nmin,sngl(cgcQ2s)*q2pmin(iqp))
         call ipoOm5Tab(xp,xm,bk(k))
         omt=0d0
-        if(idf(1))omt=omt+om5Jk(nmx,k,1)*binfun
-        if(idf(2))omt=omt+om5Jk(nmx,k,2)*binfun
-        if(idf(3))omt=omt+om5Jk(nmx,k,3)*binfun
+        if(idf(1))omt=omt+om5Jk(nmx,k,1)*binfun  !---------------------------------------!
+        if(idf(2))omt=omt+om5Jk(nmx,k,2)*binfun  !om5Jk depends on global variable q2pmin!
+        if(idf(3))omt=omt+om5Jk(nmx,k,3)*binfun  !---------------------------------------!
         if(idf(4))omt=omt+om5Jk(nmx,k,4)*binfun
         if(idf(-1))omt=omt+om5Jk(nmx,k,11) 
         w1=omt
@@ -2462,9 +2443,9 @@ c fine tune value of Q2s between q2mnval(nq1) and q2mnval(nq2)
         if(idf(i))then
           ii=i
           if(i.eq.-1)ii=11
-          if(i.gt.0)then
-            w(i)=binfac*om5Jk(n,k,ii)*binfun
-            omt=omt+w(i)
+          if(i.gt.0)then                      !---------------------------------------!
+            w(i)=binfac*om5Jk(n,k,ii)*binfun  !om5Jk depends on global variable q2pmin!
+            omt=omt+w(i)                      !---------------------------------------!
           elseif(i.eq.0)then
             w(0)=om5Jk(n,k,0)
             if(wdd.gt.0d0)w(0)=binfac*w(0)
@@ -2513,7 +2494,7 @@ c fine tune value of Q2s between q2mnval(nq1) and q2mnval(nq2)
       endif !================================= iqq=1 end =========================================
 
       if(ish.ge.6)write(ifch,*)'WomTy : '
-     .,iqq,n,k,xp,xm,binfac,cgcq2s,facintpt,xpome,con1,con2
+     .,iqq,n,k,xp,xm,binfac,cgcq2s,xpome,con1,con2
      .,q2pmin(1),q2pmin(2),wsh/ww,bk(k),idf
 
  9999 continue
@@ -2565,7 +2546,7 @@ c----------------------------------------------------------------------
 c----------------------------------------------------------------------
       integer function igetJval(maproj,matarg,engy)
 c----------------------------------------------------------------------
-      parameter (KDIM=8,NSYSDIM=30,MDIM=5)  
+      parameter (KDIM=8,NSYSDIM=100,MDIM=5)  
       character*500 path
       character *80 line
       data ncount/0/
@@ -2599,7 +2580,7 @@ c----------------------------------------------------------------------
 c----------------------------------------------------------------------
       function piDeform(M,z,maproj,matarg,engy) !polynomial interpolation (linear)
 c----------------------------------------------------------------------
-      parameter (KDIM=8,NSYSDIM=75,MDIM=5)  
+      parameter (KDIM=8,NSYSDIM=100,MDIM=5)  
       real zar(KDIM),war(KDIM)
       real zx(NSYSDIM,KDIM),wx(NSYSDIM,KDIM,MDIM),engyx(NSYSDIM)
       integer maprojx(NSYSDIM),matargx(NSYSDIM)
@@ -2746,7 +2727,7 @@ c------------------------------------------------------------------------
       integer jcp1(nflav,2),jcp2(nflav,2),jcm1(nflav,2),jcm2(nflav,2)
       common/col3/ncol,kolpt,ncoli /cfacmss/facmss /cts/its
 
-
+      integer getAccumJerr
 c     entry
 c     -----
 
@@ -3017,7 +2998,7 @@ c     ----
       call utprix('ProSeF',ish,ishini,5)
       return
 
- 1002 jerr(1)=jerr(1)+1         ! > 9 quarks per flavor attempted.
+ 1002 call setAccumJerr(1,getAccumJerr(1)+1)         ! > 9 quarks per flavor attempted.
  1001 iret=1
       if(ish.ge.5)write(ifch,'(a)')'Problem in ProSeF ... '
       goto 1000
@@ -5027,7 +5008,7 @@ c       if(ncy.gt.0.or.iokoll.ne.0)then
        write(ifhi,'(a,e22.14)')'histoweight ',dble(hww)
        write(ifhi,'(a)')       'array 2'
        s3=0
-       call getSystemType(isys)
+       call  getSystemType(isys,amassMax,amassAsy)
        call deformoptget(1,iodeform)  
        if(iodeform.eq.1)stop'ERROR iodeform = 1 not supported any more'
        conn1=zavco5
@@ -6003,6 +5984,26 @@ c  jex: emission type
 c         1= no emission, 2= proj emis, 3= targ emis, 4= both sides
 c         5= all  for iii=2
 c-----------------------------------------------------------------------
+c    xpar2 .... choices of (up to three) models
+c                  1 = ours + MC
+c                  2 = ours + CTEQ + MC
+c                  3 = ours + CTEQ
+c                  4 = ours(charm) + CTEQ(charm)
+c                 41 = CTEQ(charm)
+c                  5 = ours(charm)
+c                  6 = ours(bottom) + CTEQ(bottom)
+c    xpar3 .... 1=log 2=lin
+c    xpar4 .... xmax                             for iii eq 9
+c    xpar5 .... ihq=nint(xpar5)                  for iii ne 4
+c    xpar6 .... xmax (not for iii=4)
+c    xpar7 .... 1=MB
+c    xpar8 .... xmin for theo function (if 1: adds 'plot 0')
+c    xpar9 .... number of bins
+c    xpar10 ... factor for theo fuction
+c    xpar11 ... q2cmin(1 and 2)=xpar11
+c    xpar12 ... pdfparamset(1 and 3, xpar12 )
+c    xpar13 ... nlow (lowest bin considered)
+c-----------------------------------------------------------------------
 
 #include "aaa.h"
 #include "sem.h"
@@ -6035,6 +6036,7 @@ c-----------------------------------------------------------------------
       common /cmodeDeltaFzero/ modeDeltaFzero
       integer iffsigiEfficiency
       common /ciffsigiEfficiency/ iffsigiEfficiency
+         !double precision xCTEQ2,pifpartone!TEST-CTEQ-EPOS
       real shat
       character cii*1,dii*6,c3*3,modu*5
       integer ii,jj
@@ -6095,6 +6097,11 @@ c      sdummy=sh_max
       elseif(ipar2.eq.5)then
         jjup=1
         jjselect(1)=7 !ours charm    
+        iSKIP_MC=1    !skip MC
+      elseif(ipar2.eq.6)then
+        jjup=2
+        jjselect(1)=9 !ours bottom   
+        jjselect(2)=10 !CTEQ14 bottom 
         iSKIP_MC=1    !skip MC
       else
         stop'ERROR 14042022'
@@ -6294,9 +6301,11 @@ c        q2cmin updated later in fom function to take into account x evolution t
            ff(1)=area/(maproj*matarg)/sigine*10 !Ncol=A*B included
            ff(2)=float(nstat)
            ff(3)=float(ntevt) 
-         else
-           write(ifmt,*)'ignored'
-           return
+         else !make plot nevertheless to avoid "histo not found"
+           area=1
+           ff(1)=1
+           ff(2)=1
+           ff(3)=1
          endif
        endif
 
@@ -6565,12 +6574,26 @@ c       endif
         y2     = rapo
         nbins  = nbipt
         nup=nbins
-        if(nint(xpar9).gt.0)nup=nint(xpar9)
+        if(nint(xpar9).gt.0.)nup=nint(xpar9)
+        if(nint(xpar13).gt.0.)nlow=nint(xpar13)
+        if(nlow.gt.nup)stop'ERROR xpar13 > xpar9'
         sx=engy**2
         xup=ptob(nup)
         ncntEmsP21=ncntEmsP21+1
         !jjmx=5
         !if(ihq.ne.0)jjmx=1
+        !++++++++++++++++++++++++++++++++++++++++++
+        !bbb=pifpartone(1,dble(0.1),5.,0,2,0)
+        !print*,'TEST-CTEQ-EPOS'
+        !do i=4,1,-1
+        !  x=1./10**i
+        !  aaa=xCTEQ2(1,dble(x),5.,0,2,0)
+        !  bbb=pifpartone(1,dble(x),5.,0,2,0)
+        !  aaa1=xCTEQ2(1,dble(x),5.,1,2,0)
+        !  bbb1=pifpartone(1,dble(x),5.,1,2,0)
+        !  print*,'TEST-CTEQ-EPOS',aaa,bbb,aaa1,bbb1
+        !enddo
+        !++++++++++++++++++++++++++++++++++++++++++
         do jjx=jjlow,jjup
         jj=jjselect(jjx) 
         if(jjx.le.9)then
@@ -6592,17 +6615,22 @@ c       endif
         if(jj.eq.3)write(ifhi,'(a)')'htyp lkb'
         if(jj.eq.4)write(ifhi,'(a)')'htyp lgv'
         if(jj.eq.5)write(ifhi,'(a)')'htyp lgb'
-        if(jj.ge.10)write(ifhi,'(a)')'htyp liv'
-        if(ipar2.eq.3.or.ipar2.eq.4.or.ipar2.eq.31.or.ipar2.eq.41)then
+        if(jj.ge.30)write(ifhi,'(a)')'htyp liv'
+        if(ipar2.eq.3.or.ipar2.eq.4.or.ipar2.eq.6
+     .  .or.ipar2.eq.31.or.ipar2.eq.41)then
           if(jj.eq.1)write(ifhi,'(a)')'htyp lin'
           if(jj.eq.6)write(ifhi,'(a)')'htyp lin'
           if(jj.eq.7)write(ifhi,'(a)')'htyp lin'
           if(jj.eq.8)write(ifhi,'(a)')'htyp lin'
+          if(jj.eq.9)write(ifhi,'(a)')'htyp lin'
+          if(jj.eq.10)write(ifhi,'(a)')'htyp lin'
         else
           if(jj.eq.1)write(ifhi,'(a)')'htyp lrv'
           if(jj.eq.6)write(ifhi,'(a)')'htyp lwb'
           if(jj.eq.7)write(ifhi,'(a)')'htyp lrv'
           if(jj.eq.8)write(ifhi,'(a)')'htyp lwb'
+          if(jj.eq.9)write(ifhi,'(a)')'htyp lrv'
+          if(jj.eq.10)write(ifhi,'(a)')'htyp lwb'
         endif
 
         write(ifhi,'(a,e22.14)')'histoweight ',dble(hww)
@@ -6617,7 +6645,7 @@ c       endif
             sum=sum+ffsigi(qq,50.,0,1)*(dqq**(i+1)-dqq**i)
           enddo
         endif
-        do i=1,nup
+        do i=nlow,nup
          pt=ptu*(pto/ptu)**((i-0.5)/nbipt) !log binning needed at low pt !!!
          !pt=ptu+(pto-ptu)*(i-0.5)/nbipt
          if(pt.le.pto)then
@@ -6647,6 +6675,10 @@ c          if(ihww.gt.0)then
             if(engy.ge.10.)sig=ffsigi(pt**2,y2,4,1) !our stuff charm
           elseif(jj.eq.8)then
             if(engy.ge.10.)sig=ffsigi(pt**2,y2,4,6) !CTEQ14 charm
+          elseif(jj.eq.9)then
+            if(engy.ge.10.)sig=ffsigi(pt**2,y2,5,1) !our stuff bottom
+          elseif(jj.eq.10)then
+            if(engy.ge.10.)sig=ffsigi(pt**2,y2,5,6) !CTEQ14 bottom
           endif
           !factors: ((hbar*c)**2=0.389 GeV^2.mbarn, and ffsig in GeV^-2)
           !  division by delta_rap: 1/2 already done in ffsigi and psjpdf (integration from 0 to y2)

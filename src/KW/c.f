@@ -5,7 +5,7 @@ C  This file is distributed under the terms of the GNU General Public License ve
 C  (See COPYING file for the text of the licence)
 C
       program eposc     
-      common/hydr4/zclass(5,100),izmode,maxsurf,iofrout,jzmode(7)
+      common/hydr4/zclass(5,100),izmode,maxsurf,iofrout,jzmode(8)
       character*500 fidata,fiepos
       character line*1000,linex*1000
       common /cwo/nopen,ifop
@@ -59,6 +59,10 @@ c     to read input from different file name given as argument
           elseif(line(i:j).eq.'#define2')then
 
       call setDefine(line,i,j,2)
+
+          elseif(line(i:j).eq.'#define3')then
+
+      call setDefine(line,i,j,3)
 
            elseif(line(i:j).eq.'CentralityClass')then
           

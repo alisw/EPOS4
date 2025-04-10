@@ -48,7 +48,7 @@ c---------------------------------------------------------------------
         if(ieostabm.eq.2)call eostabm !make table2
       endif
       !here nothing needed for other ioeos
-      call seteostype(ioeos)
+      call seteostype(ioeos) !just to allow code in YK only for 22
       end
 
 c---------------------------------------------------------------------
@@ -89,9 +89,9 @@ c---------------------------------------------------------------------
       if(ioeos.gt.0)then
        if(ireadhyt.eq.0)then
          if(ihlle.eq.0.and.ioeos.gt.0)then
-           write(ifmt,'(a)')'enter hlle; nfr=-1 ... '
+           write(ifmt,'(a)')'enter hlle in eosx; nfr=-1 ... '
            call hlle(-1)
-           write(ifmt,'(a)')'exit hlle'
+           write(ifmt,'(a)')'exit hlle in eosx'
          endif
          call xxEos
        endif
@@ -250,9 +250,12 @@ c-----------------------------------------------------------------------
           call memo(1,'create eos via initeoshlle3f;')
           call initeoshlle3f(fn3f(1:nfn3f)//CHAR(0)
      .      ,B,volex0,delta0,aaa, bbb) 
-        elseif(ioeos.eq.6)then
+        elseif(ioeos.eq.6)then  !--> eos = new eoBEST(PathBEST) in ctrl.cpp
           write(*,*)'reading BEST table'
-          call initbest(fnnx(1:nfnnx)//'MSt/'//CHAR(0))
+          call initbest(fnnx(1:nfnnx)//'src/MSt/'//CHAR(0))
+        elseif(ioeos.eq.8)then  !--> eos = new eoBEST(PathBEST2) in ctrl.cpp
+          write(*,*)'reading BEST2 table'
+          call initbest(fnnx(1:nfnnx)//'srcext/EOS/BEST2/'//CHAR(0)) !BEST2 to be created
         elseif(ioeos.eq.30)then
           call memo(1,'create eos via initeoschiralhlle;')
           call initeoschiralhlle(fnnx(1:nfnnx)//
@@ -368,13 +371,15 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
 #include "aaa.h"
 #include "ho.h"
+      if(iHyEos.eq.0)return
       if(ioeos.eq.0.or.nrevt.gt.1)return
-      if(ioeos.eq.1)then
-        call wrxx 
+      if(ioeos.ge.1)then
 c       call xxEos1
 c       call xxEos2
-        call xxEos3(0.0, 0.5)
-        stop'regular stop in xxEos'
+        call xxEos3(0.0, 0.5,0.0)
+        call xxEos3(0.0, 0.5,0.3)
+        call xxEos3(0.0, 0.5,0.45)
+        stop'Regular stop in xxEos'
       endif
       end
       
@@ -392,7 +397,7 @@ c      call eostest5
 c      call eostest6 
 c      call eostest7
 c      call eostest8
-c       stop'Normal STOP in eostest'
+c       stop'Normal stop in eostest'
       end           
 
 c-----------------------------------------------------------------------
@@ -694,7 +699,7 @@ c-----------------------------------------------------------------------
       end
 
 c-----------------------------------------------------------------------
-      subroutine xxEos3(x1,x2)    !   eps,p (T) comp with lattice
+      subroutine xxEos3(x1,x2,xmub)    !   eps,p (T) comp with lattice
 c-----------------------------------------------------------------------
       double precision  gammaS, B, mS, delta0, muc, volex0,
      . emax, e0, anmax, bnmax, an0, muBmax, muQmax, muSmax, Taccuracy,
@@ -720,7 +725,7 @@ c-----------------------------------------------------------------------
         do ix=1,imax
          ttt = x1 + ix*(x2-x1)/199
          tar(ix)=ttt
-         mub=0
+         mub=xmub
          muq=0
          mus=0
          call eosihlle(ttt, mub, muq, mus, ee, n_b, n_q, n_s, pp) 
@@ -846,7 +851,6 @@ c-----------------------------------------------------------------------
       enddo   
       write(ifhi,'(a)') ' endarray closehisto '
       write(ifhi,'(a)')'plot 0'
-      stop      
  
       end
 

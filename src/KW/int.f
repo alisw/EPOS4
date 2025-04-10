@@ -71,7 +71,7 @@ c     -------------------------------------------------
 
       !call hllexx !commented => keep ist=5 for iorsdf.eq.5.and.ispherio+ihlle.eq.0
 
-      call getSystemType(isys)
+      call  getSystemType(isys,amassMax,amassAsy)
       if(isys.le.2)call findHeavyQuarkPairs(100)
 
       nptlbd=nptl
@@ -88,7 +88,7 @@ c     -------------------------------------------------
         if(ityptl(i).eq.61.and.idptl(i).eq.333)call utphiBW(i)  !BW mass smearing
       enddo 
 
-      if(ish.ge.2)call alist('final decay&',0,0)
+      if(ish.ge.2)call aalist('list after decays&',0,0)
       if(iappl.eq.4.or.iappl.eq.7.or.iappl.eq.9)then
         nptli=1
       else
@@ -136,7 +136,7 @@ c remove useless particles if not enough space
       if(ish.ge.2)then
       if(ish.ge.3)call alist('partial list&',0,0)
       do 6 ip=np1,nptl
-        call alist('&',ip,ip)
+        call aalist('&',ip,ip)
 6     continue
       endif
       goto 41
@@ -178,7 +178,6 @@ c Decay droplets not included in clusters
 c----------------------------------------------------------------------
 #include "aaa.h"
 #include "ems.h"
-#include "ico.h"
       common/cdelzet/delzet,delsce /cvocell/vocell,xlongcell
       iret=0
       delzet=0.
@@ -255,6 +254,7 @@ c----------------------------------------------------------------------
       if(idi.eq.9997)return !non isol photon
       if(idi.eq.9998)return !isol photon
       if(idi.eq.9999)return !jet
+      if(mod(abs(idi),100).eq.88.and.abs(idi).gt.9999)return
       if(i.le. nptlpt)return
       call getiorptl(i,iori)
       call getjorptl(i,jori)
@@ -265,6 +265,7 @@ c----------------------------------------------------------------------
         print*,'i id ist ity ior = ',i,idi,isti,ityi,iori
         stop'ERROR index2521  iori LE 0'
       endif
+      if(isto.eq.2)return !ghost particles
       if(isto.eq.1)then
         ioriOld=iori
         call getjorptl(iori,joroOld)
@@ -276,8 +277,9 @@ c----------------------------------------------------------------------
         goto 77
       endif
       if(isto.ne.29)then
-        print*,'id ist ity ist(iori) = ',idi,isti,ityi
+        print*,'i id ist ity ist(iori) = ',i,idi,isti,ityi
      .  ,isto
+        call alist('ERROR&',1,i+1)
         stop'ERROR index2521  ist(iori) NE 29'
       endif  
       call getiorptl(iori,ioro)

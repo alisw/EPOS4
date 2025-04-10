@@ -6,7 +6,17 @@
 //
 
 #include <iostream>
+#include <sstream>
+#include "Analysis.hpp"
+#include "Ico.hpp"
+#include "Outlist.hpp"
+using std::string;
 
+int numberOfEvents();
+void normalizeAnalysis(int numberOfEvents);
+void listParticlesCheck(string,int,int,int,string);
+
+extern "C" void aaalist_(char *text, int *n, int *m, char *file);
 
 extern "C" {
   void memo_(int *, const char*, int);
@@ -21,14 +31,75 @@ extern "C" {
   void swopen_();                              
   void eposend_();
   void astati_();
+  void closecccptl_();
   int ifevent_();
   void setebin_(int *);
   int ifebin_();
 }
 
+extern Outlist *outlist;
 
 /**
- * Show memory usage at the start of the process
+ * Get OutputListScreen flag:
+ *
+ *     1 - To activate printout of particle list to the screen
+ *     0 - No action
+ *
+ */
+void getOutputListScreen(int *flag){
+  *flag=outlist->getToscreen();
+}
+
+/**
+ * Get OutputListFile flag:
+ *
+ *     1 - To activate printout of particle list into some file
+ *     0 - No action
+ *
+ * Get name of the file
+ *
+ */
+void getOutputListFile(int *flag, string& file){
+  int le=outlist->getTofile();
+  if(le>0){
+    *flag=1;
+    //Array<char> * name = outlist->getThename();
+    file="";
+    for(int i = 1; i < le+1; i++){
+      char ch = outlist->getThenameElem(i);
+      file+=ch;
+    }
+  }else{
+    *flag=0;
+  }
+}
+
+/**
+ * Destroy cccptl object (EPOS particle list).
+ *
+ */
+void closeCccptl(){
+  closecccptl_();
+}
+
+/**
+Print EPOS particle list into check file.
+\param text Some text explaining particle list
+\param n First index to be printed
+\param m Last index to be printed
+\param file Name of the check file
+*/
+void aaalist_(char *text, int *n, int *m, char *file){
+  string s = text;
+  int i=s.find('&');
+  string su = s.substr(0,i); 
+  string fi=file;
+  //std::cout<<"AAALIST"<< su <<" "<<i<<" "<< *n<<" "<<*m<<" "<< fi <<std::endl;
+  listParticlesCheck(su,i,*n,*m,fi);
+}
+
+/**
+ * Show memory usage at the start of the process.
  *
  */
 void showMemoryAtStart(){
@@ -39,7 +110,7 @@ void showMemoryAtStart(){
 
 
 /**
- * Show memory usage at the end of the process
+ * Show memory usage at the end of the process.
  *
  */
 void showMemoryAtEnd(){
@@ -50,7 +121,7 @@ void showMemoryAtEnd(){
 
 
 /**
- * Execution time
+ * Initialize execution time.
  *
  */
 void checkTime(){
@@ -60,7 +131,7 @@ void checkTime(){
 
 
 /**
- * Start EPOS
+ * Initialize EPOS - first round.
  *
  */
 void eposStart(){
@@ -69,7 +140,8 @@ void eposStart(){
 
 
 /**
- * Read the input file
+ * Read the input file (optns file), containing the configuration
+ * concerning the reaction and the output format. 
  *
  */
 void readInputFile(){
@@ -78,7 +150,7 @@ void readInputFile(){
 
 
 /**
- * Initialize EPOS
+ * Initialize EPOS - second round.
  *
  */
 void initializeEpos(){
@@ -87,7 +159,7 @@ void initializeEpos(){
 
     
 /**
- * Initialize the event counters
+ * Initialize the event counters.
  *
  */
 void initializeEventCounters(){
@@ -96,7 +168,7 @@ void initializeEventCounters(){
 
 
 /**
- * Define the storage settings
+ * Define the storage settings.
  *
  */
 void defineStorageSettings(){
@@ -105,27 +177,40 @@ void defineStorageSettings(){
 
 
 /**
- * Write statistics
+ * Genarate EPOS event.
  *
  * @param n event number
  *
  */
 void generateEposEvent(int& n){
   eposevent_(&n);
+  // the map analysis_function is defined in src/KWa/AnalysisFunctions.hpp
+  // the following loop iterates the map and executes all analysis functions.
+  std::vector<Analysis*> analysesVector = getAnalysesVector();
+  for (Analysis* analysis : analysesVector) {
+    analysis->analyze();
+  }
+  closeCccptl();
 }
 
 
 /**
- * Finalize simulation
+ * Finalize simulation.
  *
  */
 void finalizeSimulation(){
-  bfinal_();     
+  bfinal_();
+  // normalize dataset before writing to the file
+  //  int analysisIdx = 0;
+  //  normalizeAnalysis("PtSpectra", numberOfEvents());  
+  // the map analysis_function is defined in src/KWa/AnalysisFunctions.hpp
+  // the following loop iterates the map and executes all analysis functions.
+  normalizeAnalysis(numberOfEvents());  
 }                         
 
 
 /**
- * Rewind the input file
+ * Rewind the input file.
  *
  */
 void rewindInputFile(){
@@ -134,7 +219,7 @@ void rewindInputFile(){
      
                   
 /**
- * End EPOS
+ * Delete all C++ objects.
  *
  */
 void eposEnd(){
@@ -181,4 +266,5 @@ int numberOfEnergyValues(){
 void setEnergyIndex(int& n){
   setebin_(&n);
 }
+
 
