@@ -1,0 +1,38 @@
+echo off
+
+#define  npo100.00  50000
+#define  npo00.00  0
+
+!npo table makes not much sense at this low energy, inversion unreliable
+#define2  npo05.00  -0.40    0.09       -49  
+#define2  npo10.00  -0.31    0.54       -85  
+#define2  npo15.00  -0.21    0.69       -90  
+#define2  npo20.00  -0.11    0.84       -95  
+#define2  npo25.00  -0.02    0.98      -100  
+#define2  npo30.00   0.08    1.13      -105  
+#define2  npo35.00   0.17    1.28      -111  
+#define2  npo40.00   0.27    1.42      -115  
+#define2  npo45.00   0.37    1.65      -128  
+#define2  npo50.00   0.46    1.96      -150  
+#define2  npo55.00   0.58    2.26      -168  
+#define2  npo60.00   0.71    2.62      -191  
+#define2  npo65.00   0.84    3.15      -231  
+#define2  npo70.00   0.97    3.76      -279  
+#define2  npo75.00   1.10    4.57      -347  
+#define2  npo80.00   1.23    5.70      -447  
+#define2  npo85.00   1.36    7.23      -587  
+#define2  npo90.00   1.48    9.42      -794  
+#define2  npo95.00   2.04   12.93     -1089  
+#define2  npo99.00   2.67   19.38     -1671  
+#define2  npo99.90   3.49   26.12     -2263  
+
+#define  nporange1to1   "::1::1::"
+#define  nporange2to2   "::2::2::"
+#define  nporange3to3   "::3::3::"
+#define  nporange4to4   "::4::4::"
+#define  nporange5to6   "::5::6::"
+#define  nporange7to9   "::7::9::"
+#define  nporange10to14 "::10::14::"
+#define  nporange15to20 "::15::20::"
+
+echo on

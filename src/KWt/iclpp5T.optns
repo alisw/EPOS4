@@ -19,76 +19,81 @@ CentralityClass 16  16 16   1   0   0.12
 CentralityClass 17  17 17   1   0   0.08
 CentralityClass 18  18 18   1   0   0.05
 
-#define  npo100  1000
-#define  npoXX  1000
-#define  npo100.00  1000
-#define  npo00  0
+#define  npoXX.00  50000
+#define  npo100.00  50000
+#define  npo00.00  0
 
-#define  vzac100 1000
-#define  vzac00  0
+#define2  npo05.00   0.02    0.10      -318  
+#define2  npo10.00   0.06    0.55       -88  
+#define2  npo15.00   0.35    0.70       -50  
+#define2  npo20.00   0.57    0.85       -33  
+#define2  npo25.00   0.71    1.00       -29  
+#define2  npo30.00   0.86    1.15       -25  
+#define2  npo35.00   1.00    1.30       -23  
+#define2  npo40.00   1.15    1.45       -21  
+#define2  npo45.00   1.30    1.72       -25  
+#define2  npo50.00   1.44    2.04       -29  
+#define2  npo55.00   1.68    2.36       -29  
+#define2  npo60.00   1.98    2.80       -29  
+#define2  npo65.00   2.28    3.35       -32  
+#define2  npo70.00   2.61    4.08       -36  
+#define2  npo75.00   3.06    5.04       -39  
+#define2  npo80.00   3.51    6.32       -44  
+#define2  npo85.00   4.16    8.13       -49  
+#define2  npo90.00   4.97   10.71       -54  
+#define2  npo95.00   6.24   14.84       -58  
+#define2  npo99.00   8.97   22.48       -60  
+#define2  npo99.90  12.33   30.21       -59  
 
-#if1 #5 mx my mz oy hu
-         #define vzac05   4.04
-         #define vzac10   6.17
-         #define vzac15   7.77
-         #define vzac20   9.16
-         #define vzac25   10.46
-         #define vzac30   11.75
-         #define vzac35   13.08
-         #define vzac40   14.48
-         #define vzac45   16.03
-         #define vzac50   17.75
-         #define vzac55   19.71
-         #define vzac60   21.97
-         #define vzac65   24.6
-         #define vzac70   27.66
-         #define vzac75   31.27
-         #define vzac80   35.58
-         #define vzac85   41.05
-         #define vzac90   48.44
-         #define vzac95   60.13
-         #define vzac99   82.02
-         #define vzac999   104.3
-         #define vzac32   12.28
-         #define vzac52   18.49
-         #define vzac62   22.97
-         #define vzac72   29.03
-         #define vzac81   36.57
-         #define vzac86   42.32
-         #define vzac905   49.35
-         #define vzac953   61.1
-         #define vzac9905   82.61
+#define  vzac100.00 1000
+#define  vzac00.00  0
+
+#if1 #9 mx my mz hu m2 m3 mya myb hqyn
+
+#define2  vzac30.00  15.69    0.00      1569  
+#define2  vzac32.00  16.33    0.00      1633  
+#define2  vzac50.00  22.67    0.00      2267  
+#define2  vzac52.00  23.51    0.00      2351  
+#define2  vzac60.00  27.22    0.00      2722  
+#define2  vzac62.00  28.23    0.00      2823  
+#define2  vzac70.00  32.59    0.00      3259  
+#define2  vzac72.00  33.76    0.00      3376  
+#define2  vzac80.00  38.96    0.00      3896  
+#define2  vzac81.00  39.69    0.00      3969  
+#define2  vzac85.00  42.90    0.00      4290  
+#define2  vzac86.00  43.79    0.00      4379  
+#define2  vzac90.00  47.89    0.00      4789  
+#define2  vzac90.50  48.48    0.00      4848  
+#define2  vzac95.00  55.35    0.00      5535  
+#define2  vzac95.30  55.97    0.00      5597  
+#define2  vzac99.00  69.69    0.00      6969  
+#define2  vzac99.05  70.11    0.00      7011  
+#define2  vzac99.90  86.82    0.00      8682  
+#define2  vzac99.99  102.1    0.00     10212  
+
 #else1
-         #define vzac05    4.17
-         #define vzac10    6.42
-         #define vzac15    8.1
-         #define vzac20    9.57
-         #define vzac25    10.95
-         #define vzac30    12.33
-         #define vzac35    13.76
-         #define vzac40    15.3
-         #define vzac45    17.01
-         #define vzac50    18.97
-         #define vzac55    21.25
-         #define vzac60    23.97
-         #define vzac65    27.18
-         #define vzac70    30.92
-         #define vzac75    35.25
-         #define vzac80    40.4
-         #define vzac85    46.92
-         #define vzac90    55.97
-         #define vzac95    70.94
-         #define vzac99    101
-         #define vzac999    132.7
-         #define vzac32    12.89
-         #define vzac52    19.83
-         #define vzac62    25.19
-         #define vzac72    32.57
-         #define vzac81    41.57
-         #define vzac86    48.46
-         #define vzac905    57.1
-         #define vzac953    72.23
-         #define vzac9905    101.8
+
+#define2  vzac30.00  23.93   15.69       824  
+#define2  vzac32.00  25.12   16.33       879  
+#define2  vzac50.00  38.24   22.67      1557  
+#define2  vzac52.00  40.09   23.51      1658  
+#define2  vzac60.00  47.85   27.22      2063  
+#define2  vzac62.00  49.89   28.23      2166  
+#define2  vzac70.00  58.98   32.59      2639  
+#define2  vzac72.00  61.60   33.76      2784  
+#define2  vzac80.00  74.09   38.96      3513  
+#define2  vzac81.00  75.91   39.69      3622  
+#define2  vzac85.00  83.96   42.90      4106  
+#define2  vzac86.00  86.22   43.79      4243  
+#define2  vzac90.00  96.68   47.89      4879  
+#define2  vzac90.50  98.21   48.48      4973  
+#define2  vzac95.00  116.0   55.35      6070  
+#define2  vzac95.30  117.7   55.97      6170  
+#define2  vzac99.00  153.8   69.69      8413  
+#define2  vzac99.05  154.9   70.11      8481  
+#define2  vzac99.90  198.5   86.82     11168  
+#define2  vzac99.99  236.5  102.10     13445  
+
 #fi1
 
 #define  nporange1to1    "::1::1::"
@@ -100,63 +105,47 @@ CentralityClass 18  18 18   1   0   0.05
 #define  nporange31to40  "::31::40::"
 #define  nporange51to60  "::51::60::"
 
-#define  vzacrange0to01   "::vzac999::vzac100::"
-#define  vzacrange01to1   "::vzac99::vzac999::"
-#define  vzacrange1to5    "::vzac95::vzac99::"
-#define  vzacrange5to10   "::vzac90::vzac95::"
-#define  vzacrange10to15  "::vzac85::vzac90::"
-#define  vzacrange15to20  "::vzac80::vzac85::"
-#define  vzacrange20to30  "::vzac70::vzac80::"
-#define  vzacrange30to40  "::vzac60::vzac70::"
-#define  vzacrange40to50  "::vzac50::vzac60::"
-#define  vzacrange50to70  "::vzac30::vzac50::"
-#define  vzacrange70to100 "::vzac00::vzac30::"
-#define  vzacrange0to1    "::vzac99::vzac100::"
-#define  vzacrange0to5    "::vzac95::vzac100::"
-#define  vzacrange5to15   "::vzac85::vzac95::"
-#define  vzacrange10to20  "::vzac80::vzac90::"
-#define  vzacrange15to30  "::vzac70::vzac85::"
-#define  vzacrange30to50  "::vzac50::vzac70::"
-#define  vzacrange50to100 "::vzac00::vzac50::"
+! Input for 'range' in util
+! 2
+! vzac 0.00 0.01
+! vzac 0.01 0.1
+!...
 
-#define  vzacrange0to0.95   "::vzac9905::vzac100::"
-#define  vzacrange0.95to4.7 "::vzac953::vzac9905::"
-#define  vzacrange4.7to9.5  "::vzac905::vzac953::"
-#define  vzacrange9.5to14   "::vzac86::vzac905::"
-#define  vzacrange14to19    "::vzac81::vzac86::"
-#define  vzacrange19to28    "::vzac72::vzac81::"
-#define  vzacrange28to38    "::vzac62::vzac72::"
-#define  vzacrange38to48    "::vzac52::vzac62::"
-#define  vzacrange48to68    "::vzac32::vzac52::"
-#define  vzacrange68to100   "::vzac00::vzac32::"
+#define  vzacrange0to0.01     "::vzac99.99::vzac100.00::"                        
+#define  vzacrange0.01to0.1   "::vzac99.90::vzac99.99::"                        
+#define  vzacrange0.1to1      "::vzac99.00::vzac99.90::"                        
+#define  vzacrange1to5        "::vzac95.00::vzac99.00::"                        
+#define  vzacrange5to10       "::vzac90.00::vzac95.00::"                        
+#define  vzacrange10to20      "::vzac80.00::vzac90.00::"                        
+#define  vzacrange20to30      "::vzac70.00::vzac80.00::"                        
+#define  vzacrange30to40      "::vzac60.00::vzac70.00::"                        
+#define  vzacrange40to50      "::vzac50.00::vzac60.00::"                        
+#define  vzacrange50to70      "::vzac30.00::vzac50.00::"                        
+#define  vzacrange70to100     "::vzac00.00::vzac30.00::"                        
+#define  vzacrange15to20      "::vzac80.00::vzac85.00::"                        
+#define  vzacrange10to15      "::vzac85.00::vzac90.00::"                        
+#define  vzacrange0to0.1      "::vzac99.90::vzac100.00::"                        
+#define  vzacrange30to50      "::vzac50.00::vzac70.00::"                        
+#define  vzacrange15to30      "::vzac70.00::vzac85.00::"                        
+#define  vzacrange5to15       "::vzac85.00::vzac95.00::"                        
+#define  vzacrange0to1        "::vzac99.00::vzac100.00::"                        
 
-#define  vzacrange0to4.7    "::vzac953::vzac100::"
-#define  vzacrange4.7to14   "::vzac86::vzac953::"
-#define  vzacrange14to28    "::vzac72::vzac86::"
-#define  vzacrange28to48    "::vzac52::vzac72::"
-#define  vzacrange48to100   "::vzac00::vzac52::"
+#define  vzacrange0to0.95   "::vzac99.05::vzac100.00::"
+#define  vzacrange0.95to4.7 "::vzac95.30::vzac99.05::"
+#define  vzacrange4.7to9.5  "::vzac90.50::vzac95.30::"
+#define  vzacrange9.5to14   "::vzac86.00::vzac90.50::"
+#define  vzacrange14to19    "::vzac81.00::vzac86.00::"
+#define  vzacrange19to28    "::vzac72.00::vzac81.00::"
+#define  vzacrange28to38    "::vzac62.00::vzac72.00::"
+#define  vzacrange38to48    "::vzac52.00::vzac62.00::"
+#define  vzacrange48to68    "::vzac32.00::vzac52.00::"
+#define  vzacrange68to100   "::vzac00.00::vzac32.00::"
 
-
-!#define  vzac  vzac05  2.15 
-!#define  vzac  vzac10  4.60 
-!#define  vzac  vzac15  6.97 
-!#define  vzac  vzac20  9.10 
-!#define  vzac  vzac25 10.98 
-!#define  vzac  vzac30 12.70 
-!#define  vzac  vzac35 14.34 
-!#define  vzac  vzac40 15.97 
-!#define  vzac  vzac45 17.65 
-!#define  vzac  vzac50 19.42 
-!#define  vzac  vzac55 21.34 
-!#define  vzac  vzac60 23.46 
-!#define  vzac  vzac65 25.88 
-!#define  vzac  vzac70 28.64 
-!#define  vzac  vzac75 31.85 
-!#define  vzac  vzac80 35.62 
-!#define  vzac  vzac85 40.28 
-!#define  vzac  vzac90 46.52 
-!#define  vzac  vzac95 56.44 
-!#define  vzac  vzac99 77.01 
-!#define  vzac  vzac999 103.16 
+#define  vzacrange0to4.7    "::vzac95.30::vzac100.00::"
+#define  vzacrange4.7to14   "::vzac86.00::vzac95.30::"
+#define  vzacrange14to28    "::vzac72.00::vzac86.00::"
+#define  vzacrange28to48    "::vzac52.00::vzac72.00::"
+#define  vzacrange48to100   "::vzac00.00::vzac52.00::"
+#define  vzacrange9.5to19   "::vzac81.00::vzac90.50::"
 
 echo on

@@ -1,7 +1,9 @@
-# Define this directory's flags:
-set(${PROJECT_NAME}_MS_CXX_FLAGS "-O2 -g -Wall -fPIC -pthread -m64" CACHE STRING "${PROJECT_NAME} HEPMC CXX FLAGS")
-# Enable this directory's flags:
-set(CMAKE_CXX_FLAGS "${${PROJECT_NAME}_MS_CXX_FLAGS}")
+#
+#  This file is part of EPOS4
+#  Copyright (C) 2022 research institutions and authors (See CREDITS file)
+#  This file is distributed under the terms of the GNU General Public License version 3 or later
+#  (See COPYING file for the text of the licence)
+#
 
 # Do the local stuff:
 set(MS_SRC 
@@ -15,4 +17,7 @@ set(MS_SRC
 )
 
 add_library(MS OBJECT ${MS_SRC})
-target_include_directories(MS PRIVATE ../../srcext/YK/)
+separate_arguments(CXX_COMPILE_FLAGS UNIX_COMMAND ${CXX_COMPILE_FLAGS})
+target_compile_options(MS PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${CXX_COMPILE_FLAGS}>)
+
+target_include_directories(MS PRIVATE ${PROJECT_SOURCE_DIR}/srcext/YK/)

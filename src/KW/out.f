@@ -5,6 +5,7 @@ C  This file is distributed under the terms of the GNU General Public License ve
 C  (See COPYING file for the text of the licence)
 C
 
+
       subroutine treestore(numpom)
 #include "aaa.h"
       parameter (mx3ptl=150000)
@@ -17,13 +18,18 @@ C
       real zus (mxptlxx)
       integer iversnx,laprojx,maprojx,latargx,matargx,nfullx,nfreezex
       real engyx, sigt, dy
-      integer nhard, npartproj, nparttarg, nspecp, nspecn
+      integer nhard, npartproj, nparttarg 
+      integer nspecprojp, nspecprojn, nspectargp, nspectargn
       common/cNpart/sumNpart
       common/ciniflo/ecccoe(5),eccphi(5)
       common/cigrpac/igrpac/cigrval/igrvalF
       common/cnfrx/nfrx
       common/cmxpom/mxpom
       character*200 fn
+
+      if(irootcproot.gt.0.or.hepmc.eq.1)write(ifmt,'(a)')
+     *'enter treestore'
+
       itest=0
  
       call maxsize_get(2, mx2ptl )
@@ -38,13 +44,16 @@ C
           ii=index(fndt(1:nfndt),".data")-1
           if(irootcproot.gt.0)then
             write(ifmt,'(a)')'opentree '//fndt(1:ii)//'.root'
-            call opentree(1,iextree,fndt(1:ii)//'.root'//CHAR(0))
+            call opentree(1,iextree,ihepmc3,
+     .                    fndt(1:ii)//'.root'//CHAR(0))
           endif
-          if(ihepmc.eq.1)then
-            call open_hepmc(fnhm(1:nfnhm)//'.hepmc'//CHAR(0))
-          else if(ihepmc.eq.2)then
-            call open_hepmc('/dev/stdout'//CHAR(0))
-          endif
+          if(hepmc.eq.1)then
+            write(ifmt,'(a)')'openhepmc '//fnhm(1:nfnhm)//'.hepmc'
+            call openhepmc(fnhm(1:nfnhm)//'.hepmc'//CHAR(0))
+          else if(hepmc.eq.2)then
+            write(ifmt,'(a)')'openhepmc /dev/stdout'
+            call openhepmc('/dev/stdout'//CHAR(0))
+          endif 
           izm=ifillTree
           nfullt(1)=nfull
         else !-----orderTree case using Poms or similar-----
@@ -52,12 +61,12 @@ C
           if(irootcproot.gt.0)then
             write(ifmt,'(a,2i7)')'opentree '//fn(1:nfn)
      .     ,numpom,nfullt(numpom)
-            call opentree(numpom,iextree,fn(1:nfn)//CHAR(0))
+            call opentree(numpom,iextree,ihepmc3,fn(1:nfn)//CHAR(0))
           endif
-          if(ihepmc.eq.1)then
-            call open_hepmc(fnhm(1:nfnhm)//'.hepmc'//CHAR(0))
-          else if(ihepmc.eq.2)then
-            call open_hepmc('/dev/stdout'//CHAR(0))
+          if(hepmc.eq.1)then
+            call openhepmc(fnhm(1:nfnhm)//'.hepmc'//CHAR(0))
+          else if(hepmc.eq.2)then
+            call openhepmc('/dev/stdout'//CHAR(0))
           endif
           izm=izmode
         endif
@@ -70,7 +79,7 @@ C
         nfullx =nfullt(numpom)
         nfreezex=nfreeze
         if(irootcproot.gt.0)
-     .  call treehead(numpom,iversnx,laprojx,maprojx,latargx,matargx
+     .  call FillHead(numpom,iversnx,laprojx,maprojx,latargx,matargx
      .  ,engyx,nfullx,nfreezex)
         sumNpart=0
       endif
@@ -92,7 +101,7 @@ C
         endif
 
         jo=jorptl(i)
-        if(istptl(i).eq.20.or.istptl(i).eq.21)jo=nint(radptl(i))
+        !if(istptl(i).eq.20.or.istptl(i).eq.21)jo=nint(radptl(i)) !KW2309 makes problems
         !print*,'          ',iorptl(i),jo,i,'   '
         !.   ,idptl(i)
         if(istptl(i).le.1.or.istptl(i).eq.29
@@ -135,7 +144,7 @@ C
           else
             jor(n)=0
           endif
-          if(ist(n).eq.21.and.jor(n).gt.0)ior(jor(n))=ior(n)
+          !if(ist(n).eq.21.and.jor(n).gt.0)ior(jor(n))=ior(n) !KW2309 makes problems
           px(n)= pptl(1,i)
           py(n)= pptl(2,i)
           pz(n)= pptl(3,i)
@@ -193,23 +202,33 @@ c*JJ      nhard=ikoevt
       nhard=0 !*JJ ikoevt is number of pomerons, so not exactly nhard
       npartproj=ng11evt !*JJ number of Glauber proj participants
       nparttarg=ng12evt !*JJ number of Glauber targ participants
-      nspecp=ngspecp !nppevt+ntpevt
-      nspecn=ngspecn !npnevt+ntnevt
+c     nspecp=ngspecp !nppevt+ntpevt
+c     nspecn=ngspecn !npnevt+ntnevt
+c     nspecp=nppevt+ntpevt
+c     nspecn=npnevt+ntnevt
+      nspecprojp=nppevt
+      nspecprojn=npnevt
+      nspectargp=ntpevt
+      nspectargn=ntnevt
       if(irootcproot.gt.0)then
-        call fillTree(numpom,nptevt, cnt, sigt, iextree
-     .  , nev, npt, ngl, kol, nhard,npartproj,nparttarg,nspecp,nspecn 
+        call fillTree(numpom,nptevt, cnt, sigt, iextree, ihepmc3
+     .  , nev, npt, ngl, kol, nhard, npartproj, nparttarg
+     .  , nspecprojp, nspecprojn, nspectargp, nspectargn 
      .  , phi, phir, psi2, psi3, psi4, psi5, ecci2, ecci3, ecci4, ecci5
      .  , id, ist, ity, ior, jor, zus, px, py, pz, eam 
      .  , x, y, z, t, iret)
       endif 
-      if(ihepmc.eq.1 .or. ihepmc.eq.2)then
+      if(hepmc.eq.1 .or. hepmc.eq.2)then
         if(ish.ge.2)call alist('Fill HepMC direct&',0,0)
         call getReaction(iprojZ,iprojA,itargZ,itargA,fegyevt)
-        dy=0
-        if(ihepframe.eq.1) dy=-rapcms
-        call fillhepmc(iextree,nrevt,fegyevt,dy,iprojZ,iprojA
-     .  ,itargZ,itargA,nhard,ngl,npartproj,nparttarg,nspecp,nspecn
-     .  ,nptevt,cnt,sigt,id,ist,ity,ior,jor,zus,px,py,pz,eam,x,y,z,t)
+        dy=-hepmc_rapcms
+        call fillhepmc(iextree,ihepmc3,nrevt,fegyevt,dy, iprojZ, iprojA
+     .  , itargZ, itargA, nhard, ngl, npartproj, nparttarg
+     .  , nspecprojp, nspecprojn, nspectargp, nspectargn, nptevt, cnt
+     .  , sigt, id, ist, ity, ior, px, py, pz, eam, x, y, z, t
+     .  , hepmc_record_mode, hepmc_tau_decay, hepmc_record_id_nb
+     .  , hepmc_record_id_list)
+
       endif
       !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       !  List of fillTree variables
@@ -218,6 +237,7 @@ c*JJ      nhard=ikoevt
       ! cnt .......... centrality variable
       ! sigt ......... total cross-section of the process
       ! iextree ...... tree extension (0,1)
+      ! ihepmc3 ...... HepMC format version (0=HepMC2,1=HepMC3)
       ! id ........... particle id (epos code, 
       !                  see "List of particle codes" in "KW/ids.f")
       ! ist .......... status and particle type
@@ -268,6 +288,8 @@ c*JJ      nhard=ikoevt
       !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       if(iret.ne.0)
      .stop'##### ERROR in treestore: array in fillTree too small #####'
+      if(irootcproot.gt.0.or.hepmc.eq.1)write(ifmt,'(a)')
+     *'exit treestore'
       end
       subroutine tfname(numpom,fn,nfn)          
 #include "aaa.h"
@@ -343,11 +365,18 @@ c*JJ      nhard=ikoevt
        if(nopent(npom).gt.0)then
         if(irootcproot.gt.0)then
           write(ifmt,'(a,i7)')'closetree',npom
+          call clop(3)
           call tfname(npom,fn,nfn)          
-          call closetree(npom,fn(1:nfn)//CHAR(0))
+          call closetree(npom,iextree,ihepmc3,fn(1:nfn)//CHAR(0))
+          write(ifmt,'(a,i7)')'closetree done'
+          call clop(3)
         endif
-        if(ihepmc.eq.1 .or. ihepmc.eq.2)then
+        if(hepmc.eq.1 .or. hepmc.eq.2)then
+          write(ifmt,'(a)')'closehepmc'
+          call clop(3)
           call closehepmc()
+          write(ifmt,'(a,i7)')'closehepmc done'
+          call clop(3)
         endif
        endif
       enddo
@@ -477,7 +506,8 @@ c###############################################################################
          endif
          if(isyst.eq.0)then       !----system i (interactive local)---
            fnamein=
-     .     fnnx(1:nfnnx)//'../../../public/root/'
+c    .     fnnx(1:nfnnx)//'../../../public/root/'
+     .     '/sps/nantheo/werner/ss/' !*JJ
      .     //fnhi(jj1+2:jj2)//c4(1:ic4)
      .     //"/"//cij(1:nij)//"/"//fnhi(jj1:jj2)//c4(1:ic4)//' '
          elseif(isyst.eq.1)then       !-------system q (qepos)---------
@@ -558,7 +588,8 @@ c###############################################################################
       real p5 (mxptlxx), en (mxptlxx)
       real x (mxptlxx), y (mxptlxx), z (mxptlxx), t (mxptlxx)
       real sigt, dy
-      integer nhard, npartp, npartt, nspecp, nspecn
+      integer nhard, npartp, npartt 
+      integer nspecprojp, nspecprojn, nspectargp, nspectargn
       data nrevtxx/0/
       save nrevtxx
 
@@ -569,10 +600,10 @@ c###############################################################################
       call checkRootFiles(1,i1,i3,i4)
       if(i4.eq.-1)call checkRootFiles(2,i1,i3,i4)
       write(ifmt,'(2(a,i8))')'getCevtCptl: loop',i3,'  to',i4
-      if(ihepmc.eq.1)then
-        call open_hepmc(fnhm(1:(nfnhm))//'.hepmc'//CHAR(0))
-      else if(ihepmc.eq.2)then
-        call open_hepmc('/dev/stdout'//CHAR(0))
+      if(hepmc.eq.1)then
+        call openhepmc(fnhm(1:(nfnhm))//'.hepmc'//CHAR(0))
+      else if(hepmc.eq.2)then
+        call openhepmc('/dev/stdout'//CHAR(0))
       endif
       do i=i3,i4
         call clop(3)
@@ -589,10 +620,10 @@ c###############################################################################
          do ii=1,nevents
            nrevtxx=nrevtxx+1
            nrevt=nrevtxx
-           call etreeevt(ii,np,cnt,sigt,iextree
-     .     ,nev,npt,ngl,kol,nhard,npartp,npartt,nspecp,nspecn,phi,phir
-     .     ,psi2,psi3,psi4,psi5,ecci2,ecci3,ecci4,ecci5
-     .     ,id,ist,ity,ior,jor,px,py,pz,eam
+           call etreeevt(ii,np,cnt,sigt,iextree,ihepmc3
+     .     ,nev,npt,ngl,kol,nhard,npartp,npartt,nspecprojp,nspecprojn
+     .     ,nspectargp,nspectargn,phi,phir,psi2,psi3,psi4,psi5
+     .     ,ecci2,ecci3,ecci4,ecci5,id,ist,ity,ior,jor,px,py,pz,eam
      .     ,x,y,z,t)
            nptl=np
            ng1evt=npartp+npartt
@@ -607,8 +638,10 @@ c###############################################################################
      .       .and.sqrt(pz(1)**2+0.94**2).gt.0.50*engy/2)then
                if(eam(1).gt.0.50*engy/2)iold=1 !looks like an energy and not a mass
              else
-               print*,id(1),ist(1),ity(1),px(1),py(1),pz(1),eam(1) 
-               stop'####### ERROR 26032016 #######'
+               if(iphsd.eq.0)then
+                 print*,id(1),ist(1),ity(1),px(1),py(1),pz(1),eam(1) 
+                 stop'####### ERROR 26032016 #######'
+               endif
              endif
            endif
            do n=1,np
@@ -677,19 +710,26 @@ c###############################################################################
            if(mod(nrevt,modsho).eq.0)
      .     write(ifmt,'(a,i7,a,a,a)')'event',
      .     nrevt,' from ',fnamein(1:index(fnamein,' ')-1),'  '
-           if(ihepmc.eq.1 .or. ihepmc.eq.2)then
+           if(hepmc.eq.1 .or. hepmc.eq.2)then
              if(ish.ge.2)call alist('Fill HepMC from Root&',0,0)
-             dy=0
-             if(ihepframe.eq.1) dy=-rapcms
-             call fillhepmc(iextree,nrevt,engy,dy,laproj,maproj
-     .       ,latarg,matarg,nhard,ngl,npartp,npartt,nspecp,nspecn,np,bm
-     .       ,sigt,id,ist,ity,ior,jor,zus,px,py,pz,eam,x,y,z,t)
+             dy=-hepmc_rapcms
+c            call fillhepmc(iextree,nrevt,engy,dy,laproj,maproj
+c    .       ,latarg,matarg,nhard,ngl,npartp,npartt,nspecp,nspecn,np,bm
+c    .       ,sigt,id,ist,ity,ior,px,py,pz,eam,x,y,z,t
+c    .       ,hepmc_record_mode,hepmc_tau_decay,hepmc_record_id_nb
+c    .       ,hepmc_record_id_list)
+             call fillhepmc(iextree,ihepmc3,nrevt,fegyevt,dy,laproj
+     .       , maproj, latarg, matarg, nhard, ngl, npartproj, nparttarg
+     .       , nspecprojp, nspecprojn, nspectargp, nspectargn, np, bm
+     .       , sigt, id, ist, ity, ior, px, py, pz, eam, x, y, z, t
+     .       , hepmc_record_mode, hepmc_tau_decay, hepmc_record_id_nb
+     .       , hepmc_record_id_list)
            endif
          enddo
          call etreeclose()
         endif
       enddo
-      if(ihepmc.eq.1 .or. ihepmc.eq.2) call closehepmc()
+      if(hepmc.eq.1 .or. hepmc.eq.2) call closehepmc()
       nevent=nrevt
       call wrxx
       call swopen
@@ -873,7 +913,7 @@ c     .     ,px,py,pz,en,x,y,z,t)
        if(nopent(npom).gt.0)then
         write(ifmt,'(i3,$)')npom
         call tfname(npom,fn,nfn)          
-        call closetree(npom,fn(1:nfn)//CHAR(0))
+        call closetree(npom,iextree,ihepmc3,fn(1:nfn)//CHAR(0))
        endif
       enddo
       write(ifmt,'(a)')' '

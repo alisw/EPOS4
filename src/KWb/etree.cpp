@@ -23,15 +23,15 @@ extern "C" void etreeclose_(){
 extern "C" void etreenevent_(int * nevents){
         *nevents = etree->EposTree->GetEntries();
 }
-extern "C" void etreeevt_(int * ii, int *_np, float *_bim, float *_sigtot, int *_iextree
-           , int *_nev, int *_npt, int *_ngl, int *_kol, int *_nhard, int *_npartproj, int *_nparttarg, int *_nspecp, int *_nspecn //*JJ
+extern "C" void etreeevt_(int * ii, int *_np, float *_bim, float *_sigtot, int *_iextree, int *_ihepmc3
+           , int *_nev, int *_npt, int *_ngl, int *_kol, int *_nhard, int *_npartproj, int *_nparttarg, int *_nspecprojp, int *_nspecprojn, int *_nspectargp, int *_nspectargn //*JJ
            , float *_phi, float *_phir, float *_psi2, float *_psi3, float *_psi4, float *_psi5, float *_ecci2, float *_ecci3, float *_ecci4, float *_ecci5
            , int *_id, int *_ist, int *_ity, int *_ior, int *_jor, float *_px, float *_py, float *_pz, float *_en
            , float *_x, float *_y, float *_z, float *_t) {
         int i=*ii-1;
         int iextree=*_iextree;
+        int ihepmc3=*_ihepmc3;
         //cout<<" event "<<i<<endl;
-    //**JJ std::cout << " ****** AJEDNEK TUATU ******** " << std::endl;
         etree->EposTree->SetBranchAddress("np", _np   );
         etree->EposTree->SetBranchAddress("bim", _bim );
         etree->EposTree->SetBranchAddress("nev", _nev ); //----new---->
@@ -44,8 +44,15 @@ extern "C" void etreeevt_(int * ii, int *_np, float *_bim, float *_sigtot, int *
          etree->EposTree->SetBranchAddress("nhard", _nhard );//*JJ
          etree->EposTree->SetBranchAddress("npartproj", _npartproj );//*JJ
          etree->EposTree->SetBranchAddress("nparttarg", _nparttarg );//*JJ
-         etree->EposTree->SetBranchAddress("nspecp", _nspecp );//*JJ
-         etree->EposTree->SetBranchAddress("nspecn", _nspecn );//*JJ
+         etree->EposTree->SetBranchAddress("nspecp", _nspecprojp );//*JJ
+         etree->EposTree->SetBranchAddress("nspecn", _nspecprojn );//*JJ
+         if(ihepmc3==1) //extension 2
+         {
+          etree->EposTree->SetBranchAddress("nspecprojp", _nspecprojp );//*JJ
+          etree->EposTree->SetBranchAddress("nspecprojn", _nspecprojn );//*JJ
+          etree->EposTree->SetBranchAddress("nspectargp", _nspectargp );//*JJ
+          etree->EposTree->SetBranchAddress("nspectargn", _nspectargn );//*JJ
+         }
         }
         etree->EposTree->SetBranchAddress("phi", _phi );
         etree->EposTree->SetBranchAddress("phir", _phir );

@@ -29,7 +29,6 @@ c iorsdf transmitted via aaa.h
 c----------------------------------------------------------------------
 #include "aaa.h"
 #include "ems.h"
-#include "ico.h"
       common/cxyzt/xptl(mxptl+29),yptl(mxptl+29),zptl(mxptl+29)
      * ,tptl(mxptl+29),optl(mxptl+29),uptl(mxptl+29),sptl(mxptl+29)
      *,rptl(mxptl+29,3)
@@ -66,6 +65,10 @@ c----------------------------------------------------------------------
       logical lprint 
       save ncntpo
       data ncntpo /0/
+      real xmaxico, getIcoXmax
+      
+      xmaxico=getIcoXmax()
+
       ncntpo=ncntpo+1
       call utpri('jintpo',ish,ishini,4)
       lprint=nfrx.eq.0
@@ -406,6 +409,13 @@ c...check high pt segments
       !... -1 = valid but high pt
       !...  0 = not valid
       
+      !TEST
+      !n=igetNpom()
+      !call getRnpom(1.0,Z)!Z=n/max_n/f
+      !Z2=max(0.,ng1evt-2.)/35
+      !write(*,'(a,2f10.2)')'TEST-Z',Z,Z2
+      !ENDTEST 
+
       esu=0
       do i=1,nptla
       if(istptl(i).eq.0.or.istptl(i).eq.3)esu=esu+pptl(4,i)
@@ -1427,7 +1437,6 @@ c iorsdf transmitted via aaa.h
 c----------------------------------------------------------------------
       implicit none
 #include "aaa.h"
-#include "ico.h"
       integer iret
       real xptl,yptl,zptl,tptl,optl,uptl,sptl,rptl
       common/cxyzt/xptl(mxptl+29),yptl(mxptl+29),zptl(mxptl+29)
@@ -1472,6 +1481,7 @@ c----------------------------------------------------------------------
      &,nst,ntmp,ntry,n,idum,mbinsum,ior,nmn,nmx
       real amt,rap
 
+      integer getAccumJerr
 c...prepare /cptl/ for clusters
 
       if(ish.ge.6)write(ifch,*)'prepare /cptl/ for clusters'
@@ -1702,7 +1712,8 @@ c...finish cluster storage to /cptl/
         pptld(5,mm)=sqrt(max(0d0,p52))
         if(pptld(5,mm).lt.amcmin)then
         amcmi0=utdble(1.1*utamnu(ke(1),ke(2),ke(3),ke(4),ke(5),ke(6),5))
-          if(idptl(n).ne.800000000)jerr(2)=jerr(2)+1 !tp20140605 error here
+          if(idptl(n).ne.800000000)
+     &       call setAccumJerr(2,getAccumJerr(2)+1)  !tp20140605 error here
           if(pptld(4,mm).gt.amcmi0)then
 c give enough mass to the cluster by rescaling momentum
             if(pptld(4,mm).ge.amcmin)then
@@ -1733,7 +1744,7 @@ c      write(ifch,*)'droplet uds=',ke(1),ke(2),ke(3),'   E=',pptld(5,mm)
               endif
             enddo
           else
-            jerr(3)=jerr(3)+1
+            call setAccumJerr(3,getAccumJerr(3)+1)
 c            print *,pptld(5,mm),pptld(4,mm),sqrt(pptld(3,mm)*pptld(3,mm)
 c     &                   +pptld(2,mm)*pptld(2,mm)
 c     &                   +pptld(1,mm)*pptld(1,mm)
@@ -2198,7 +2209,6 @@ c reduction of multiplicity if the system is extended.
 c----------------------------------------------------------------------
       implicit none
 #include "aaa.h"
-#include "ico.h"
       real bglaub,f1,f2
       common/cbglaub/bglaub
       integer ncol,kolpt,ncoli

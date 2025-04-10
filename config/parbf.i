@@ -3,8 +3,6 @@ set iregge 0
 !satpom off         !for testing
 !--------------------------------------------------------------
 set factk 1.0!1.6!2.4!1.8!1.2     !compensate with epscrx in key
-set ptipom 1.5 !1.75!3.0   
-set ptipomi 0.5 !1.7 !1.3 !0.3 
 set facq2tim 1.0 !1.5 !1.25 ! !factor for Q2 arguments of timsh2 
 set q2fin  0.2 !2.5      
 set qkonia1 0. !2.0 !6.0 !1e10 !1000.
@@ -113,11 +111,12 @@ set gamreg(2,1) 8.    !0.5  !reggeon factor
 !################################################################
 
 set etaos 0.08 !0.32!0.0001! very little change spectra pp (same zetaos)
+set zetaos 0.
 
 set dsegce 1. !11.68   !replace nsegce : dsegce*vocell=nsegce (to have less core a low energy because cell volume is larger so density is lower)
 set tfrout 0.164 !0.150 !0.164 !0.168 !0.140   !T~0.150 too flat pt spectra
 set fofac  1.480 !1.300 !1.550 !1.650ot !1.700   !in PbPb, pp less sensitive
-set epsfin 0.20  !0.20  !0.05
+set epsfin 0.14  !0.20  !0.05
 set taustr 1. !0.05 !0.3! 1.0 !1000. !1.0
 set iotst2 0 !30 !20 !modifies fpost (0.01fm)
 

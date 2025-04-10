@@ -1695,7 +1695,7 @@ c simulated cross sections
       xs=xsectionpar()      !ctp just as a reference not used here anymore)
 c      rexndi(iclpro)=rexndii(iclpro)
 c      rexndi(icltar)=rexndii(icltar)
-        if(ish.ge.2)write(ifch,*)'Xsigma : rexdif/ndi=',rexdif(iclpro)
+        if(ish.ge.3)write(ifch,*)'Xsigma : rexdif/ndi=',rexdif(iclpro)
      &                                                 ,rexdif(icltar)
      &                                                 ,rexndi(iclpro)
      &                                                 ,rexndi(icltar)

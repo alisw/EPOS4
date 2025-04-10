@@ -204,13 +204,13 @@ extern "C" void core1paramset4_(float* v1,float* v2,float* v3,float* v4) { core1
 extern "C" void core1paramget4_(float* v1,float* v2,float* v3,float* v4) { core1param->get4(*v1,*v2,*v3,*v4) ;  }
 extern "C" void core1paramset7_(float* v1,float* v2,float* v3,float* v4,float* v5,float* v6,float* v7) { core1param->set7(*v1,*v2,*v3,*v4,*v5,*v6,*v7) ;  }
 extern "C" void core1paramget7_(float* v1,float* v2,float* v3,float* v4,float* v5,float* v6,float* v7) { core1param->get7(*v1,*v2,*v3,*v4,*v5,*v6,*v7) ;  }
-Mudiar<float> *core2param ;
-extern "C" void core2paramcreate_(int* n1)      { core2param = new Mudiar<float>(*n1) ;  }
-extern "C" void core2paramdestroy_(void)        { delete core2param ; }
-extern "C" void core2paramset_(int* i1,float* val){ core2param->set(*i1-1, *val) ;  }
-extern "C" void core2paramget_(int* i1,float* val){ core2param->get(*i1-1, *val) ;  }
-extern "C" void core2paramset6_(float* v1,float* v2,float* v3,float* v4,float* v5,float* v6) { core2param->set6(*v1,*v2,*v3,*v4,*v5,*v6) ;  }
-extern "C" void core2paramget6_(float* v1,float* v2,float* v3,float* v4,float* v5,float* v6) { core2param->get6(*v1,*v2,*v3,*v4,*v5,*v6) ;  }
+Mudiar<float> *feloss ;
+extern "C" void felosscreate_(int* n1)      { feloss = new Mudiar<float>(*n1) ;  }
+extern "C" void felossdestroy_(void)        { delete feloss ; }
+extern "C" void felossset_(int* i1,float* val){ feloss->set(*i1-1, *val) ;  }
+extern "C" void felossget_(int* i1,float* val){ feloss->get(*i1-1, *val) ;  }
+extern "C" void felossset6_(float* v1,float* v2,float* v3,float* v4,float* v5,float* v6) { feloss->set6(*v1,*v2,*v3,*v4,*v5,*v6) ;  }
+extern "C" void felossget6_(float* v1,float* v2,float* v3,float* v4,float* v5,float* v6) { feloss->get6(*v1,*v2,*v3,*v4,*v5,*v6) ;  }
 
 //###################################################################################################
 //################################ maxsize object -> dimensions #####################################

@@ -1,0 +1,141 @@
+echo off
+
+#define  bim00    0.00 
+#define  bimXX   20.00
+#define  bim100  20.00
+#define  bi100  20.00
+
+#define  npo100.00  50000
+#define  npo00.00  0
+
+#define  npn100.00  50000
+#define  npn00.00  0
+
+!#####################################################################################
+#define3  bim01   1.17    1.17         0      *
+#define3  bim02   1.65    1.65         0      *
+#define3  bim025  1.85    1.84         1      **
+#define3  bim03   2.03    2.02         0      *
+#define3  bim05   2.62    2.60         1      **
+#define3  bim06   2.87    2.85         1      **
+#define3  bim075  3.21    3.19         1      **
+#define3  bim10   3.71    3.68         1      **
+#define3  bim12   4.06    4.04         1      **
+#define3  bim15   4.54    4.51         1      **
+#define3  bim20   5.24    5.21         1      **
+#define3  bim25   5.86    5.82         1      **
+#define3  bim30   6.42    6.38         1      **
+#define3  bim35   6.94    6.89         1      **
+#define3  bim40   7.42    7.36         1      **
+#define3  bim45   7.87    7.81         1      **
+#define3  bim50   8.29    8.24         1      **
+#define3  bim55   8.70    8.64         1      **
+#define3  bim60   9.08    9.02         1      **
+#define3  bim65   9.46    9.39         1      **
+#define3  bim70   9.82    9.75         1      **
+#define3  bim75  10.18   10.11         1      **
+#define3  bim80  10.55   10.48         1      **
+#define3  bim85  10.95   10.89         1      **
+#define3  bim90  11.42   11.37         0      *
+#define3  bim92  11.66   11.60         1      **
+#define3  bim95  12.11   12.06         0      *
+#define3  npo05.00   1.22    1.59       -23      ************************
+#define3  npo10.00   2.94    3.68       -20      *********************
+#define3  npo15.00   4.67    5.78       -19      ********************
+#define3  npo20.00   6.39    7.87       -19      ********************
+#define3  npo25.00   8.11   10.61       -24      *************************
+#define3  npo30.00  10.40   15.65       -34      *************************
+#define3  npo35.00  15.07   21.40       -30      *************************
+#define3  npo40.00  19.87   29.40       -32      *************************
+#define3  npo45.00  27.27   40.28       -32      *************************
+#define3  npo50.00  36.38   54.28       -33      *************************
+#define3  npo55.00  47.80   71.75       -33      *************************
+#define3  npo60.00  62.12   93.52       -34      *************************
+#define3  npo65.00  79.39  119.80       -34      *************************
+#define3  npo70.00  100.7  151.80       -34      *************************
+#define3  npo75.00  126.4  190.40       -34      *************************
+#define3  npo80.00  157.3  236.90       -34      *************************
+#define3  npo85.00  194.3  292.50       -34      *************************
+#define3  npo90.00  239.0  359.90       -34      *************************
+#define3  npo95.00  295.0  444.70       -34      *************************
+#define3  npo99.00  355.2  535.10       -34      *************************
+#define3  npo99.90  389.3  584.80       -33      *************************
+#define3  npn20.00   5.60    5.88        -5      ******
+#define3  npn40.00  18.44   18.91        -2      ***
+#define3  npn60.00  46.25   46.17         0      *
+#define3  npn80.00  96.26   93.40         3      ****
+#define3  npn90.00  133.3  126.70         5      ******
+#define3  npn99.00  176.6  160.60        10      ***********
+#define3  npn99.90  183.9  165.30        11      ************
+!#####################################################################################
+
+CentralityLimit 0  0
+CentralityLimit 5  bim05
+CentralityLimit 10 bim10
+CentralityLimit 15 bim15
+CentralityLimit 20 bim20
+CentralityLimit 25 bim25
+CentralityLimit 30 bim30
+CentralityLimit 35 bim35
+CentralityLimit 40 bim40
+CentralityLimit 45 bim45
+CentralityLimit 50 bim50
+CentralityLimit 55 bim55
+CentralityLimit 60 bim60
+CentralityLimit 65 bim65
+CentralityLimit 70 bim70
+CentralityLimit 75 bim75
+CentralityLimit 80 bim80
+CentralityLimit 85 bim85
+CentralityLimit 90 bim90
+CentralityLimit 95 bim95
+CentralityLimit 100 bi100
+
+CentralityClass cc20
+CentralityClass 1    0     bim05  1
+CentralityClass 2    bim05 bim10  1
+CentralityClass 3    bim10 bim15  2
+CentralityClass 4    bim15 bim20  2
+CentralityClass 5    bim20 bim25  2
+CentralityClass 6    bim25 bim30  2
+CentralityClass 7    bim30 bim35  4
+CentralityClass 8    bim35 bim40  4
+CentralityClass 9    bim40 bim45  4
+CentralityClass 10   bim45 bim50  4
+CentralityClass 11   bim50 bim55  4
+CentralityClass 12   bim55 bim60  8
+CentralityClass 13   bim60 bim65  8
+CentralityClass 14   bim65 bim70  16
+CentralityClass 15   bim70 bim75  16
+CentralityClass 16   bim75 bim80  16
+CentralityClass 17   bim80 bim85  16
+CentralityClass 18   bim85 bim90  16
+CentralityClass 19   bim90 bim95  16
+CentralityClass 20   bim95 bi100  16
+
+#define  bimrange0to10  "::bim00::bim10::"
+#define  bimrange0to20  "::bim00::bim20::"
+#define  bimrange10to30 "::bim10::bim30::"
+#define  bimrange20to40 "::bim20::bim40::"
+#define  bimrange30to50 "::bim30::bim50::"
+#define  bimrange40to60 "::bim40::bim60::"
+#define  bimrange60to80 "::bim60::bim80::"
+#define  bimrange60to90 "::bim60::bim90::"
+#define  bimrange95to100 "::bim95::bi100::"
+#define  bimrange80to100 "::bim80::bi100::"
+
+#define  bimrange0to1   "::bim00::bim01::"
+#define  bimrange0to5   "::bim00::bim05::"
+#define  bimrange5to10  "::bim05::bim10::"
+#define  bimrange10to20 "::bim10::bim20::"
+#define  bimrange20to30 "::bim20::bim30::"
+#define  bimrange30to40 "::bim30::bim40::"
+#define  bimrange40to50 "::bim40::bim50::"
+#define  bimrange50to60 "::bim50::bim60::"
+#define  bimrange60to70 "::bim60::bim70::"
+#define  bimrange70to80 "::bim70::bim80::"
+#define  bimrange80to90 "::bim80::bim90::"
+#define  bimrange90to100 "::bim90::bi100::"
+
+
+echo on

@@ -525,7 +525,7 @@ c...redo
 c...preparing rejection method to get q2,z
       q2=q2start
       z=0.5
-      PT2MIN=max(qcdlambda(noflav(q2))*1.1,q2fin)
+      PT2MIN=max(qcdlambda(noflav0(q2))*1.1,q2fin)
       alphaMax=pssalf(PT2MIN/qcdlam) * 1.2
       if(ish.ge.9)then
         write (ifch,*) '---------------------',ii
@@ -550,7 +550,7 @@ c...get min value of z
 
 c...calculate integrals over AP functions (upper limits, FBR = "proposal function" g)
       IF(idfl.EQ.9) THEN
-        FBRqqb=noflav(q2)*(0.5-ZC) 
+        FBRqqb=noflav0(q2)*(0.5-ZC) 
         FBR=6.*LOG((1.-ZC)/ZC)+FBRqqb
       ELSE
         FBRqqb=0.
@@ -586,8 +586,10 @@ c...select flavor and z-value + rejections
           Z=ZC+(1.-2.*ZC)*rangen()
           if(z.lt.zcNEW.or.1-z.lt.zcNEW) GOTO 390 !KW1812
           IF(Z**2+(1.-Z)**2.LT.rangen()) GOTO 390
-          idfla=int(1.+rangen()*float(noflav(q2)))
+          idfla=int(1.+rangen()*float(noflav0(q2)))
           idflb=-idfla
+          !if(q2start.gt.10.and.ii2.eq.2.and.facq2tim.gt.2.)
+          !.print*,'TESTqqbar',n10,q2start,q2,noflav0(q2),idfla
         else                    !..................g -> gg
           Z=(1.-ZC)*(ZC/(1.-ZC))**rangen()
           if(z.lt.zcNEW.or.1-z.lt.zcNEW) GOTO 390 !KW1812
@@ -605,7 +607,7 @@ c...select flavor and z-value + rejections
       endif
 
 c...rejections
-      if(q2*z*(1.-z).le.qcdlambda(noflav(q2))) goto 390      
+      if(q2*z*(1.-z).le.qcdlambda(noflav0(q2))) goto 390      
       if(pssalf(q2*z*(1.-z)/qcdlam) / alphaMax .gt.1. )then
         print*,'ratio = ',pssalf(q2*z*(1.-z)/qcdlam) / alphaMax
         print*,'alphaMax = ',alphaMax

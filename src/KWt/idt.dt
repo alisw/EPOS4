@@ -615,4 +615,19 @@
        213099     9903120     99   99   99    diff_lambda_state     0  0   0   0  99.00000   99.00000  0.0000E+00  1  1  N
        800000110  110         99   99   99    Reggeon               0  0   0   0  99.00000   99.00000  0.0000E+00  1  1  N
        800000990  990         99   99   99    Pomeron               0  0   0   0  99.00000   99.00000  0.0000E+00  1  1  N
-    
+! -------------------------------------------                                                                    
+!       Resonances    
+! -------------------------------------------                                                                    
+!       Special particles, with ist=9, which are created in addition to the usual particle list. 
+!       In addition to id, also ity must be specified. Possible choices for ity and id: 
+!       ity:  
+!         80 = resonances with decay into daughters which do not rescatter                                                  
+!         81 = resonances with decay into daughters which do rescatter                                      
+!       id:
+!         <normal_id>XY
+!           where <normal_id> stands for the usual id of the particle according to the above table,  
+!           and where XY is a two digit number (00, 01, 02, 03) which refers to a particular decay channel.
+!         A complete list of all currently used id codes can be found via 'grep ka= src/KW/u.f'
+!           (each channel appears twice, since R->A+B and R->B+A need to be treated explicitely)
+! -------------------------------------------                                                                 
+

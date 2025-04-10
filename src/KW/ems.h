@@ -46,8 +46,6 @@ c     *,binscalk(kollmx),nxmaxq2(kollmx)
       equivalence (kproj(1,1),kremn(1,1,1)),(ktarg(1,1),kremn(1,1,2))
       equivalence (lproj(1),lremn(1,1)),(ltarg(1),lremn(1,2))
       double precision gammaV
-c      common/col8/nbproj3(mamx,mamx),nbtarg3(mamx,mamx)
-      common/col8/ptiproj(npommx,kollmx),ptitarg(npommx,kollmx)
       common/col2/coordpr(2,npommx,kollmx)
       double precision expb2par,hnormp,hnormt,snormp,snormt,hsigp,hsigt
      *,ssigp,ssigt

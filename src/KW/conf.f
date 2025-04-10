@@ -176,20 +176,12 @@ c     ---------------------------------------------------------------
         lproj3(i)=0
         jproj(1,i)=nint(sign(1.,rangen()-rexdif(iclpro)))
         jproj(2,i)=0 !nint(sign(1.,rangen()-zfluct))
-        !dipole:
-        ang=2*pi*rangen()
-        diproj(i,1)=disize*cos(ang)
-        diproj(i,2)=disize*sin(ang)
       enddo
       do j=1,matarg
         ltarg(j)=0
         ltarg3(j)=0
         jtarg(1,j)=nint(sign(1.,rangen()-rexdif(icltar)))
         jtarg(2,j)=0 !nint(sign(1.,rangen()-zfluct))
-        !dipole:
-        ang=2*pi*rangen()
-        ditarg(j,1)=disize*cos(ang)
-        ditarg(j,2)=disize*sin(ang)
       enddo
       do 12 i=1,maproj
       do 11 j=1,matarg
@@ -223,8 +215,28 @@ c     ---------------------------------------------------------------
       if(koll.eq.0)goto 1001
 
       call geoglauber
+      call setParamsFluct() !determines disize and screening fluctuations
 
-      call setParamsEfluct()
+c     dipole
+c     ------
+      do i=1,maproj
+        diproj(i,1)=0
+        diproj(i,2)=0
+      enddo
+      do j=1,matarg
+        ditarg(j,1)=0
+        ditarg(j,2)=0
+      enddo
+      do i=1,maproj
+        ang=2*pi*rangen()
+        diproj(i,1)=disize*cos(ang)
+        diproj(i,2)=disize*sin(ang)
+      enddo
+      do j=1,matarg
+        ang=2*pi*rangen()
+        ditarg(j,1)=disize*cos(ang)
+        ditarg(j,2)=disize*sin(ang)
+      enddo
 
 c     determine coord
 c     ---------------
@@ -345,8 +357,8 @@ ckw  but of the string end partons, which should depend on Z
      .            -2*log(rangen())*(cos(2*pi*rangen()))**2  )
      .     / sqrt(3.)
       else
-        print*,ipt,  facpos(ipt)
-        stop'03122011' 
+        print*,'PROBLEM in  ranpos',ipt,  facpos(ipt)
+        stop'ERROR 03122011' 
       endif !~~~~~~~~
       afacpos=mod(abs(facpos(ipt)),100.)
       rrr=rrr*afacpos
@@ -752,23 +764,25 @@ c     ------------
            if(iokoll.ne.0)then   ! precisely matarg collisions
 
       nptl=nptl+1
-      do 3 i=1,4
-3     xorptl(i,nptl)=0
+      do i=1,4
+        xorptl(i,nptl)=0
+      enddo
       tivptl(1,nptl)=-ainfin
       tivptl(2,nptl)=0
       istptl(nptl)=1
       iorptl(nptl)=-1
       jorptl(nptl)=0
-      do 1 k=1,koll
-      nptl=nptl+1
-      do 4 i=1,4
-4     xorptl(i,nptl)=0
-      tivptl(1,nptl)=-ainfin
-      tivptl(2,nptl)=0
-      istptl(nptl)=1
-      iorptl(nptl)=-1
-      jorptl(nptl)=0
-1     continue
+      do k=1,koll
+        nptl=nptl+1
+        do i=1,4
+          xorptl(i,nptl)=0
+        enddo 
+        tivptl(1,nptl)=-ainfin
+        tivptl(2,nptl)=0
+        istptl(nptl)=1
+        iorptl(nptl)=-1
+        jorptl(nptl)=0
+      enddo
 
            elseif(iappl.ne.7)then
 
@@ -985,8 +999,9 @@ c electron remnant
       iorptl(nptl)=-1
       jorptl(nptl)=0
       istptl(nptl)=0
-      do 5 i=1,4
- 5      xorptl(i,nptl)=0
+      do i=1,4
+        xorptl(i,nptl)=0
+      enddo
       tivptl(1,nptl)=0
       tivptl(2,nptl)=0
       zpaptl(1,nptl)=0.

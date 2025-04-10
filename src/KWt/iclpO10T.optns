@@ -1,0 +1,80 @@
+echo off
+
+#define  npo100.00  50000
+#define  npo00.00  0
+
+#define  npn100.00  50000
+#define  npn00.00  0
+
+#define2  npo05.00   0.10    0.69       -59  
+#define2  npo10.00   0.55    0.96       -41  
+#define2  npo15.00   0.70    1.24       -54  
+#define2  npo20.00   0.85    1.51       -66  
+#define2  npo25.00   1.00    1.85       -85  
+#define2  npo30.00   1.15    2.19      -104  
+#define2  npo35.00   1.30    2.53      -123  
+#define2  npo40.00   1.45    2.96      -151  
+#define2  npo45.00   1.72    3.39      -167  
+#define2  npo50.00   2.04    3.89      -185  
+#define2  npo55.00   2.36    4.41      -205  
+#define2  npo60.00   2.80    5.01      -221  
+#define2  npo65.00   3.35    5.67      -232  
+#define2  npo70.00   4.08    6.46      -238  
+#define2  npo75.00   5.04    7.42      -238  
+#define2  npo80.00   6.32    8.60      -228  
+#define2  npo85.00   8.13   10.11      -198  
+#define2  npo90.00  10.71   12.11      -140  
+#define2  npo95.00  14.84   15.26       -42  
+#define2  npo99.00  22.48   19.00       348  
+#define2  npo99.90  30.21   27.83       238  
+
+#define2  npn20.00   1.69    1.72        -3  
+#define2  npn40.00   2.27    2.45       -18  
+#define2  npn60.00   3.23    3.19         4  
+#define2  npn80.00   4.90    4.78        12  
+#define2  npn90.00   6.21    6.17         4  
+#define2  npn99.00   9.16    9.50       -34  
+#define2  npn99.90  11.12   11.30       -18  
+
+CentralityLimit 0  0.
+CentralityLimit 5  npo05.00
+CentralityLimit 10 npo10.00
+CentralityLimit 15 npo15.00
+CentralityLimit 20 npo20.00
+CentralityLimit 25 npo25.00
+CentralityLimit 30 npo30.00
+CentralityLimit 35 npo35.00
+CentralityLimit 40 npo40.00
+CentralityLimit 45 npo45.00
+CentralityLimit 50 npo50.00
+CentralityLimit 55 npo55.00
+CentralityLimit 60 npo60.00
+CentralityLimit 65 npo65.00
+CentralityLimit 70 npo70.00
+CentralityLimit 75 npo75.00
+CentralityLimit 80 npo80.00
+CentralityLimit 85 npo85.00
+CentralityLimit 90 npo90.00
+CentralityLimit 95 npo95.00
+CentralityLimit 100 npo100.00
+
+#define  nporange0to5    "::npo95.00::npo100.00::"
+#define  nporange5to10   "::npo90.00::npo95.00::"
+#define  nporange10to20  "::npo80.00::npo90.00::"
+#define  nporange20to30  "::npo70.00::npo80.00::"
+#define  nporange30to40  "::npo60.00::npo70.00::"
+#define  nporange40to50  "::npo50.00::npo60.00::"
+#define  nporange50to60  "::npo40.00::npo50.00::"
+#define  nporange60to70  "::npo30.00::npo40.00::"
+#define  nporange70to80  "::npo20.00::npo30.00::"
+#define  nporange80to90  "::npo10.00::npo20.00::"
+#define  nporange90to100 "::npo00.00::npo10.00::"
+
+#define  nporange10to25  "::npo75.00::npo90.00::"
+#define  nporange25to40  "::npo60.00::npo75.00::"
+#define  nporange40to60  "::npo40.00::npo60.00::"
+#define  nporange60to90  "::npo10.00::npo40.00::"
+#define  nporange90to95  "::npo05.00::npo10.00::"
+#define  nporange95to100 "::npo00.00::npo05.00::"
+
+echo on

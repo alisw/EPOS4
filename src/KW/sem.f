@@ -378,10 +378,10 @@ c-----------------------------------------------------------------------
             fx=fx+dble(wgss(ig1,i1))*ft/sh**2
             !~~~~~~~~~~~~~TEST~~~~~~~~~~~~~~~~~~~~~~~~
             !if(igetIsh().eq.11)then 
-            ! if(i.eq.1.and.m.eq.2)then
+            ! if(i.eq.1.and.m.eq.2.and.m1.eq.1)then
             ! call HardScale(1,sc,qq,2)      !get scale sc
-            ! write(ifmt,'(a,3f9.3,f16.0,$)')'FSIGII TEST',y,xx1,xx2,ft
-            ! write(ifmt,'(f12.6,$)')fpdf(1,xx1,sc,0,2,0)
+            ! write(ifmt,'(a,2f9.3,2e10.3,$)')'FSIGII TEST',y,sc,xx1,xx2
+            ! write(ifmt,'(f16.0,f12.6,$)')ft,fpdf(1,xx1,sc,0,2,0)
             ! write(ifmt,'(f12.6)')fpdf(2,xx2,sc,0,2,0)
             ! endif
             !endif
@@ -456,7 +456,7 @@ c-----------------------------------------------------------------------
       fx=0.d0
       xx2=1d0
       xx1=1d0
-      y=acosh(1./xt) !from s+t+u=0 (see pub/19epos4)
+      y=acosh(1./xt) !from s+t+u=0 (see pub/19epos4) !KW2305 ???????????? actually two solutions +-acosh(..) -> factor 2
       if(y.ge.ymin-0.001.and.y.le.ymax+0.001)then
         z=xx1*xx2
         sh=z*s
@@ -4698,9 +4698,10 @@ c-----------------------------------------------------------------------
        qqx=qq !max(qq,dble(q2ini)/(1.d0-dsqrt(z))) 
        do klas=1,klasmax
         call HardScale(klas,qqx,pt2min,1)  !get pt2min 
-        pt2min=max(0.,pt2min)
-        call getBornKin2(klas,sh,dble(pt2min), smn, tmn, tmx,iret) !get tmn,tmx
         ft=0.d0
+        !NEEDED FOR abs(coelaf-1).lt.1e-5.and.abs(coekaf-1).lt.1e-5 :
+        if(pt2min.gt.0)then 
+        call getBornKin2(klas,sh,dble(pt2min), smn, tmn, tmx,iret) !get tmn,tmx
         if(iret.eq.0)then
          do i1=1,7
          do m1=1,2
@@ -4752,7 +4753,8 @@ c-----------------------------------------------------------------------
          enddo
          psjet=psjet + a1(i)*sngl(ft*z**(1.+delh)/sh**2)
      &                    *(1.d0/tmn-1.d0/tmx)!part of t-Jacobian, MUST be inside klas loop
-       endif                    !tmn.lt.tmx
+        endif !iret
+        endif !pt2min.gt.0
        enddo !klas
       enddo
       enddo
@@ -4855,9 +4857,10 @@ c-----------------------------------------------------------------------
          qqx=qq !max(qq,dble(q2ini)/(1.d0-dsqrt(z))) 
          do klas=1,klasmax !here we must sum over all klas, since jl is not in-Born pair
           call HardScale(klas,qqx,pt2min,1)  !get pt2min 
-          pt2min=max(0.,pt2min)
-          call getBornKin2(klas,sh,dble(pt2min), smn, tmn, tmx,iret)
           ft=0.
+          !NEEDED FOR abs(coelaf-1).lt.1e-5.and.abs(coekaf-1).lt.1e-5 :
+          if(pt2min.gt.0)then 
+          call getBornKin2(klas,sh,dble(pt2min), smn, tmn, tmx,iret)
           if(iret.eq.0)then
            do i1=1,7
            do m1=1,2
@@ -4885,13 +4888,21 @@ c      endif
              ft=ft+a1(i1)*fb*sngl(t**2)
              if(.not.(ft.le.0..or.ft.ge.0.))then !NaN catch
              print*,ft, psjetj(0,klas,tmx,q1,q2,scale1,t,xx,sh,j,l)
-             stop'NaN in psjet1 fx1' 
+             stop'NaN in psjet1 ft' 
              endif
            enddo
            enddo
            fx1=fx1 + dble(a1(i)*ft)/sh**2*(1.d0-z)
      &                *(1.d0/tmn-1.d0/tmx) !part of t-x Jacobien, MUST be inside klas loop
-         endif
+           !~~~~~~~~~~~~~~~~~~~~~~
+           if(.not.(fx1.le.0..or.fx1.ge.0.))then !NaN catch
+           print*,'klas,fx1,sh**2,tmn,tmx,qqx,pt2min:'
+     .     ,klas,fx1,sh**2,tmn,tmx,qqx,pt2min
+           stop'NaN in psjet1 fx1' 
+           endif 
+           !~~~~~~~~~~~~~~~~~~~~~~ 
+          endif
+          endif
          enddo !klas
         enddo
         enddo
@@ -4909,9 +4920,10 @@ c      endif
          qqx=qq !max(qq,dble(q2ini)/(1.d0-z)/ik) 
          do klas=1,klasmax
           call HardScale(klas,qqx,pt2min,1)  !get pt2min 
-          pt2min=max(0.,pt2min)
-          call getBornKin2(klas,sh,dble(pt2min), smn, tmn, tmx,iret)
           ft=0.d0
+          !NEEDED FOR abs(coelaf-1).lt.1e-5.and.abs(coekaf-1).lt.1e-5 :
+          if(pt2min.gt.0)then 
+          call getBornKin2(klas,sh,dble(pt2min), smn, tmn, tmx,iret)
           if(iret.eq.0)then
            do i1=1,7
            do m1=1,2
@@ -4941,7 +4953,8 @@ c      endif
            enddo
            fx2=fx2 + dble(a1(i)*ft)/sh**2*z**(1.+delh)
      &          *(1.d0/tmn-1.d0/tmx) !part of t-Jacobien, MUST be inside klas loop
-        endif
+          endif
+          endif
 c      if(.not.(fx2.le.0..or.fx2.ge.0.))then !NaN catch
 c         print*,'NaN in loop 2 in psjet1',fx2,t,tmn,tmx
 c         stop'NaN in loop 2 in psjet1'
@@ -4992,7 +5005,6 @@ c-----------------------------------------------------------------------
       double precision smn,tmn,tmx
       integer ienvi
       common /cienvi/ ienvi
-      ienvi=104
       !real crash(2)
       !icrash=3
       iret=0
@@ -5005,6 +5017,9 @@ c-----------------------------------------------------------------------
       if(iabs(j).eq.4.and.  noflav(q1).lt.5 ) return ! 1 bottom
       if(iabs(l).eq.3.and.  noflav(q2).lt.4 ) return ! 2 charm
       if(iabs(l).eq.4.and.  noflav(q2).lt.5 ) return ! 2 bottom
+
+      ienviSave=ienvi
+      ienvi=104
 
       s=dble(ss)
       if(jdis.le.0)then
@@ -5094,6 +5109,7 @@ c-----------------------------------------------------------------------
      &            ,psborn,jdis,qq,qqcut,j,l,jl,smin,ss,iret0,iret1
 c      if(jdis.lt.0)
 c     .print*,'psborn',q1,q2,qqcut,ss,j,l,psborn,iret,iret0,iret1
+      ienvi=ienviSave
       return
       end
 
@@ -7514,8 +7530,9 @@ c       endif
 
       if((wk(1).lt.-100 .or. wk(2).lt.-100 .or. wk(3).lt.-100)
      .  .and.evk(i,j,k,m,l).gt.1d-10)then
-        call utmsg('WARNING psevi2: x far outside range')
-        print*,xx,yx,(evk(i,j,k2,m,l),k2=k-2,k)
+        call getMonitorFileIndex(ifmt)
+        write(ifmt,*)'WARNING psevi2: x far outside range'
+     .   ,xx,yx,(evk(i,j,k2,m,l),k2=k-2,k)
       endif
 
       do k1=1,3

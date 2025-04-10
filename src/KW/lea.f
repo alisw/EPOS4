@@ -4142,6 +4142,8 @@ c-----------------------------------------------------------------------
       common /ems12/iodiba,bidiba  ! defaut iodiba=0. if iodiba=1, study H-Dibaryon
       character c*1,c1*1,c2*1
 
+      integer getAccumJerr
+
       call utpri('ProReF',ish,ishini,3)
 
       iretxx=0
@@ -4591,9 +4593,9 @@ c              endif
               call gakfra(iret)
               call gakli2(0,0)
             endif
-            jerr(4)=jerr(4)+1
+            call setAccumJerr(4,getAccumJerr(4)+1)
           elseif(ifrade.gt.0.and.ispherio.eq.0)then ! Unsuccessful decay
-            jerr(5)=jerr(5)+1
+            call setAccumJerr(5,getAccumJerr(5)+1)
             if(ish.ge.4)write(ifch,*)
      *         '***** Unsuccessful remnant cluster decay'
      *             ,' --> do RemoveHadrons instead.'

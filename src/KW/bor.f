@@ -156,7 +156,7 @@ c------------------------------------------------------------------------
         do i=1,j-1
           if(id(i).eq.-id(j))then
             distHQ=sqrt((x(1,i)-x(1,j))**2+(x(2,i)-x(2,j))**2)
-            if(distHQ.lt.0.01)then
+            !if(distHQ.lt.0.01)then
               p1=p(1,i)+p(1,j)
               p2=p(2,i)+p(2,j)
               p3=p(3,i)+p(3,j)
@@ -167,7 +167,7 @@ c------------------------------------------------------------------------
               x4=(x(4,i)+x(4,j))/2
               call writeCharmPairs(p1,p2,p3,p4,x1,x2,x3,x4
      .         ,ida,jor(j),ity(j)) 
-            endif
+            !endif
           endif
         enddo
       enddo
@@ -249,8 +249,8 @@ c------------------------------------------------------------------------
             pptl(1,nptl)=p1
             pptl(2,nptl)=p2
             !rap method (p3 method see 3438u9 and older)
-            pptl(3,nptl)=amt*cosh(rap)
-            pptl(4,nptl)=amt*sinh(rap) 
+            pptl(3,nptl)=amt*sinh(rap) 
+            pptl(4,nptl)=amt*cosh(rap)
             pptl(5,nptl)=p5
             iorptl(nptl)=0
             istptl(nptl)=26

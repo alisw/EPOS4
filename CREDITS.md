@@ -24,7 +24,7 @@
           * Gabriel SOPHYS (EPOS3, analysis) 
           * Tanguy PIEROG (Cosmic Ray application, EPOS LHC, EPOS3) 
           * Sergej OSTAPCHENKO (NEXUS, pQCD part)
-          * Michael HLADIK (NEXUS Metropolis
+          * Michael HLADIK (NEXUS Metropolis)
           * Hajo DRESCHER (NEXUS string decay)
           * Iurii KARPENKO (Hydro module)
           * Maria STEFANIAK (EoS module) 

@@ -25,7 +25,7 @@ c-----------------------------------------------------------------------
       real ept1(4),ept2(4)
       double precision ept(4),wpt(2),pLadder(4),wplus,wminus,wp0i,wm0i
      *,wp0,wm0,si,smin,xmin,xp1,wpi,wmi,xp,xm,wp1,wm1,wp2,wm2,z1
-     *,wp1i,wm1i,pth,xp2,xg,zg,smax,xmax,xpi,xmi
+     *,wp1i,wm1i,pth,xp2,xg,smax,xmax,xpi,xmi
      *,xmax1,xmin1,zp0,psutz,xpmax0,xpmin0,gb0,tmax0,tmin0,zpm,gb
      *,gbyj,tmax,tmin,t,x1min,x1max,t1min,t1max
      *,t1x,xq1,qq,xpmin,xpmax,psuds,ss,xpsat,rapsat,rapmaxsat
@@ -33,7 +33,7 @@ c-----------------------------------------------------------------------
      *,gbymin,gbymax,rrr,dq2mass,pxh1,pxh2,pyh1,pyh2
      *,xxp1pom,xyp1pom,xxp2pom,xyp2pom,xxm1pom,xym1pom,xxm2pom,xym2pom
      *,xxp1poi,xyp1poi,xxp2poi,xyp2poi,xxm1poi,xym1poi,xxm2poi,xym2poi
-     *,wpq(2),wmq(2),wp1s,wm1s
+     *,wpq(2),wmq(2)
      *,wudt,wwuu,wwdd,wwud,wwdu
      *,zzmax,zzmin,xxmax,xxmin,xx1,xx2,zzmn,zzmx,zzz,uuu
      *,xxmax1,xxmin1,xx1x,xx2x,xpBorn,xmBorn,xzero,xnew
@@ -121,7 +121,9 @@ c-----------------------------------------------------------------------
       data ncount6/0/
       save ncount6
       common/cpsutz/dxpsutz
-      parameter (mxsplt=6)
+      parameter (mxrapsata=8)
+      real rapsata(mxrapsata)
+      parameter (mxsplt=8)
       integer kdir(mxsplt)
       real wimi(mxsplt),wipi(mxsplt)
       call utpri('psahot',ish,ishini,3)
@@ -131,17 +133,11 @@ c-----------------------------------------------------------------------
 
       !--- in ---
 
-      if(maproj.ge.matarg)then
-        call defParamsSat(kcol
-     .  ,ixsplit,wtsplit,qqsmall,qqfac,qqsfac,qqmax
-     .  ,rapsat1,rapsat2,asymmsat)
-      else
-        call defParamsSat(kcol
-     .  ,ixsplit,wtsplit,qqsmall,qqfac,qqsfac,qqmax
-     .  ,rapsat2,rapsat1,asymmsat)
-      endif
+      call defParamsSat(kcol
+     .  ,ixsplit,wtsplit,wtsplit2,qqsmall,qqfac,qqsfac,qqmax
+     .  ,rapsata,asymmsat)
 
-      call getSystemType(isys)
+      call  getSystemType(isys,amassMax,amassAsy)
       iptl=nppr(ncolp,kcol)
       ip=iproj(kcol)
       it=itarg(kcol)
@@ -149,13 +145,16 @@ c-----------------------------------------------------------------------
       bpomr=bk(kcol) !bhpr(ncolp,kcol)
       idfpomr=idfpr(ncolp,kcol) !link of pomeron, 1=pro&tar
 
-      ptiprj=ptiproj(ncolp,kcol)
-      ptitrg=ptitarg(ncolp,kcol)
-      ptisat=ptipos+ptiposi*log(max(q2cmin(1),q2cmin(2))/q2sft)
       if(npr(3,kcol).le.1)then
-        ptiprj=0 ! if Npom<=1
-        ptitrg=0 ! if Npom<=1
-        ptisat=0 ! if Npom<=1
+        ptiprj=0. ! if Npom<=1
+        ptitrg=0. ! if Npom<=1
+        ptisat=0. ! if Npom<=1
+        ptiposii=0.
+      else
+        ptiprj=ptipom + ptipomi * sqrt(npr(3,kcol)-1.) !randow walk !ckw21 
+        ptitrg=ptipom + ptipomi * sqrt(npr(3,kcol)-1.) 
+        ptiposii=       ptiposi * sqrt(npr(3,kcol)-1.)  !log(max(q2cmin(1),q2cmin(2))/q2sft)
+        ptisat=ptipos + ptiposii
       endif
  
       idsprj=idsppr(ncolp,kcol)
@@ -173,7 +172,7 @@ c-----------------------------------------------------------------------
       ntxt80save=ntxt80
   1   ntryhot=ntryhot+1
       ntxt80=ntxt80save
-      !if(ntryhot.gt.1)print*,'Redo 1',igo
+      !if(ntryhot.gt.1)print*,'Redo ntryhot igo:',ntryhot,igo
 
       !--- in / out ---
 
@@ -235,21 +234,9 @@ c-----------------------------------------------------------------------
         goto 16
       endif
 
-      if(wtsplit.le.1.0)then
-        kxsplit=1
-        if(rangen().lt.wtsplit)kxsplit=2
-      elseif(wtsplit.le.2.0)then
-        kxsplit=2
-        if(rangen().lt.wtsplit-1)kxsplit=4
-      elseif(wtsplit.le.3.0)then
-        kxsplit=4
-        if(rangen().lt.wtsplit-2)kxsplit=6
-      else
-        stop'02022022'
-      endif 
-      if(kxsplit.gt.mxsplit)stop'ERROR maxsize_set(1 too small' 
+      kxsplit=1 ! Finally best dn_c/dy for kxsplit=1
 
-      !--- split into ixsplit sub poms (C) and kxsplit sub poms (A,B)
+      !--- REMOVED split into ixsplit sub poms (C) and kxsplit sub poms (A,B)
 
       !- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -   
       !SPLIT-METHOD T: Only for tests !!!
@@ -270,6 +257,7 @@ c-----------------------------------------------------------------------
       jsplit=jsplit+1
       if(jsplit.gt.mxsplit)stop'ERROR Increase mxsplit'
 
+      ifav=-1
       ntxt80save=ntxt80
       nptl2=nptl
       ntrysplit=0
@@ -291,134 +279,10 @@ c-----------------------------------------------------------------------
         call gbpom_set(2,jsplit,ncolp,kcol, 0. )
       endif
 
-      !--- split momenta if kxsplit > 1 ---
-
-      methodsplit=3 !1 = SPLIT-METHOD A  2 = SPLIT-METHOD B  3 = SPLIT-METHOD C
+      if(jsplit.eq.1.and.ntrysplit.eq.1)kdir(1)=0
       if(idpomr.lt.0.and.jsplit.eq.1.and.ntrysplit.eq.1)then ! sat pom
-       if(kxsplit.gt.1)then
-        if(methodsplit.eq.1)then
-          !- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
-          !SPLIT-METHOD A: simple sharing
-          !- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -   
-          do jij=1,kxsplit
-            wipi(jij)=wp0i/kxsplit 
-            wimi(jij)=wm0i/kxsplit 
-          enddo
-        elseif(methodsplit.eq.2)then
-          !- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -   
-          !SPLIT-METHOD B: rapidity shifts for sub poms (to avoid multiplicity explosion)
-          !- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -   
-          !we use for sub pom splitting the string picture with breaks (*) along hyperbola p+p-=m2 
-          ! p-\*1                     6*/ p+  The break points should be equidistant in rapidity 
-          !     \    2           5    /       so for the jth break we have 
-          !       \  *   3   4   *  /         0.5*log(p+/p-)=y_j with y_(j+1)-y_j=const    
-          !         \    *   *    /           the hyperbola gives p+p-=m2
-          !           \         /             so  p+_j = m*exp(y_j)
-          !             \     /                   p-_j = m*exp(-y_j)
-          !               \ /                  with j=1,2,3,4...,k (k = kxsplit, the number of sub poms)
-          !Rapidity range from p+-=m*exp(+-ymax/ymin) -> ymax=log(wp0i/m)=y_k, ymin=-log(wm0i/m)=y_0
-          !  --> ystep = (ymax-ymin)/k, y_j = y_(j-1) + ystep (equidistant, as required)  
-          !contruction of sub poms (p+ and p- values, using wip and wim) :
-          !   sub pom j:          wim(j-1)-wim(j),            wip(j)-wip(j-1) 
-          !          with:      wim(0)=wm0i, wim(k)=0       wip(0)=0, wip(k)=wp0i
-          !- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -   
-          !works in principle, but we need small hypmass, not to explose multiplicity
-          !then many parton chains containing charm are rejected, which should be corrected,
-          !there is enough energy around ready to be "taken". Very slow !!  
-          ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-          hypmass=10. !mass defining hyperbola p+p-=hypmass**2
-          ymn=-log(wm0i/hypmass)
-          ymx=log(wp0i/hypmass)
-          ystep=(ymx-ymn)/kxsplit
-          if(ystep.le.0.)then
-            write(ifmt,'(a)')'Negative ystep, no sat pom split'
-            kxsplit=1
-          endif
-          do jij=1,kxsplit
-           yjj=ymn+ystep*jij
-           if(jij.eq.1)then
-             wimx=wm0i
-             wipx=0
-             summ=0
-             sump=0
-           else
-             wimx=wim
-             wipx=wip 
-           endif
-           if(jij.eq.kxsplit)then
-             wim=0
-             wip=wp0i
-           else
-             wim=hypmass*exp(-yjj)
-             wip=hypmass*exp(yjj)
-           endif
-           wimi(jij)=wimx-wim
-           wipi(jij)=wip-wipx 
-           summ=summ+wimi(jij)
-           sump=sump+wipi(jij)
-           !print*,'TEST-split',jij,yjj,wimi(jij),wipi(jij)
-           !.   ,'     ',summ,wm0i,sump,wp0i
-           !print*,'TEST-split',jij,wimi(jij)*wipi(jij)
-          enddo
-          !print*,'TEST-split',kxsplit
-        elseif(methodsplit.eq.3)then
-          !- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
-          !SPLIT-METHOD C
-          !- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -   
-          splitfrc=0.9!0.5 !0.99
-          irdo=1
-          if(rangen().le.0.5)irdo=2
-          if(asymmsat.gt.1.0)stop'ERROR 02022022 asymmsat > 1'
-          if(kxsplit.eq.2.or.kxsplit.eq.4.or.kxsplit.eq.6)then
-            kdir(irdo)=1
-            wipi(irdo)=wp0i*splitfrc 
-            wimi(irdo)=wm0i*(1-splitfrc) 
-            if(rangen().gt.asymmsat)then
-              kdir(3-irdo)=-1
-              wipi(3-irdo)=wp0i*(1-splitfrc) 
-              wimi(3-irdo)=wm0i*splitfrc   
-            else
-              kdir(3-irdo)=1
-              wipi(3-irdo)=wp0i*splitfrc 
-              wimi(3-irdo)=wm0i*(1-splitfrc)   
-            endif
-          endif
-          if(kxsplit.eq.4.or.kxsplit.eq.6)then
-            kdir(2+irdo)=1
-            wipi(2+irdo)=wp0i*splitfrc 
-            wimi(2+irdo)=wm0i*(1-splitfrc) 
-            if(rangen().gt.asymmsat)then
-              kdir(2+3-irdo)=-1
-              wipi(2+3-irdo)=wp0i*(1-splitfrc) 
-              wimi(2+3-irdo)=wm0i*splitfrc
-            else
-              kdir(2+3-irdo)=1
-              wipi(2+3-irdo)=wp0i*splitfrc 
-              wimi(2+3-irdo)=wm0i*(1-splitfrc)
-            endif   
-          endif
-          if(kxsplit.eq.6)then
-            kdir(4+irdo)=1
-            wipi(4+irdo)=wp0i*splitfrc 
-            wimi(4+irdo)=wm0i*(1-splitfrc) 
-            if(rangen().gt.asymmsat)then
-              kdir(4+3-irdo)=-1
-              wipi(4+3-irdo)=wp0i*(1-splitfrc) 
-              wimi(4+3-irdo)=wm0i*splitfrc
-            else
-              kdir(4+3-irdo)=1
-              wipi(4+3-irdo)=wp0i*splitfrc 
-              wimi(4+3-irdo)=wm0i*(1-splitfrc)
-            endif   
-          endif
-          if(kxsplit.ne.2.and.kxsplit.ne.4.and.kxsplit.ne.6)then
-            stop'methodsplit=3 requires kxsplit = 2 or 4 or 6'
-          endif 
-        endif !methodsplit
-       else
-          wimi(1)=wm0i
-          wipi(1)=wp0i
-       endif
+        wimi(1)=wm0i
+        wipi(1)=wp0i
       endif 
 
       if(idpomr.lt.0)then ! sat pom
@@ -552,35 +416,93 @@ c-----------------------------------------------------------------------
       !role of some imposed high pt cutoff. Used presently for sat poms !!!!!!! change it <=======
       !~~~~~~ 
 
-      !-------------------------------------
-      !          s2min, s2max  and  qqsat 
-      !-------------------------------------
+      !-----------------------------------------------------------
+      ! Pseusosoft Pom PDF (PPPDF): ifav, rapsatrel
+      !-----------------------------------------------------------
 
+      if(idpomr.lt.0)then
+        probot=0.020!0.035!0.05!0.1!0.02
+        if(ifav.lt.0)then 
+         if(rangen().gt.probot)then !...charm pseudo pom
+          ifav=4
+         else!..........................bottom pseudo pom
+          ifav=5
+         endif
+        endif
+        if(ifav.ge.4)then
+          c=2*rangen()-1
+          rapsatrel=c
+          ptisatrap=0
+          if(ptisat.gt.0.)ptisatrap= min( 1.0 , ptipos) + ptiposii !avoid big values for HF
+        else
+          a=0 !0.20       !afrapsat
+          b=3*(0.5-a)     !frapsat(x)=a+b*x^2  \int = 1
+          c=2*rangen()-1  !use superposition method w*f1+(1-w)*f2, w=2a
+          if(rangen().gt.2*a) c = sign(1.,c) * (abs(c))**(1./3)
+          rapsatrel=c
+          ptisatrap= ptisat  * (2.1-1.9*abs(rapsatrel))
+        endif
+      endif
+
+      !------------------------------------------------------
+      ! Pseusosoft Pom PDF (PPPDF): s2min, s2max  and  qqsat 
+      !------------------------------------------------------
+
+      facq2tim=1
       if(idpomr.le.-1)then ! sat pom    
+        qqsma=qqsmall
+        probot=0.020!0.035!0.05!0.1!0.02
+        if(ifav.eq.5)
+     .   qqsma=qqsmall+(qbmass-qcmass)*2.5!2!3!4! Threshold effect: 2-2.5 jump, then no change
         qqupp=min(0.25*sngl(ss), max(q2cmin(1),q2cmin(2)) )
         qqlow=0.5 !qqupp!q2sft
         qqff=qqupp*qqfac
-        hh=qqsmall**2/qqff
+        hh=qqsma**2/qqff
         if(rangen().lt.1./(1.+hh))then
-        !if(rangen().lt.1./(1.+hh/2.))then
-        !if(rangen().lt.1./(1.+hh/2.*3.))then
           qqsat=-alog(rangen())+hh
         else
-          qqsat=hh*rangen()
-          !qqsat=hh*sqrt(rangen())
-          !qqsat=hh*0.5*(4-sqrt(16-12*rangen()))
+          qqsat=hh !*rangen()
         endif
         qqsat=qqsat*qqff 
+        coelafSave=coelaf
+        if(ifav.eq.4)then !........charm pseudo pom
+          coelaf=9
+          call HardScale(4,qqsat,pt2xx, 1 ) 
+          if(pt2xx.lt.0.001)pt2xx=-log(rangen())-log(rangen()) !=(2-2*sqrt(rangen())) !law ~ \ = 1-0.5x{0-2}
+          qqssfac=2.0!4.0
+          qqmass=qcmass**2
+          facq2tim=1
+          ptemi=1.0*(rangen()+rangen()) !law ~ /\ = x{0-1};2-x{1-2}
+        elseif(ifav.eq.5)then!.....bottom pseudo pom
+          coelaf=9
+          call HardScale(5,qqsat,pt2xx, 1 ) 
+          if(pt2xx.lt.0.001)pt2xx=10*(2-2*sqrt(rangen())) !law ~ \ = 1-0.5x{0-2}
+          qqssfac=5!10.0
+          qqmass=qbmass**2
+          facq2tim=5
+          ptemi=3.5*(rangen()+rangen()) !law ~ /\ = x{0-1};2-x{1-2}
+        else
+          coelaf=coelafSave
+          call HardScale(1,qqsat,pt2xx, 1 ) 
+          if(pt2xx.lt.0.001)stop'ERROR 230815'
+          qqssfac=2.0!4.0
+          qqmass=0.
+          facq2tim=1
+          ptemi=1.0*(rangen()+rangen()) !law ~ /\ = x{0-1};2-x{1-2}
+        endif
+        if(ifav.ge.4.and.qqsma**2.ge.coelaf*qqmass)then !otherwise spike in pt distr
+          print*,'qqsma,coelaf,qqmass:',qqsma,coelaf,qqmass
+          stop'ERROR 23052023'
+        endif
+        coelaf=coelafSave
         qqs(1)=qqsat
         qqs(2)=qqsat
         qqcut=qqsat
-        s2min=4.*(qqsat+qcmass**2) * qqsfac  
+        qqxxx=max(qqsat,pt2xx)
+        s2min=4.*(qqxxx+qqmass) * qqssfac  
         s2min1_save=s2min
-        !s2max=s2min *100 !1.001
-        !s2min=s2min-log(1-rangen()*(1-exp(s2min-s2max))) !exp distr for s
-        s2max=4.*(qqsat+qqmax) * qqsfac 
+        s2max=4.*(qqxxx+qqmass) * qqssfac 
         !===> maybe update needed for "frej" and "fscale1sat"  
-        !s2max=s2min * 1.001
         s2min=min(s2min,ss)
         s2max=min(s2max,ss)
         s2min=(s2min+rangen()*(s2max-s2min))*0.999
@@ -619,7 +541,7 @@ c       a little bit of pt is necessary in case of sea quarks
           pt=max(0.001,pt)
           pt=pt*ranptjcut(ptmx/pt)
         else
-          pt=min(ptisat,ptmx)
+          pt=min(ptisatrap,ptmx)
           pt=max(0.001,pt)
           pt=pt*ranptjcut(ptmx/pt)
         endif
@@ -636,7 +558,7 @@ c       a little bit of pt is necessary in case of sea quarks
           pt=max(0.001,pt)
           pt=pt*ranptjcut(ptmx/pt)
         else
-          pt=min(ptisat,ptmx)
+          pt=min(ptisatrap,ptmx)
           pt=max(0.001,pt)
           pt=pt*ranptjcut(ptmx/pt)
         endif
@@ -685,9 +607,9 @@ c       a little bit of pt is necessary in case of sea quarks
       pth=(pxh1+pxh2)**2+(pyh1+pyh2)**2
 c      print *,idpomr,pth
 
-      !--------------------------------------
-      ! compute smin,smax,xmin,xmax and xpsat  
-      !--------------------------------------
+      !-----------------------------------------------------------
+      ! smin,smax,xmin,xmax
+      !-----------------------------------------------------------
 
       if(idpomr.ge.0)then
         smin = ( sqrt(dble(s2min))+sqrt(pth) )**2    !hard pomeron s_min
@@ -702,28 +624,42 @@ c      print *,idpomr,pth
       xmax = smax/ss
       if(idpomr.ge.0)xmin = min(xmin,(sqrt(s2max)-ammsqd)**2/ss)
       call setmirror(0)
+
+      !-----------------------------------------------------------
+      ! Pseusosoft Pom PDF (PPPDF): xpsat
+      !-----------------------------------------------------------
+
       if(idpomr.lt.0)then
         mirror=0
-        if(maproj.eq.matarg.and.rangen().lt.0.5)mirror=1
-        call setmirror(mirror)
-        rappom=0.5*log(wp0/wm0)   !affected by splitfrc
+        !if(maproj.eq.matarg.and.rangen().lt.0.5)mirror=1
+        !call setmirror(mirror)
+        rappomi=0.5*log(wp0i/wm0i)  !rap of initial Pom in Lab frame
+        rappom=0.5*log(wp0/wm0)   !rap of split Pom in Lab frame
         zpmsat=(xmin+xmax)/2.
         xpmaxsat=psutz(ss,zpmsat*ss,dble(amqpt**2)) 
         rapmaxsat=0.5*log(xpmaxsat**2/zpmsat)
         !rapsat=-rapmaxsat+rangen()*2*rapmaxsat !fine tuning sat 
-        rap1=max(0.,rapmaxsat-rapsat1)
-        rap2=max(0.,rapmaxsat-rapsat2)
-        if(mirror.eq.1)call swap(rap1,rap2)
-        if(methodsplit.eq.3.and.mod(kxsplit,2).eq.0)then !maximize rap
-          if(kdir(jsplit).eq. 1) rapsat=rap2  !rappom>0
-          if(kdir(jsplit).eq.-1) rapsat=-rap1 !rappom<0
+        if(maproj.gt.matarg)then
+          rap1=max(0.,rapmaxsat-rapsata(1))
+          rap2=max(0.,rapmaxsat-rapsata(2))
         else
-          rapsat=-rap1
-          if(rangen().lt.0.5)rapsat=rap2
+          rap1=max(0.,rapmaxsat-rapsata(2))
+          rap2=max(0.,rapmaxsat-rapsata(1))
         endif
+        if(mirror.eq.1)call swap(rap1,rap2)
+        n555=0
+  555   continue
+        n555=n555+1
+        !rapsat=-rap1
+        !if(rangen().lt.0.5)rapsat=rap2
+        rapsat=(-rap1+rap2)/2 + rapsatrel * (rap2+rap1)/2
+        if(abs(rapsat).gt.rapsata(3).and.n555.lt.20)goto 555
+        wtrapsat=1. ! Finally best dn_c/dy for wtrapsat=1.
+        !- - - - - - - - - - - - - - - - - 
+        !Redo if ifav and finally created flavor do not agree 
+        !  see 'ifav redo' below
+        !- - - - - - - - - - - - - - - - - 
         xpsat=sqrt(zpmsat)*exp(rapsat)         
-        !write(*,'(a,3i5,7f14.5)')'TEST-xpsat',idpomr,kxsplit,jsplit
-        !.,rapsat,rapmaxsat,rappom,  xpsat,xpmaxsat,zpmsat,  amqpt**2/ss
       endif
    
       !----------------------------------------------------
@@ -1187,7 +1123,16 @@ c        print *,'val',ntryrej
         !rejection normalization
         !-----------------------
 
-        if(iqq.le.0)then   
+        if(iqq.lt.0)then   
+          do i=0,3
+          do j=0,3
+            ee44(i,j)=EsatSeaTil(ipomtype,1,xpmin0 ,qqs(1),i)
+     .               *EsatSeaTil(ipomtype,2,xpmin0 ,qqs(2),j)
+            if(i.ge.2)ee44(i,j)=ee44(i,j)*wtsplit2*wtrapsat
+            if(j.ge.2)ee44(i,j)=ee44(i,j)*wtsplit2*wtrapsat
+          enddo
+          enddo
+        elseif(iqq.eq.0)then   
           do i=0,3
           do j=0,3
             ee44(i,j)=EsatSeaTil(ipomtype,1,xpmin0 ,qqs(1),i)
@@ -1297,8 +1242,8 @@ c       *     ,(r2had(iclpro)+r2had(icltar))*z,frej
         if(iqq.lt.0)then
           !write(*,'(a,i5,5f12.2)')'TEST-xpmax',iqq
           !.  ,xpmin,xpmax,ss,zpm*ss,dble(amqpt**2)
-          xpmax=xpsat       !xp is fixed
-          xpmin=xpsat*0.999 ! to xpsat
+          xpmax=xpsat*1.001    !xp is fixed
+          xpmin=xpsat          ! to xpsat
         endif
         !kkkkkkkkkkkkkkkkkkk!KW1909
         if(ioTestFact.ne.0.and.ioTestFact.le.5)then 
@@ -1335,6 +1280,7 @@ c       *     ,(r2had(iclpro)+r2had(icltar))*z,frej
           !  xm=zpm/xp
           !endif
         endif
+        !if(xm.gt.1.)print*,'TEST',iqq,xm,xp/zpm
         
         !kkkkkkkkkkkkkkkkkkk!KW1908
         if(ioTestFact.ge.6) xp = 0.9
@@ -1365,6 +1311,8 @@ c       *     ,(r2had(iclpro)+r2had(icltar))*z,frej
           do j=0,3
             ee44(i,j)=EsatSeaTil(ipomtype,1,xp ,qqs(1),i)
      .               *EsatSeaTil(ipomtype,2,xm ,qqs(2),j)
+            if(i.ge.2)ee44(i,j)=ee44(i,j)*wtsplit2*wtrapsat
+            if(j.ge.2)ee44(i,j)=ee44(i,j)*wtsplit2*wtrapsat
           enddo
           enddo
         elseif(iqq.eq.0)then
@@ -1419,7 +1367,7 @@ c       *     ,(r2had(iclpro)+r2had(icltar))*z,frej
           nrejtot=nrejtot+1
           if(ntryrej.gt.999999)then
             write(ifmt,'(a,i3,9e10.2)')'WARNING ntryrej for iqq ='
-     .     ,iqq,gbyj,gb0
+     .     ,iqq,gbyj,gb0,rapsat !see 555
             igo=2
             goto 1 !redo psahot
           endif
@@ -1544,8 +1492,6 @@ c###############################################################################
       amqpti=amqpt
       xpi=xp
       xmi=xm
-
-  6   continue  ! <--------- rejection -------- 6 ---------
 
       amqt(1)=amqti(1)
       xxp1pom=xxp1poi
@@ -1901,7 +1847,36 @@ c in case of gluon emission, compensate intr pt in string end
 
 
 c in case of sea quark emission, fix momentum here to take it from the soft part
-      
+
+      !----------------------------------------------------------
+      ! wp0        lc+ for the semihard interaction
+      ! wm0        lc- for the semihard interaction
+      ! wpi=wp0*xp       lc+ for the hard interaction
+      ! wmi=wm0*xm       lc+-for the hard interaction
+      !
+      ! wp1i=wp1=wp0-wpi          remaining lc+ for the soft part
+      ! wm1i=wm1=wm0-wmi          remaining lc- for the soft part
+      !
+      ! wpq(1)                 emitted parton
+      ! wmq(1)
+      !   wm1i=wm1i-wmq(1)            remove from
+      !   wp1i=wp1i-wpq(1)            soft part
+      !
+      ! wmq(2)                 emitted parton
+      ! wpq(2)
+      !   wp1i=wp1i-wpq(2)            remove from
+      !   wm1i=wm1i-wmq(2             soft part
+      !         _____    _____ 
+      !              | g |     soft         ioj = 7 8
+      !              | l |      
+      !              v u ^      
+      !              |   |      
+      !              |...|_____ emission     ioj = -7 -8
+      !         hard |         
+      !---------------------------------------------------------      
+
+      xg=5./sqrt(wp0*wm0)
+
       do ipt=ipt1,ipt2,ipto !~~~~~~~~~~~~~~loop over proj / targ ~~~~~~~
 
       if(ipt.eq.1)then      !~~~~~projectile
@@ -1917,48 +1892,10 @@ c in case of sea quark emission, fix momentum here to take it from the soft part
           dq2mass=dq2mass+dble(q2mass(1))
           q2mass(1)=pxh1**2+pyh1**2+q2mass(1)
             
-          !check
-          !if(1.d0-1.d0/(wp0*(wmi-(smin+dq2mass)/wpi)).le.xp)then
-          !if(ntryx.lt.999)then            
-          !if(ish.ge.6)write(ifch,*)
-          !.'Reject proj quark mass',wp0,wmi,wpi,smin,dq2mass
-          !goto 6            !back to flavor
-          !else
-          !if(ish.ge.6)write(ifch,*)'Reject proj quark mass redo hard'
-          !goto 1
-          !endif
-
-          !give part of the momentum going to the hard part to the first parton
-          wp1s=wp1i
-          wm1s=wm1i
- 7        ntryx=ntryx+1
-          wp1i=wp1s
-          wm1i=wm1s
-          zg=1d0-drangen(xp)*(1.d0-xp) !new fraction of wp0 going to hard taking into account the emission of the first parton
-          if(ish.ge.8)write (ifch,*)'7-zg,xp',zg,xp
-          if(drangen(zg).gt.zg**dels(1)
-     .          *((1.d0-xp/zg)/(1.d0-xp))**betpom(1))goto 7
-          xg=xp/zg    !between 1 and xp (fraction of wp0 available for hard + additionnal parton)
-          wpq(1)=wp0*(xg-xp) !momentum+ for additionnal parton
-          wmq(1)=dble(q2mass(1))/wpq(1)    !momentum- for additionnal parton
+          wpq(1) = exp(rangen()*log(xg)) * wp1i   ! 1/x from xg to 1
+          wmq(1) = exp(rangen()*log(xg)) * wm1i   !
           wm1i=wm1i-wmq(1)   !remove momentum- from soft part of other side
           wp1i=wp1i-wpq(1)   !remove momentum+ from soft part of other side
-          if(wm1i*wp1i.le.dble(amqpt**2)+dq2mass
-     .      .and.ioTestFact.le.7)then
-            if(ntryx.lt.99)then
-              if(ish.ge.8)write(ifch,*)
-     . 'Reject proj quark x',xg,xp,wpq(1),wmq(1),wm1i,wp1i,amqpt,dq2mass
-              goto 7
-            elseif(ntryx.lt.999)then
-              if(ish.ge.6)write(ifch,*)'Reject proj quark x redo flavor'
-              goto 6
-            else
-              if(ish.ge.6)write(ifch,*)'Reject proj quark x redo hard'
-              njstr=nj
-              igo=4
-              goto 1
-            endif
-          endif
 
         endif                   !~~~~~quark initiate space like cascade    
 
@@ -1975,49 +1912,10 @@ c in case of sea quark emission, fix momentum here to take it from the soft part
           dq2mass=dq2mass+dble(q2mass(2))
           q2mass(2)=pxh2**2+pyh2**2+q2mass(2)
           
-          !check
-          !if(1.-1./(wm0*(wpi-(smin+dq2mass)/wmi)).le.xm)then
-          !  if(ntryx.lt.999)then            
-          !    if(ish.ge.6)write(ifch,*)
-          !.    'Reject targ quark mass',wm0,wmi,wpi,smin,dq2mass
-          !    goto 6            !back to flavor
-          !  else
-          !  if(ish.ge.6)write(ifch,*)'Reject targ mass quark redo hard'
-          !    goto 1
-          !  endif
-          !endif
-
-          wp1s=wp1i
-          wm1s=wm1i
- 8        ntryx=ntryx+1
-          wp1i=wp1s
-          wm1i=wm1s
-          zg=1.d0-drangen(xm)*(1.d0-xm)
-          if(ish.ge.8)write (ifch,*)'8-zg,xm',zg,xm
-          if(drangen(zg).gt.zg**dels(2)
-     .         *((1.d0-xm/zg)/(1.d0-xm))**betpom(2))goto 8
-          xg=xm/zg
-          wmq(2)=wm0*(xg-xm)
-c          wpq=(1.d0+dble(q2mass(2)))/wmq
-          wpq(2)=dble(q2mass(2))/wmq(2)   !TP1904
+          wmq(2) = exp(rangen()*log(xg)) * wm1i  
+          wpq(2) = exp(rangen()*log(xg)) * wp1i 
           wp1i=wp1i-wpq(2)
           wm1i=wm1i-wmq(2)
-          if(wm1i*wp1i.le.dble(amqpt**2)+dq2mass
-     .      .and.ioTestFact.le.7)then
-            if(ntryx.lt.99)then
-              if(ish.ge.8)write(ifch,*)
-     . 'Reject targ quark x',xg,xm,wpq(2),wmq(2),wp1i,wm1i,amqpt,dq2mass
-              goto 8
-            elseif(ntryx.lt.999)then
-              if(ish.ge.6)write(ifch,*)'Reject targ quark x redo flavor'
-              goto 6
-            else
-              if(ish.ge.6)write(ifch,*)'Reject targ quark x redo hard'
-              njstr=nj
-              igo=6
-              goto 1
-            endif
-          endif 
 
         endif                                        !~~~~~quark initiate space like cascade
 
@@ -2041,7 +1939,7 @@ c          wpq=(1.d0+dble(q2mass(2)))/wmq
      .      write(ifmt,'(a,2e10.3,i5)')
      .      'WARNING psahot: return to start, after pslcsh',wp2,wm2,iqq
           igo=7
-          goto 1
+          goto 1 !redo psahot
         endif
         endif
         
@@ -2062,7 +1960,7 @@ c          wpq=(1.d0+dble(q2mass(2)))/wmq
         t1min=(1.d0/x1max-1.d0)
         t1max=(1.d0/x1min-1.d0)
         igo=8
-        if(t1max.le.0.and.ioTestFact.le.7)goto 1
+        if(t1max.le.0.and.ioTestFact.le.7)goto 1 !redo psahot
         if(ioTestFact.le.7)then
  5        t1x=t1min*(t1max/t1min)**drangen(t1min)
           if(ish.ge.8)write (ifch,*)'t1x,t1min,t1max',t1x,t1min,t1max
@@ -2236,6 +2134,7 @@ c put the sea quarks (or diquarks) into the parton list as string end
         endif
         ioj(nj+1)=7
         ityj(nj+1)=30
+        !print*,'ENDPARTONS',nptl,ncolp,ntrysplit, nj,iqj(nj),iqj(nj+1)
 
         eqj(1,nj)=.5*sngl(wp1+dble(amqt(1))**2/wp1)
         eqj(2,nj)=wp1-eqj(1,nj)
@@ -2288,21 +2187,12 @@ c put the sea quarks (or diquarks) into the parton list as string end
 
           eqj(1,nj)=.5*sngl(wpq(1)+dble(q2mass(1))/wpq(1))
           eqj(2,nj)=-eqj(1,nj)+sngl(wpq(1))
-          if(idpomr.lt.0)then !sat pom
-           eqj(3,nj)=pxh1/2 !-pxh1 !otherwise produces        !not compensated
-           eqj(4,nj)=pyh1/2 !-pyh1 !strange ccbar correlation !corrected via utresc
-           pxh1=pxh1/2 !pt intr split 
-           pyh1=pyh1/2
-           pth=(pxh1+pxh2)**2+(pyh1+pyh2)**2
-           !check
-           call HardScale(4,qqcut,pt2xx, 1 ) 
-           call getBornKin(4,sngl(wpi*wmi-pth),pt2xx,du1,du2,du3,iret) 
-           if(iret.eq.1)then
-             write(ifmt,'(a)')'WARNING rsh Redo subPom for quark SL' 
-             if(ntrysplit.lt.20)goto 2
-             goto 1
-           endif
-          else
+          !compensate intr pt ==> already commented ==> REMOVED after 4.0.2.q6
+          if(idpomr.lt.0)then !sat pom !to avoid strange correlation
+           phi=2*pi*rangen() 
+           eqj(3,nj)=ptemi*cos(phi)
+           eqj(4,nj)=ptemi*sin(phi)
+          elseif(idpomr.ge.0)then !nor pom
            eqj(3,nj)=-pxh1
            eqj(4,nj)=-pyh1
           endif
@@ -2410,6 +2300,7 @@ c put the sea quarks (or diquarks) into the parton list as string end
         endif
         ioj(nj+1)=8
         ityj(nj+1)=30
+        !print*,'ENDPARTONS',nptl,ncolp,ntrysplit, nj,iqj(nj),iqj(nj+1)
 
         eqj(1,nj)=.5*sngl(wm1+dble(amqt(3))**2/wm1)
         eqj(2,nj)=eqj(1,nj)-sngl(wm1)
@@ -2461,21 +2352,12 @@ c put the sea quarks (or diquarks) into the parton list as string end
 
           eqj(1,nj)=.5*sngl(wmq(2)+dble(q2mass(2))/wmq(2))
           eqj(2,nj)=eqj(1,nj)-sngl(wmq(2))
-          if(idpomr.lt.0)then !sat pom
-           eqj(3,nj)=pxh2/2 !-pxh2 !otherwise produces        !not compensated
-           eqj(4,nj)=pyh2/2 !-pyh2 !strange ccbar correlation !corrected via utresc
-           pxh2=pxh2/2 !pt intr split 
-           pyh2=pyh2/2
-           pth=(pxh1+pxh2)**2+(pyh1+pyh2)**2
-           !check
-           call HardScale(4,qqcut,pt2xx, 1 ) 
-           call getBornKin(4,sngl(wpi*wmi-pth),pt2xx,du1,du2,du3,iret) 
-           if(iret.eq.1)then
-             write(ifmt,'(a)')'WARNING rsh Redo subPom for quark SL' 
-             if(ntrysplit.lt.20)goto 2
-             goto 1
-           endif
-          else
+          !compensate intr pt ==> already commented ==> REMOVED after 4.0.2.q6
+          if(idpomr.lt.0)then !sat pom !to avoid strange correlation
+           phi=2*pi*rangen() 
+           eqj(3,nj)=ptemi*cos(phi)
+           eqj(4,nj)=ptemi*sin(phi)
+          elseif(idpomr.ge.0)then !nor pom
            eqj(3,nj)=-pxh2
            eqj(4,nj)=-pyh2
           endif
@@ -2775,14 +2657,13 @@ c          modeDeltaFzero=1 !fzero ~ delta(1-x)           !tp in psaini
       if(idpomr.ge.0)then
         call getLimitsEoL(jl,sis,qqcut , smn,tmn,tmx,iret)
       else !sat pom -> compute tmn for klas 4, to allow gg->ccar <-------------
-        call HardScale(4,qqcut,pt2xx, 1 ) 
-        call getBornKin(4,sis,pt2xx,smn,tmn,tmx,iret) 
+        call getBornKin(ifav,sis,pt2xx,smn,tmn,tmx,iret) 
       endif
       if(iret.eq.1)then
         write(ifmt,
-     .  '(a,2i5/a,2f8.2/a,f8.2/a,3f8.2/a,f8.2/a,f8.2/a,f8.2/a,3f8.2)')
+     .  '(a,2i5/a,3f8.2/a,f8.2/a,3f8.2/a,f8.2/a,f8.2/a,f8.2/a,3f8.2)')
      .  'ERROR 02082019',idpomr,jl
-     .  ,' qqcut,qcmass**2',qqcut,qcmass**2
+     .  ,' qqcut,pt2xx,qcmass**2',qqcut,pt2xx,qcmass**2
      .  ,' s2min1         ',s2min1_save
      .  ,' s2min2,pth     ',s2min2_save,pth1_save,pth4_save
      .  ,' s2minPlusPth   ',s2minPlusPth_save
@@ -3219,22 +3100,26 @@ c          modeDeltaFzero=1 !fzero ~ delta(1-x)           !tp in psaini
       if(iqq.lt.0)then
         call setLadderindex(5)
         jdis=-1
+        tmx=tmn+0.2
+        scale=qqsat
         fscale1sat=50  !<===== depends strongly on "fine tuning sat"
-        if(qqsat.lt.4.00)fscale1sat=fscale1sat*0.5
-        if(qqsat.lt.3.00)fscale1sat=fscale1sat*0.5
-        if(qqsat.lt.2.00)fscale1sat=fscale1sat*0.5
-        if(qqsat.lt.1.50)fscale1sat=fscale1sat*0.3
-        if(qqsat.lt.1.00)fscale1sat=fscale1sat*0.1
-        if(qqsat.lt.0.60)fscale1sat=fscale1sat*0.3
-        if(qqsat.lt.0.30)fscale1sat=fscale1sat*0.1
-        if(qqsat.lt.0.10)fscale1sat=fscale1sat*0.2
+        if(tmn.lt.4.00)fscale1sat=fscale1sat*0.5
+        if(tmn.lt.3.00)fscale1sat=fscale1sat*0.5
+        if(tmn.lt.2.00)fscale1sat=fscale1sat*0.5
+        if(tmn.lt.1.50)fscale1sat=fscale1sat*0.1
+        if(tmn.lt.1.00)fscale1sat=fscale1sat*0.3
+        if(tmn.lt.0.60)fscale1sat=fscale1sat*0.3
+        if(tmn.lt.0.30)fscale1sat=fscale1sat*0.1
+        if(tmn.lt.0.10)fscale1sat=fscale1sat*0.2
+        if(engy.lt.1000)then
+        if(tmn.lt.2.00)fscale1sat=fscale1sat*0.2
+        if(tmn.lt.1.50)fscale1sat=fscale1sat*5.0
+        endif
         !+++++++++++++++++++++++++
         !cKW2108 
         !To be consistent with psborn (no integration) we should use t=tmn.
         !To keep the normal procedure, we generate t bewteen tmn and tmn+dt 
         !+++++++++++++++++++++++++
-        tmx=tmn+0.2
-        scale=tmn
       else
         call setLadderindex(1)
         jdis=0
@@ -3322,8 +3207,8 @@ c          modeDeltaFzero=1 !fzero ~ delta(1-x)           !tp in psaini
       f = f * allPropi
       f = f *fscale1*fscale1sat !arbitrary scale for rejection
       if(isi.eq.1)then
-        if(f.gt.1)write(ifmt,'(a,i3,2f8.2)')'WARNING rejection ratio 1'
-     .  ,iqq,f,qqsat
+        if(f.gt.1)write(ifmt,'(a,i3,4f8.2)')'WARNING rejection ratio 1:'
+     .  ,iqq,f,qqsat,tmn,pt2xx
         fmax=max(fmax,f)
         fsum=fsum+f
         fx=f
@@ -3360,6 +3245,7 @@ c          modeDeltaFzero=1 !fzero ~ delta(1-x)           !tp in psaini
           endif 
         endif    
         !write(*,'(a,5f10.1)')'TEST-psahot',tmn,tmx,t,sh,sqrt(pt2)
+        !REMOVE commented ifav redo after 4.0.2.r4
       else
         vparam(90)=vparam(90)+1 
         if(mIB.eq.0.and.nIB.eq.0)then
@@ -4284,6 +4170,35 @@ c      if(iqq.eq.0)write(40,*)qq,sss,zpm,sBorn,gbyj,gb0,gbymax
       call psjarr(jtp,jfl)
       !===================
 
+      !~~~~~ifav redo~~~~~
+      if(idpomr.lt.0.and.ntrysplit.lt.20)then
+        call getistptl(nptl2+1,ist1)
+        call getistptl(nptl2+2,ist2)
+        if(ist1.ne.25.or.ist2.ne.25)stop'ERROR 230816'
+        nheavy=0
+        do i=nptl2+3,nptl
+          call getidptl(i,idi)
+          call getistptl(i,isti)
+          if(abs(idi).eq.4.or.abs(idi).eq.5)nheavy=nheavy+1
+        enddo
+        if((ifav.ge.4.and.nheavy.eq.0)
+     .  .or.(ifav.lt.4.and.nheavy.gt.0))then
+          ifav=1
+          njstr=nj
+          goto 2
+        endif
+        !if(nheavy.gt.0)then !.or.ntrysplit.gt.2)then
+        !  print*,'----------------',ifav,mOB,nOB,ntrysplit,nheavy
+        !  !do i=nptl2+3,nptl
+        !  !  call getidptl(i,idi)
+        !  !  call getistptl(i,isti)
+        !  !  print*,i,idi,isti
+        !  !enddo
+        !endif
+      endif
+      !~~~~~ifav redo END~~~~~
+
+
       !~~~~~~~~~~~~~~~~~~~TEST~~~~~~~~~~~~~~~~~~~~~~~
       !sum=0
       !do i=nptl1+1,nptl
@@ -4323,7 +4238,8 @@ c        print *,i,idptl(i),istptl(i)
           if(abs(mOB).eq.4.and.abs(nOB).eq.4)vparam(93)=vparam(93)+1
           goto 2 !only for sat poms
         endif
-        goto 1
+        igo=12
+        goto 1 !redo psahot
       endif
 
       !KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK
@@ -4644,6 +4560,7 @@ c-----------------------------------------------------------------------
           endif
 
           if(nptl-nptl0.lt.nj)then !bg if nptl-nptl0=nj-> all jets registered-> end
+            igo=13
             goto 1    !bg else one looks for a new string and so for a new quark 
           else
             if(ish.ge.3)then
@@ -4730,17 +4647,20 @@ c------------------------------------------------------------------------
 c-----------------------------------------------------------------------
 c pspawr - writing final parton kj into particle list
 c------------------------------------------------------------------------
-c Input:
+c Input: chain of partons
       parameter (mjstr=20000)
       common /psar29/ eqj(4,mjstr),iqj(mjstr),ncj(2,mjstr),ioj(mjstr),nj
       common /psar30/ iorj(mjstr),ityj(mjstr),bxj(6,mjstr),q2j(mjstr)
-
+      common /psar31/ ktyj(mjstr)
+c------------------------------------------------------------------------
+c nj - number of partons
 c eqj(1:4,k) - 4-momentum (qgs) for k-th parton;
 c bxj(1:4,k) - coordinates for k-th parton formation point;
 c iqj(k) - ID (qgs) for k-th parton;
 c ncj(1:2,k) - colour connected partons indexes for k-th parton;
-c nj - number of partons
-c-----------------------------------------------------------------------
+c ioj(j) - flavor of mother parton
+c ktyj(j) - parton type (from SL = 1,2, from Born = 11,12,13)
+c------------------------------------------------------------------------
 #include "aaa.h"
 #include "sem.h"
       common/ciptl/iptl
@@ -4782,6 +4702,7 @@ c-----------------------------------------------------------------------
       endif                                               !ala
       !print*,'hard origin = iaaptl for partons: ',kj,nptl,iaaptl(nptl)
       jorptl(nptl)=ioj(kj)
+      ifrptl(1,nptl)=ktyj(kj)
       istptl(nptl)=20
       do i=1,4
         xorptl(i,nptl)=bxj(i,kj)
@@ -4802,14 +4723,14 @@ c-----------------------------------------------------------------------
       subroutine psreti(ncr,jort,nfprt
      .          ,ey,s0xi,c0xi,s0i,c0i,s0xh,c0xh,s0h,c0h,iret)
 c-----------------------------------------------------------------------
-c Reconstructs the chain of partons (eventually the kinky strings) following color flow
+c Updates the chain of partons (= kinks) following color flow
 c starting from the time-like parton nfprt being the start of a TL cascade
 c (either from Born or the SP cascade).
 c It uses information from /cprt/, already filled from calls to tim... (TL cascade)
 c----------------------------------------------------------------------- 
-c We keep the old notation: jet = final state time-like parton
+c Notation: jet = final state time-like partons
 c----------------------------------------------------------------------- 
-c ncr(i) - colour connections for the jet
+c ncr(i) - colour connections for the parton
 c jort - color orientation for gluons (=1 if +color goes first, =-1 otherwise)
 
       parameter (ntim=1000)
@@ -4827,14 +4748,20 @@ c iorprt - parent parton position in the list
 c idaprt - daughter partons positions in the list
 c ey,s0xi,c0xi,s0i,c0i,s0xh,c0xh,s0h,c0h - boost, rotations Born
 
-c output:
+c----------------------------------------------
+c output: chain of partons, updated
+c----------------------------------------------
       parameter (mjstr=20000)
       common /psar29/ eqj(4,mjstr),iqj(mjstr),ncj(2,mjstr),ioj(mjstr),nj
-c nj - number of final jets
-c eqj(i,j) - 4-momentum for the final jet j
-c iqj(j) - flavour for the final jet j
-c ncj(m,j) - colour connections for the final jet j
       common /psar30/ iorj(mjstr),ityj(mjstr),bxj(6,mjstr),q2j(mjstr)
+      common /psar31/ ktyj(mjstr)
+c-----------------------------------------------
+c nj - number of final partons in jet
+c eqj(i,j) - 4-momentum for the final parton j
+c iqj(j) - flavour for the final parton j
+c ncj(m,j) - colour connections for the final parton j
+c ioj(j) - flavor of mother parton
+c ktyj(j) - parton type (from SL = 1,2, from Born = 11,12,13)
 c-----------------------------------------------------------------------
       dimension ep3(4),ncr(2),nci(2,ntim)
 #include "aaa.h"
@@ -5079,7 +5006,8 @@ c-----------------------------------------------------------------------
 
         ioj(nj)=jorprt(iprt) !flavor of mother parton
         q2j(nj)=q2prt(iprt)
-
+        ktyj(nj)=jj
+        
         if(nprtjx.eq.2)then !out Born before timelike cascade  !ala
           iodur(nj)=iordur(iprt)                          !ala
         else                                              !ala
@@ -5375,6 +5303,7 @@ c-----------------------------------------------------------------------
       parameter (mjstr=20000)
       common /psar29/eqj(4,mjstr),iqj(mjstr),ncj(2,mjstr),ioj(mjstr),nj
       common /psar30/ iorj(mjstr),ityj(mjstr),bxj(6,mjstr),q2j(mjstr)
+      common /psar31/ ktyj(mjstr)
       if(nj2.lt.nj1)return
       do i=nj1,nj2
       ncj(1,i)=0
@@ -5394,6 +5323,7 @@ c-----------------------------------------------------------------------
       bxj(5,i)=0
       bxj(6,i)=0
       q2j(i)=0
+      ktyj(i)=0
       enddo
       end
 
@@ -5891,8 +5821,8 @@ c time-like cascade
       !---modif qq1,2 sat pom---
       if(ipomtype.lt.0)then !fine tuning sat
       !  call idmass(4,am4)
-        qq1=8 !4.*q2fin+2.*am4**2+0.1 !min value allowing ccbar split
-        qq2=qq1                    
+      !  qq1=8 !4.*q2fin+2.*am4**2+0.1 !min value allowing ccbar split
+      !  qq2=qq1                    
       !  if(mIB.eq.0.and.nIB.eq.0.and.mOB.eq.0.and.nOB.eq.0)then !ggggsat
       !    qq1=9. !qqupp
       !    qq2=9. !qqupp
@@ -5927,8 +5857,8 @@ c time-like cascade
         if(en1**2.lt.(qt2+q2m1)-0.0001
      .    .or.qq1.lt.sngl(q2m1)-0.001
      .    .or.qq2.lt.sngl(q2m2)-0.001) then
-          write(ifmt,'(a,4x,4i3,6f9.4,i4)')
-     .    'WARNING psabor bef timsh2',j2,l2,iOB(ii),iOB(3-ii) 
+          write(ifmt,'(a,i4,3x,4i3,1x,2f10.4,4f9.4,i4)')
+     .    'WARNING psabor bef timsh2',ipomtype,j2,l2,iOB(ii),iOB(3-ii) 
      .    ,en1**2-qt2-q2m1,en1**2,qt2,sngl(q2m1),qq1-q2m1,qq1,jt
         endif
         if(qq1.le.sngl(q2m1))qq1=sngl(q2m1)+1e-5
@@ -5937,10 +5867,23 @@ c time-like cascade
         if(qq2.le.0.)qq2=1e-5
       endif
 
+      q2finsave=q2fin
+      if(sngl(en1).gt.getJetEmin())then
+        !determine pt
+        pt=utJetPt(sngl(en1),ey,s0xi,c0xi,s0i,c0i,s0xh,c0xh,s0h,c0h)
+        if(pt.gt.ptrmin)then
+          q2fin=1e30
+          call incrementJetNdijet()
+          !print*,'TEST=Jet',sngl(en1),getJetEmin(),pt,ptrmin
+        endif
+      endif
+      
       !===========================================================
       call timsh2(qq1,qq2,sngl(en1),sngl(en2),iq2ini1,iq2ini2,jo1,jo2
      . ,ey,s0xi,c0xi,s0i,c0i,s0xh,c0xh,s0h,c0h,ipomtype,mIB,nIB,mOB,nOB)  !final state cascade
       !============================================================
+
+      q2fin=q2finsave
 
       qqmx1=qq1
       qqmx2=qq2

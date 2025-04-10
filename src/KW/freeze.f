@@ -31,7 +31,6 @@ c------------------------------------------------------------------------------
 #include "ho.h"
       common/cetaplot/etaplot(20),ietaplot(20),mxetaplot
       common/jcen/jcentr,jmxcentr
-      common/cwmaxIcoE/wmaxIcoE
       data etaplot / 20*0. /
       fc=dtauhy/0.25*fdtau
       modu=5
@@ -190,6 +189,8 @@ c------------------------------------------------------------------------------
       data ncntfo2/0/
       save ncntfo2
 
+      integer getAccumJerr
+
       if(kfrout.eq.1)then
         write(ifmt,'(a,f7.4,a)')
      .  'computing freeze out surface for Tfo=',tfrout,' ...    '
@@ -210,7 +211,7 @@ c------------------------------------------------------------------------------
       do nphi=1,nphihy
        phi=phihy(nphi)
        do ntau=1,ntauhy
-        tau=tauhy(ntau)
+        tau=getHydynTauhy(ntau)
         do nsurf=1,maxsurf
          radaa(nsurf,  neta,ntau,nphi)=0.
          velaa(nsurf,1,neta,ntau,nphi)=0.
@@ -258,7 +259,8 @@ c------------------------------------------------------------------------------
           elseif(kfrout.eq.3)then !cone surface, for testing
             ntaumax=12 !arbitrary choice
             rtau=radhy(nradhy) *
-     .      ( 1 - (tau-tauhy(1))/(tauhy(ntaumax)-tauhy(1)) )  
+     .      ( 1 - (tau-getHydynTauhy(1))/
+     .           (getHydynTauhy(ntaumax)-getHydynTauhy(1)) )  
             rtau=max(0.,rtau)
             q1=-r1 
             q2=-r2
@@ -271,7 +273,8 @@ c------------------------------------------------------------------------------
             rmax=rmaxx * ( 1 - etaa/etamax )  
             rmax=max(0.,rmax)
             rtau=rmax -
-     .        rmaxx*(tau-tauhy(1))/(tauhy(ntaumax)-tauhy(1))   
+     .        rmaxx*(tau-getHydynTauhy(1))/
+     .           (getHydynTauhy(ntaumax)-getHydynTauhy(1))   
             rtau=max(0.,rtau)
             q1=-r1 
             q2=-r2
@@ -336,11 +339,11 @@ c------------------------------------------------------------------------------
            call velioget(3,neta,ntau,nphi,nrad, v2(3) )
            vr1=v1(1)*cos(phi)+v1(2)*sin(phi)
            vr2=v2(1)*cos(phi)+v2(2)*sin(phi)
-           jerr(21)=jerr(21)+1
+           call setAccumJerr(21,getAccumJerr(21)+1)
            if(nsurf.eq.1.and.q2.gt.qfo)then
              if(ish.ge.3)
      .       write(ifmt,*)'WARNNG FoSur:  nrad limit reached',r2
-             jerr(22)=jerr(22)+1  !FoSur: nrad limit reached
+             call SetAccumJerr(22,getAccumJerr(22)+1)  !FoSur: nrad limit reached
              f=1
            elseif(q1.ne.q2)then
              f=(q1-qfo)/(q1-q2)
@@ -425,7 +428,7 @@ c------------------------------------------------------------------------------
       enddo
 
       dphi=phihy(2)-phihy(1)
-      dtau=tauhy(2)-tauhy(1)
+      dtau=getHydynTauhy(2)-getHydynTauhy(1)
       deta=etahy(2)-etahy(1)
       do neta=1,nzhy
         nem=neta-1
@@ -462,7 +465,7 @@ c------------------------------------------------------------------------------
         phi=phihy(nphi)
         do ntau=1,ntauhec(neta,nphi)
          if( radaa(nsurf,neta,ntau,nphi) .gt. 0. )then
-          tau=tauhy(ntau)
+          tau=getHydynTauhy(ntau)
           rad=radaa(nsurf,neta,ntau,nphi)
           vx=velaa(nsurf,1,neta,ntau,nphi)
           vy=velaa(nsurf,2,neta,ntau,nphi)
@@ -511,7 +514,7 @@ c-------------------------------------------------------------------------------
 #include "aaa.h"
 #include "ho.h"
       common/cranphi/ranphi
-      common/cee1ico/ee1ico,eistico,ee1hll
+c      common/cee1ico/ee1ico,eistico,ee1hll
       parameter (mxeflo=21)
       real eflosa(mxeflo),eflose(mxeflo)
       real eflosu(0:mxsurf),eflos(0:mxsurf),pf(4),s(4),t(10)
@@ -532,7 +535,7 @@ c-------------------------------------------------------------------------------
       real wphi(netaclu,mxsurf+1,mradtau,nphihxx)
       integer jc(nflav,2),ic(2)
       integer ncountmic
-      real v5(5)
+      real v5(5),ve3(3)
       real dMetaSum(netahxx)
       data dMetaSum / netahxx*0 /
       data ncountmic/0/ ncount/0/
@@ -544,6 +547,8 @@ c-------------------------------------------------------------------------------
 
       if(ntauhy.eq.0)goto 9999
 
+      call checkGrandCanon(0,0,0.,ve3) !initialize to zero
+
       !early hadronization at large eta, later one at small eta -> eta-tau correlation
       !therfore enough to consider dFlav(i,neta) and not in addition ntau dependence
       do i=1,3
@@ -551,6 +556,8 @@ c-------------------------------------------------------------------------------
         dFlav(i,neta)=0   
       enddo
       enddo
+
+      phinull=phievt+ranphi
 
 c create dmass_
 
@@ -568,7 +575,7 @@ c create dmass_
 c compute dmass_ level 3 and dFlav
 
       dphi=phihy(2)-phihy(1)
-      dtau=tauhy(2)-tauhy(1)
+      dtau=getHydynTauhy(2)-getHydynTauhy(1)
       deta=etahy(2)-etahy(1)
       drad=radhy(2)-radhy(1)  
 
@@ -595,13 +602,13 @@ c compute dmass_ level 3 and dFlav
       amsui(nsurf)=0
 
       do ntau=1,ntauhy !~~~~~~ tau sum ~~~~~~~~~~~
-      tau=tauhy(ntau)
+      tau=getHydynTauhy(ntau)
 
       eflos(nsurf)=0
       do i=1,mxeflo
         eflosa(i)=0
       enddo
- 
+
       do nrad=2,nradhy !~~~~~~ rad sum ~~~~~~~~~~ (needed for surface "zero")
       rd=radhy(nrad)
 
@@ -611,6 +618,8 @@ c compute dmass_ level 3 and dFlav
 
       do nphi=2,nphihy !~~~~~~ phi sum ~~~~~~~~~~
       phi=phihy(nphi)
+
+      if(iSkipSurfForCheck(nsurf,neta,ntau,nphi).eq.1)goto 888
 
       if(nsurf.eq.0.and.ntau.eq.1 .or. nsurf.gt.0.and.nrad.eq.2)then!~~~~ surface type ~~~~
 
@@ -640,14 +649,14 @@ c compute dmass_ level 3 and dFlav
           !
           ! mass distribution 
           !
-          !  call dmass_i0get   1  )                   !1-maxsurf
-          !  call dmass_i1get(  1  ,neta)              !1-nzhy
-          !  call dmass_i2get(  1  ,neta,nrad)         !1-ntauhy
-          !  call dmass_i3get(  1  ,neta,nrad,nphi)    !2-nphihy
+          !  call dmass_i0get(  1  )                   !surface zero 
+          !  call dmass_i1get(  1  ,neta)              ! 1-nzhy
+          !  call dmass_i2get(  1  ,neta,nrad)         !  1-nradhy
+          !  call dmass_i3get(  1  ,neta,nrad,nphi)    !   2-nphihy
           !  call dmass_c0get(nsurf)                   !1-maxsurf
-          !  call dmass_c1get(nsurf,neta)              !1-nzhy
-          !  call dmass_c2get(nsurf,neta,ntau)         !1-ntauhy
-          !  call dmass_c3get(nsurf,neta,ntau,nphi)    !2-nphihy
+          !  call dmass_c1get(nsurf,neta)              ! 1-nzhy
+          !  call dmass_c2get(nsurf,neta,ntau)         !  1-ntauhy
+          !  call dmass_c3get(nsurf,neta,ntau,nphi)    !   2-nphihy
 
           rad=radaa(1,neta,ntau,nphi)   
 
@@ -783,10 +792,12 @@ c compute dmass_ level 3 and dFlav
             if(nsurf.eq.0)then
               do k=1,3
                 velzz(k,neta,nrad,nphi)=u(k)/gm 
+                ve3(k)=u(k)/gm 
               enddo
             else!nsurf.gt.0
               do k=1,3
                 velaa(nsurf,k,neta,ntau,nphi)=u(k)/gm
+                ve3(k)=u(k)/gm 
               enddo
             endif
           endif
@@ -801,7 +812,20 @@ c compute dmass_ level 3 and dFlav
             dFlav(i,neta)=dFlav(i,neta)+dF(i)
           enddo
 
+          ! check
+
+          imess=0
+          if(nphi.eq.nphihy.and.neta.eq.nzhy)imess=max(ntau,nrad) 
+          if(dM2.gt.0.)then
+            dM=sqrt(dM2)
+            call checkGrandCanon(1,imess,dM,ve3) !fill
+          else
+            call checkGrandCanon(1,imess,0.,ve3) !fill
+          endif
+
       endif !surface type
+
+ 888  continue
 
       enddo !nphi
 
@@ -810,7 +834,7 @@ c compute dmass_ level 3 and dFlav
       enddo !nrad
 
       if(nsurf.eq.0.and.ntau.eq.1)then
-      nen=log10(ee1ico)
+      nen=log10(getIcoEe1ico())
       fac=10.**(4.-nen)
       if(ish.ge.3)write(ifmt,'(a,2f10.2,1x,21i6)')'Eflow0'
      .,eflosu(0),eflosu(0),(nint(eflosa(i)),i=1,mxeflo)   !eflosa(i)*fac
@@ -872,7 +896,7 @@ c print
      .  (dFlav(1,n)+dFlav(2,n)+dFlav(3,n),n=1+nzhy/2-mo,1+nzhy/2+mo)
       endif
       if(ish.ge.3)then
-      write(ifmt,'(a,f10.2,3x,a,f10.2)')'EfluidIni',ee1hll,
+      write(ifmt,'(a,f10.2,3x,a,f10.2)')'EfluidIni',getIcoEe1hll(),
      .'Sum mass*cosh(eta)',esu  
       endif
 
@@ -1156,6 +1180,9 @@ c add cluster sum to cptl
       ifrptl(2,nptl)=0
       nptla=nptl
 
+      nptlsum=0
+      npisum=0
+
 c add clusters to cptl, decay them
     
       do i=1,4
@@ -1426,6 +1453,9 @@ c add clusters to cptl, decay them
           PcluNF(i)=0
         enddo
         do n=nptlc+1,nptl
+          nptlsum=nptlsum+1
+          call getidptl(n,idxxxx)
+          if(abs(idxxxx).eq.120)npisum=npisum+1
           call getpptl(n,v5(1),v5(2),v5(3),v5(4),v5(5))
           amt=sqrt(v5(1)**2+v5(2)**2+v5(5)**2)
           call get2ibptl(n,1,neta)
@@ -1643,13 +1673,15 @@ c add clusters to cptl, decay them
             drad=radhy(2)-radhy(1)
             rad=radhy(nrad)-drad/2+rangen()*drad
             ntau=1
-            tau=tauhy(ntau)  
+            tau=getHydynTauhy(ntau)  
           else !nsurf.ne.0
             ntau=ntr
-            taumn=tauhy(ntau)
-            if(ntau.gt.1)taumn=(tauhy(ntau-1)+tauhy(ntau))/2
-            taumx=tauhy(ntau)
-            if(ntau.lt.ntauho)taummx=(tauhy(ntau)+tauhy(ntau+1))/2
+            taumn=getHydynTauhy(ntau)
+            if(ntau.gt.1)taumn=(getHydynTauhy(ntau-1)
+     .           +getHydynTauhy(ntau))/2
+            taumx=getHydynTauhy(ntau)
+            if(ntau.lt.ntauho)taummx=(getHydynTauhy(ntau)
+     .           +getHydynTauhy(ntau+1))/2
             tau=taumn+rangen()*(taumx-taumn)
             rad=radaa(nsurf,neta,ntau,nphi)      ! ----------> should be improved -> interpolation 
           endif 
@@ -1687,6 +1719,9 @@ c add clusters to cptl, decay them
 
       enddo !ncl
 
+      write(ifmt,'(a,f10.2,i6,i9,i9)')
+     .'Clusters dMsum nclu nptlsum npisum'
+     .,dMsum,nclu,nptlsum,npisum
       if(ish.ge.3)then
         write(ifmt,'(a,$)')'Summing all clusters         '  
         write(ifmt,'(6x,4f10.2,$)')Esum1,psumNF(4),Psum1,psumNF(3)   
@@ -1746,7 +1781,7 @@ c add clusters to cptl, decay them
         close(101)
       endif
 
-
+      call checkGrandCanon(2,0,0.,ve3) !plot
 
  9999 continue
 
@@ -1785,11 +1820,14 @@ c-------------------------------------------------------------------------------
       real wi(2),wj(2),wk(2),wq(2)
       integer mi(2),mj(2),mk(2),mq(2)
       common/jcen/jcentr,jmxcentr
-      common/cratioee/ratioee,ratioeex(ntauhxx)
+c      common/cratioee/ratioee,ratioeex(ntauhxx)
       data ncntrffo/0/
       save ncntrffo
       data ncnt3fo/0/
       save ncnt3fo
+
+      real getHydynRatioeex
+      integer getAccumJerr
 
       if(kfrout.ge.20)return
 
@@ -1862,7 +1900,7 @@ c-------------------------------------------------------------------------------
       !write(ifmt,*)'++++++',ntauho,jfac,nsimu
 
       dphi=phihy(2)-phihy(1)
-      dtau=tauhy(2)-tauhy(1)
+      dtau=getHydynTauhy(2)-getHydynTauhy(1)
       deta=etahy(2)-etahy(1)
       dleta=(etahy(2)-etahy(1))/jfac
       dall=dphi*dtau*dleta*0.125
@@ -1875,7 +1913,7 @@ c-------------------------------------------------------------------------------
 
       do ntau=1,ntauho !~~~~~~ tau sum ~~~~~~~~~~~
 
-      tau=tauhy(ntau)
+      tau=getHydynTauhy(ntau)
       ftau=2
       if(ntau.eq.1.or.ntau.eq.ntauho)ftau=1
 
@@ -1962,7 +2000,7 @@ c     .   ,(baraa(nsurf,i3,mt,ntau,nphi),i3=1,3)
           ey=max(e,0.)
           if(ey.ge.oEeos-0.01)then
             ncnt3fo=ncnt3fo+1
-            jerr(13)=jerr(13)+1
+            call setAccumJerr(13,getAccumJerr(13)+1)
             if(ncnt3fo.le.50)then
               write(ifmt,*)'ey=',ey,'  b1=',b1,'  b2=',b2,'  b3=',b3
      .        ,'  ',nsurf,neta,ntau,nphi
@@ -2107,9 +2145,10 @@ c     .     ,ffstat(mq(1),1,11,11,11,1),ffstat(mq(2),1,11,11,11,1)
              ggsum4=ggsum4+(ggstat(iixx)-ggstat(iixx-1))/ggstat(nspes)
           endif !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-          if(ratioeex(ntau).eq.0.)stop'####### ERROR 19022016 #######'
+          if(getHydynRatioeex(ntau).eq.0.)
+     .         stop'####### ERROR 19022016 #######'
           yie=volu*ggstat(nspes)*ggstat(nspes+2)*exp(-cox)
-     .         *fofac*eefrac/ratioeex(ntau)
+     .         *fofac*eefrac/getHydynRatioeex(ntau)
            
           !volu              volume
           !ggstat(nspes)     total yield
@@ -2154,9 +2193,9 @@ c     .     ,ffstat(mq(1),1,11,11,11,1),ffstat(mq(2),1,11,11,11,1)
                 cot=ch+cohi(m)-cox
                 !print*,'+++++++',cot,volex*ppp/tmpfo
                 js=jspes(m)
-                jerr(19)=jerr(19)+1
+                call setAccumJerr(19,getAccumJerr(19)+1)
                 if(js.eq.-1.and.cot.gt.aspes(io3,m)/tmpfo)then  !mesons
-                 jerr(20)=jerr(20)+1 !mu > m => BE condensate
+                 call setAccumJerr(20,getAccumJerr(20)+1) !mu > m => BE condensate
                  frac=0
                 endif
                 !generate thermal momenta in local frame
@@ -2270,6 +2309,7 @@ c---------------------------------------------------------------------
          call fros(3)
          call epof(1)
         endif
+        call EpoMiF
         call epof(2)
         call decayall(1,0)
         call xxEos
@@ -2398,6 +2438,10 @@ c------------------------------------------------------------------------------
 c-------------------------------------------------------------------------
       subroutine getxyrange(neta,ntau)
 c-------------------------------------------------------------------------
+c      use ArrayModule, only: getd
+c      use hocoModule, only: epsc
+      double precision getHydynEpsc
+      
 #include "aaa.h"
 #include "ho.h"
       common/crange/nxrange(nyhxx,2),nyrange(nxhxx,2)
@@ -2411,7 +2455,7 @@ c-------------------------------------------------------------------------
         wwx=ww
         ww=0.
         do i=1,3
-        ww=max(ww,abs(epsc(neta,ntau,nx,ny)))
+        ww=max(ww,abs(getHydynEpsc(neta,ntau,nx,ny)))
         enddo
        enddo
        if(ny.eq.nyhy.and.ww.eq.0)ny=nyhy
@@ -2426,7 +2470,7 @@ c-------------------------------------------------------------------------
         wwx=ww
         ww=0.
         do i=1,3
-        ww=max(ww,abs(epsc(neta,ntau,nx,ny)))
+        ww=max(ww,abs(getHydynEpsc(neta,ntau,nx,ny)))
         enddo
        enddo
        if(ny.eq.1.and.ww.eq.0)ny=0
@@ -2444,7 +2488,7 @@ c-------------------------------------------------------------------------
         wwx=ww
         ww=0.
         do i=1,3
-        ww=max(ww,abs(epsc(neta,ntau,nx,ny)))
+        ww=max(ww,abs(getHydynEpsc(neta,ntau,nx,ny)))
         enddo
        enddo
        if(nx.eq.nxhy.and.ww.eq.0)nx=nxhy
@@ -2459,7 +2503,7 @@ c-------------------------------------------------------------------------
         wwx=ww
         ww=0.
         do i=1,3
-        ww=max(ww,abs(epsc(neta,ntau,nx,ny)))
+        ww=max(ww,abs(getHydynEpsc(neta,ntau,nx,ny)))
         enddo
        enddo
        if(nx.eq.1.and.ww.eq.0)nx=0
@@ -2626,7 +2670,7 @@ c-------------------------------------------------------------------------------
             !.                 ,pptl(3,nptl) ,pptl(4,nptl)
             !endif
             !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      dtau=tauhy(2)-tauhy(1)
+      dtau=getHydynTauhy(2)-getHydynTauhy(1)
       taurd=tau-dtau/2+rangen()*dtau
       dleta=(etahy(2)-etahy(1))/jfac
       etard=eta-dleta/2+rangen()*dleta
@@ -3151,7 +3195,10 @@ cooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
 c-----------------------------------------------------------------------
       subroutine ooHoEpsilon(itau1,itau2,dtaupl)
 c-----------------------------------------------------------------------
-
+c      use ArrayModule, only: getd
+c      use hocoModule, only: epsc, barc
+c      use hocoModule, only: barc
+      double precision getHydynEpsc, getHydynBarc
 #include "aaa.h"
 #include "ho.h"
       character ctau*5, cbim*3, czz*5, txt*32
@@ -3159,7 +3206,7 @@ c-----------------------------------------------------------------------
       character*16  bbt16(2)
       common/jcen/jcentr,jmxcentr
       real bb(2,nxhy,nyhy),bbmax(2)
-      modu=nint(abs(dtaupl)/(tauhy(2)-tauhy(1)))
+      modu=nint(abs(dtaupl)/(getHydynTauhy(2)-getHydynTauhy(1)))
       if( nint(fdtau) .eq. 0 )then   
         itau2x=itau1
       elseif( fdtau .gt . 0. )then 
@@ -3175,7 +3222,7 @@ c-----------------------------------------------------------------------
       delx5=(xmaxhy-xminhy)/(nxhy-1)*0.5
       dely5=(ymaxhy-yminhy)/(nyhy-1)*0.5
       ntau=1+modu*(itau-1) 
-      tau=tauhy(ntau)
+      tau=getHydynTauhy(ntau)
 
       if(tau.le.tauzer+tauup)then !~~~~~~~~~~~~tauup~~~~~~~~~~~~
 
@@ -3191,7 +3238,7 @@ c-----------------------------------------------------------------------
       if(zz.ge.0.)write(czz,'(f4.1)')zz
       if(zz.lt.0.)write(czz,'(f5.1)')zz
       call RootCanvas(-2)
-      call histo2BeginFigure(-2)
+      call histo2BeginFigure()
       call histo2BeginPlot(1, 1)
       call RootHisto(2,
      * txt//'(#eta_{s}='//czz//', #tau ='//ctau//' fm/c)   '//cbim//';'
@@ -3201,9 +3248,11 @@ c-----------------------------------------------------------------------
      *,nyhy-2*nyoff
      *,yminhy-dely5+nyoff*dely5*2
      *,ymaxhy+dely5-nyoff*dely5*2)
-      call histo2BeginSubPlot('ooHoEpsilon'
-     *,txt//'($\eta_{s}$ ='//czz//', $\tau$ ='//ctau//' fm/c) '//cbim
-     *,txt//'($\eta_{s}$ ='//czz//', $\tau$ ='//ctau//' fm/c) '//cbim
+      call histo2BeginSubPlot(
+     * 'src/KW/freeze.f:ooHoEpsilon(itau1,itau2,dtaupl)'
+     *,'ooHoEpsilon')
+      call histo2AddHeader(
+     * txt//'($\eta_{s}$ ='//czz//', $\tau$ ='//ctau//' fm/c) '//cbim
      *,xminhy-delx5+nxoff*delx5*2
      *,xmaxhy+delx5-nxoff*delx5*2
      *,delx5*2
@@ -3219,10 +3268,10 @@ c-----------------------------------------------------------------------
          xx=xminhy+(ix-1)*delx5*2
          do iy=1,nyhy
             yy=yminhy+(iy-1)*dely5*2
-            eps=epsc(iz,ntau,ix,iy)
-            b1=barc(1,iz,ntau,ix,iy)
-            b2=barc(2,iz,ntau,ix,iy)
-            b3=barc(3,iz,ntau,ix,iy)
+            eps=getHydynEpsc(iz,ntau,ix,iy)
+            b1=getHydynBarc(1,iz,ntau,ix,iy)
+            b2=getHydynBarc(2,iz,ntau,ix,iy)
+            b3=getHydynBarc(3,iz,ntau,ix,iy)
             tem=PiEos(5,eps,b1,b2,b3)
             !if(tem.gt.tfrout)
             call RootFill(2,xx,yy,eps)
@@ -3257,8 +3306,8 @@ c-----------------------------------------------------------------------
         do iz=1,nzhy
          do ix=1,nxhy
           do iy=1,nyhy
-            if(m.eq.1)bbx=    epsc(  iz,ntau,ix,iy)
-            if(m.eq.2)bbx=abs(barc(2,iz,ntau,ix,iy))
+            if(m.eq.1)bbx=    getHydynEpsc(  iz,ntau,ix,iy)
+            if(m.eq.2)bbx=abs(getHydynBarc(2,iz,ntau,ix,iy))
             if(bbx.gt.bbmaxtot)then
               bbmaxtot=bbx
               xx=xminhy+(ix-1)*delx5*2
@@ -3293,9 +3342,14 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
       subroutine ooHoRadVel(itau1,itau2,dtaupl)
 c-----------------------------------------------------------------------
-
+c      use ArrayModule, only: getd
+c      use hocoModule, only: epsc, velc, barc
+c      use hocoModule, only: velc, barc
+      double precision getHydynEpsc, getHydynBarc
+      double precision getHydynVelc
 #include "aaa.h"
 #include "ho.h"
+      
       character ctau*5, cbim*3, czz*5, txt*27
       common/jcen/jcentr,jmxcentr
       do itau=itau1,itau2
@@ -3303,14 +3357,14 @@ c-----------------------------------------------------------------------
       nyoff=4  !5
       delx5=(xmaxhy-xminhy)/(nxhy-1)*0.5
       dely5=(ymaxhy-yminhy)/(nyhy-1)*0.5
-      modu=nint(dtaupl/(tauhy(2)-tauhy(1)))
+      modu=nint(dtaupl/(getHydynTauhy(2)-getHydynTauhy(1)))
       ntau=1+modu*(itau-1)
-      tau=tauhy(ntau)
+      tau=getHydynTauhy(ntau)
       if(tau.le.tauzer+tauup)then
       write(ctau,'(f5.2)')tau
       write(cbim,'(a,i2)')'J',jcentr
       txt='rad velocity [% of c]      '
-      call histo2BeginFigure(-2)
+      call histo2BeginFigure()
       call histo2BeginPlot(1, 1)
       do j=1,1   !2
       iz=nzhy/2+1 + (j-1)*3
@@ -3327,9 +3381,11 @@ c-----------------------------------------------------------------------
      *,nyhy-2*nyoff
      *,yminhy-dely5+nyoff*dely5*2
      *,ymaxhy+dely5-nyoff*dely5*2)
-      call histo2BeginSubPlot('ooHoRadVel'
-     *,txt//', $\tau$ ='//ctau//' fm/c) '//cbim
-     *,txt//'($\eta_{s}$ ='//czz//', $\tau$ ='//ctau//' fm/c) '//cbim
+      call histo2BeginSubPlot(
+     * 'srd/KW/freeze.f: subroutine ooHoRadVel(itau1,itau2,dtaupl)'
+     *,'ooHoRadVel')
+      call histo2AddHeader(
+     * txt//'($\eta_{s}$ ='//czz//', $\tau$ ='//ctau//' fm/c) '//cbim
      *,xminhy-delx5+nxoff*delx5*2
      *,xmaxhy+delx5-nxoff*delx5*2
      *,2*delx5
@@ -3343,17 +3399,17 @@ c-----------------------------------------------------------------------
          xx=xminhy+(ix-1)*delx5*2
          do iy=1,nyhy
             yy=yminhy+(iy-1)*dely5*2
-            vx=velc(1,iz,ntau,ix,iy)
-            vy=velc(2,iz,ntau,ix,iy)
+            vx=getHydynVelc(1,iz,ntau,ix,iy)
+            vy=getHydynVelc(2,iz,ntau,ix,iy)
             r=sqrt(xx**2+yy**2)
             phi=0
             if(r.gt.0.)phi=sign(1.,yy)*acos(xx/r)
             vtg=vx*sin(phi)-vy*cos(phi)
             vrd=vx*cos(phi)+vy*sin(phi)
-            eps=epsc(iz,ntau,ix,iy)
-            b1=barc(1,iz,ntau,ix,iy)
-            b2=barc(2,iz,ntau,ix,iy)
-            b3=barc(3,iz,ntau,ix,iy)
+            eps=getHydynEpsc(  iz,ntau,ix,iy)
+            b1= getHydynBarc(1,iz,ntau,ix,iy)
+            b2= getHydynBarc(2,iz,ntau,ix,iy)
+            b3= getHydynBarc(3,iz,ntau,ix,iy)
             tem=PiEos(5,eps,b1,b2,b3)
             w=vrd*100
             !w=sqrt(vx**2+vy**2)*100
@@ -3374,7 +3430,11 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
       subroutine ooHoTanVel(itau1,itau2,dtaupl)
 c-----------------------------------------------------------------------
-
+c      use ArrayModule, only: getd
+c      use hocoModule, only: epsc, velc, barc
+c      use hocoModule, only: velc, barc
+      double precision getHydynEpsc, getHydynBarc
+      double precision getHydynVelc
 #include "aaa.h"
 #include "ho.h"
       character ctau*5, cbim*3, czz*5, txt*27
@@ -3384,9 +3444,9 @@ c-----------------------------------------------------------------------
       nyoff=0  !5
       delx5=(xmaxhy-xminhy)/(nxhy-1)*0.5
       dely5=(ymaxhy-yminhy)/(nyhy-1)*0.5
-      modu=nint(dtaupl/(tauhy(2)-tauhy(1)))
+      modu=nint(dtaupl/(getHydynTauhy(2)-getHydynTauhy(1)))
       ntau=1+modu*(itau-1)
-      tau=tauhy(ntau)
+      tau=getHydynTauhy(ntau)
       if(tau.le.tauzer+tauup)then
       write(ctau,'(f5.2)')tau
       write(cbim,'(a,i2)')'J',jcentr
@@ -3398,7 +3458,7 @@ c-----------------------------------------------------------------------
       if(zz.ge.0.)write(czz,'(f4.1)')zz
       if(zz.lt.0.)write(czz,'(f5.1)')zz
       call RootCanvas(-2)
-      call histo2BeginFigure(-2)
+      call histo2BeginFigure()
       call histo2BeginPlot(1, 1)
       call RootHisto(2,
      * txt//'(#eta_{s}='//czz//', #tau ='//ctau//' fm/c)   '//cbim//';'
@@ -3408,9 +3468,11 @@ c-----------------------------------------------------------------------
      *,nyhy-2*nyoff
      *,yminhy-dely5+nyoff*dely5*2
      *,ymaxhy+dely5-nyoff*dely5*2)
-      call histo2BeginSubPlot('ooHoTanVel'
-     *,txt//'($\eta_{s}$ ='//czz//', $\tau$ ='//ctau//' fm/c) '//cbim
-     *,txt//'($\eta_{s}$ ='//czz//', $\tau$ ='//ctau//' fm/c) '//cbim
+      call histo2BeginSubPlot(
+     * 'src/KW/freeze.f:ooHoTanVel(itau1,itau2,dtaupl)'
+     *,'ooHoTanVel')
+      call histo2AddHeader(
+     * txt//'($\eta_{s}$ ='//czz//', $\tau$ ='//ctau//' fm/c) '//cbim
      *,xminhy-delx5+nxoff*delx5*2
      *,xmaxhy+delx5-nxoff*delx5*2
      *,2*delx5
@@ -3423,17 +3485,17 @@ c-----------------------------------------------------------------------
          xx=xminhy+(ix-1)*delx5*2
          do iy=1,nyhy
             yy=yminhy+(iy-1)*dely5*2
-            vx=velc(1,iz,ntau,ix,iy)
-            vy=velc(2,iz,ntau,ix,iy)
+            vx=getHydynVelc(1,iz,ntau,ix,iy)
+            vy=getHydynVelc(2,iz,ntau,ix,iy)
             r=sqrt(xx**2+yy**2)
             phi=0
             if(r.gt.0.)phi=sign(1.,yy)*acos(xx/r)
             vtg=vx*sin(phi)-vy*cos(phi)
             vrd=vx*cos(phi)+vy*sin(phi)
-            eps=epsc(iz,ntau,ix,iy)
-            b1=barc(1,iz,ntau,ix,iy)
-            b2=barc(2,iz,ntau,ix,iy)
-            b3=barc(3,iz,ntau,ix,iy)
+            eps=getHydynEpsc(  iz,ntau,ix,iy)
+            b1= getHydynBarc(1,iz,ntau,ix,iy)
+            b2= getHydynBarc(2,iz,ntau,ix,iy)
+            b3= getHydynBarc(3,iz,ntau,ix,iy)
             tem=PiEos(5,eps,b1,b2,b3)
             if(tem.gt.tfrout) then
                call RootFill(2,xx,yy,vtg*100)
@@ -3464,7 +3526,7 @@ c----------------------------------------------------------------------------
       delz=(zmax-zmin)/(nzbin-1)
       dely=(ymax-ymin)/(nybin-1)
       call RootCanvas(ica)
-      call histo2BeginFigure(ica)
+      call histo2BeginFigure()
       call histo2BeginPlot(1, 1)
       call RootHisto(2,
      * txt//';'
@@ -3475,9 +3537,12 @@ c----------------------------------------------------------------------------
      *,zmin-delz/2
      *,zmax+delz/2
      *)
-      call histo2BeginSubPlot('oo2'
-     *,txt
-     *,txt 
+      call histo2BeginSubPlot(
+     * 'src/KW/freeze.f:oo2(ica,nyjjj,nzjjj
+     * ,aryz,nybin,ymin,ymax,nzbin,zmin,zmax,txt1,txt2,txty,txtz)'
+     *,'oo2')
+      call histo2AddHeader(
+     * txt 
      *,ymin-dely/2
      *,ymax+dely/2
      *,dely
@@ -3514,7 +3579,7 @@ c----------------------------------------------------------------------------
       delz=(zmax-zmin)/nzbin
       dely=(ymax-ymin)/nybin
       call RootCanvas(ica)
-      call histo2BeginFigure(ica)
+      call histo2BeginFigure()
       call histo2BeginPlot(1, 1)
       call RootHisto(2,
      * txt//';'
@@ -3525,9 +3590,12 @@ c----------------------------------------------------------------------------
      *,zmin
      *,zmax
      *)
-      call histo2BeginSubPlot('oo2bin'
-     *,txt
-     *,txt
+      call histo2BeginSubPlot(
+     * 'src/KW/freeze.f:oo2bin(ica,nyjjj,nzjjj
+     * ,aryz,nybin,ymin,ymax,nzbin,zmin,zmax,txt1,txt2,txty,txtz)'
+     *,'oo2bin')
+      call histo2AddHeader(
+     * txt
      *,ymin
      *,ymax
      *,dely
@@ -3565,7 +3633,7 @@ c----------------------------------------------------------------------------
       txt(1:6)=txtx
       txt(13:20)=txty
       call RootCanvas(-3)
-      call histo2BeginFigure(-3)
+      call histo2BeginFigure()
       call RootHisto(2,
      * txt//cbim//';'
      *,nzbin
@@ -3575,9 +3643,12 @@ c----------------------------------------------------------------------------
      *,ymin
      *,ymax)
       call histo2BeginPlot(1, 1)
-      call histo2BeginSubPlot('ooHoIniYEta'
-     *,txt//cbim
-     *,txt//cbim
+      call histo2BeginSubPlot(
+     * 'src/KW/freeze.f: ooHoIniYEta(nyjjj,nzjjj
+     * ,aryz,nybin,ymin,ymax,nzbin,zmin,zmax,txtx,txty)'
+     *,'ooHoIniYEta')
+      call histo2AddHeader(
+     * txt//cbim
      *,zmin
      *,zmax
      *,(zmax-zmin)/nzbin
@@ -3603,6 +3674,10 @@ c----------------------------------------------------------------------------
 c-----------------------------------------------------------------------
       subroutine ooHoEpsilonEtaY(itau1,itau2,dtaupl)
 c-----------------------------------------------------------------------
+c      use ArrayModule, only: getd
+c      use hocoModule, only: epsc, barc
+c      use hocoModule, only: barc
+      double precision getHydynEpsc, getHydynBarc
 
 #include "aaa.h"
 #include "ho.h"
@@ -3613,15 +3688,15 @@ c-----------------------------------------------------------------------
       nyoff=5
       dely5=(ymaxhy-yminhy)/(nyhy-1)*0.5
       deleta5=(zmaxhy-zminhy)/(nzhy-1)*0.5
-      modu=nint(dtaupl/(tauhy(2)-tauhy(1)))
+      modu=nint(dtaupl/(getHydynTauhy(2)-getHydynTauhy(1)))
       ntau=1+modu*(itau-1)
-      tau=tauhy(ntau)
+      tau=getHydynTauhy(ntau)
       if(tau.le.tauzer+tauup)then
       write(ctau,'(f5.2)')tau
       write(cbim,'(a,i2)')'J',jcentr
       txt='energy density [GeV/fm^{3}] '
       call RootCanvas(-3)
-      call histo2BeginFigure(-3)
+      call histo2BeginFigure()
       call histo2BeginPlot(1, 1)
       call RootHisto(2,
      * txt//'(x=0, tau='//ctau//' fm/c)   '//cbim//';'
@@ -3631,9 +3706,11 @@ c-----------------------------------------------------------------------
      *,nyhy-2*nyoff
      *,yminhy-dely5+nyoff*dely5*2
      *,ymaxhy+dely5-nyoff*dely5*2)
-      call histo2BeginSubPlot('ooHoEpsilonEtaY'
-     *,txt   
-     *,txt//'(x=0, $\tau$ ='//ctau//' fm/c)   '//cbim//';'
+      call histo2BeginSubPlot(
+     * 'srd/KW/freeze.f:ooHoEpsilonEtaY(itau1,itau2,dtaupl)'
+     *,'ooHoEpsilonEtaY')
+      call histo2AddHeader(
+     * txt//'(x=0, $\tau$ ='//ctau//' fm/c)   '//cbim//';'
      *,zminhy-deleta5+netaoff*deleta5*2
      *,zmaxhy+deleta5-netaoff*deleta5*2
      *,deleta5*2
@@ -3648,10 +3725,10 @@ c-----------------------------------------------------------------------
          zz=zminhy+(iz-1)*deleta5*2
          do iy=1,nyhy
             yy=yminhy+(iy-1)*dely5*2
-            eps=epsc(iz,ntau,ix,iy)
-            b1=barc(1,iz,ntau,ix,iy)
-            b2=barc(2,iz,ntau,ix,iy)
-            b3=barc(3,iz,ntau,ix,iy)
+            eps=getHydynEpsc(  iz,ntau,ix,iy)
+            b1= getHydynBarc(1,iz,ntau,ix,iy)
+            b2= getHydynBarc(2,iz,ntau,ix,iy)
+            b3= getHydynBarc(3,iz,ntau,ix,iy)
             tem=PiEos(5,eps,b1,b2,b3)
             if(tem.gt.tfrout) then
                call RootFill(2,zz,yy,eps)
@@ -3669,7 +3746,11 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
       subroutine ooHoVyEtaY(itau1,itau2,dtaupl)
 c-----------------------------------------------------------------------
-
+c      use ArrayModule, only: getd
+c      use hocoModule, only: epsc, velc, barc
+c      use hocoModule, only: velc, barc
+      double precision getHydynEpsc, getHydynBarc
+      
 #include "aaa.h"
 #include "ho.h"
       character ctau*5, cbim*3, txt*29
@@ -3679,15 +3760,15 @@ c-----------------------------------------------------------------------
       nyoff=5
       dely5=(ymaxhy-yminhy)/(nyhy-1)*0.5
       deleta5=(zmaxhy-zminhy)/(nzhy-1)*0.5
-      modu=nint(dtaupl/(tauhy(2)-tauhy(1)))
+      modu=nint(dtaupl/(getHydynTauhy(2)-getHydynTauhy(1)))
       ntau=1+modu*(itau-1)
-      tau=tauhy(ntau)
+      tau=getHydynTauhy(ntau)
       if(tau.le.tauzer+tauup)then
       write(ctau,'(f5.2)')tau
       write(cbim,'(a,i2)')'J',jcentr
       txt='v_{y}  '
       call RootCanvas(-3)
-      call histo2BeginFigure(-3)
+      call histo2BeginFigure()
       call histo2BeginPlot(1, 1)
       call RootHisto(2,
      * txt//'(x=0, tau='//ctau//' fm/c)   '//cbim//';'
@@ -3697,9 +3778,11 @@ c-----------------------------------------------------------------------
      *,nyhy-2*nyoff
      *,yminhy-dely5+nyoff*dely5*2
      *,ymaxhy+dely5-nyoff*dely5*2)
-      call histo2BeginSubPlot('ooHoVyEtaY'
-     *,txt
-     *,txt//'(x=0, $\tau$ ='//ctau//' fm/c)   '//cbim
+      call histo2BeginSubPlot(
+     * 'srd/KW/freeze.f:ooHoVyEtaY(itau1,itau2,dtaupl)'
+     *,'ooHoVyEtaY')
+      call histo2AddHeader(
+     * txt//'(x=0, $\tau$ ='//ctau//' fm/c)   '//cbim
      *,zminhy-deleta5+netaoff*deleta5*2
      *,zmaxhy+deleta5-netaoff*deleta5*2
      *,deleta5*2
@@ -3713,11 +3796,11 @@ c-----------------------------------------------------------------------
          zz=zminhy+(iz-1)*deleta5*2
          do iy=1,nyhy
             yy=yminhy+(iy-1)*dely5*2
-            vy=velc(2,iz,ntau,ix,iy)
-            eps=epsc(iz,ntau,ix,iy)
-            b1=barc(1,iz,ntau,ix,iy)
-            b2=barc(2,iz,ntau,ix,iy)
-            b3=barc(3,iz,ntau,ix,iy)
+            vy= getHydynVelc(2,iz,ntau,ix,iy)
+            eps=getHydynEpsc(  iz,ntau,ix,iy)
+            b1= getHydynBarc(1,iz,ntau,ix,iy)
+            b2= getHydynBarc(2,iz,ntau,ix,iy)
+            b3= getHydynBarc(3,iz,ntau,ix,iy)
             tem=PiEos(5,eps,b1,b2,b3)
             if(tem.gt.tfrout) then
                call RootFill(2,zz,yy,vy)
@@ -3735,7 +3818,11 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
       subroutine ooHoVzEtaY(itau1,itau2,dtaupl)
 c-----------------------------------------------------------------------
-
+c      use ArrayModule, only: getd
+c      use hocoModule, only: epsc, velc, barc
+c      use hocoModule, only: velc, barc
+      double precision getHydynEpsc, getHydynBarc
+      double precision getHydynVelc            
 #include "aaa.h"
 #include "ho.h"
       character ctau*5, cbim*3, txt*29
@@ -3745,15 +3832,15 @@ c-----------------------------------------------------------------------
       nyoff=5
       dely5=(ymaxhy-yminhy)/(nyhy-1)*0.5
       deleta5=(zmaxhy-zminhy)/(nzhy-1)*0.5
-      modu=nint(dtaupl/(tauhy(2)-tauhy(1)))
+      modu=nint(dtaupl/(getHydynTauhy(2)-getHydynTauhy(1)))
       ntau=1+modu*(itau-1)
-      tau=tauhy(ntau)
+      tau=getHydynTauhy(ntau)
       if(tau.le.tauzer+tauup)then
       write(ctau,'(f5.2)')tau
       write(cbim,'(a,i2)')'J',jcentr
       txt='v_{z}  '
       call RootCanvas(-3)
-      call histo2BeginFigure(-3)
+      call histo2BeginFigure()
       call histo2BeginPlot(1, 1)
       call RootHisto(2,
      * txt//'(x=0, tau='//ctau//' fm/c)   '//cbim//';'
@@ -3763,9 +3850,11 @@ c-----------------------------------------------------------------------
      *,nyhy-2*nyoff
      *,yminhy-dely5+nyoff*dely5*2
      *,ymaxhy+dely5-nyoff*dely5*2)
-      call histo2BeginSubPlot('ooHoVzEtaY'
-     *,txt//'(x=0, $\tau$ ='//ctau//' fm/c) '//cbim
-     *,txt//'(x=0, $\tau$ ='//ctau//' fm/c) '//cbim
+      call histo2BeginSubPlot(
+     * 'src/KW/freeze.f:ooHoVzEtaY(itau1,itau2,dtaupl)'
+     *,'ooHoVzEtaY')
+      call histo2AddHeader(
+     * txt//'(x=0, $\tau$ ='//ctau//' fm/c) '//cbim
      *,zminhy-deleta5+netaoff*deleta5*2
      *,zmaxhy+deleta5-netaoff*deleta5*2
      *,deleta5*2
@@ -3780,11 +3869,11 @@ c-----------------------------------------------------------------------
          zz=zminhy+(iz-1)*deleta5*2
          do iy=1,nyhy
             yy=yminhy+(iy-1)*dely5*2
-            vz=velc(3,iz,ntau,ix,iy)
-            eps=epsc(iz,ntau,ix,iy)
-            b1=barc(1,iz,ntau,ix,iy)
-            b2=barc(2,iz,ntau,ix,iy)
-            b3=barc(3,iz,ntau,ix,iy)
+            vz= getHydynVelc(3,iz,ntau,ix,iy)
+            eps=getHydynEpsc(  iz,ntau,ix,iy)
+            b1= getHydynBarc(1,iz,ntau,ix,iy)
+            b2= getHydynBarc(2,iz,ntau,ix,iy)
+            b3= getHydynBarc(3,iz,ntau,ix,iy)
             tem=PiEos(5,eps,b1,b2,b3)
             if(tem.gt.tfrout) then
                call RootFill(2,zz,yy,vz)
@@ -3802,7 +3891,10 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
       subroutine ooHoEpsilonEtas(npad,itau1,itau2,dtaupl)
 c-----------------------------------------------------------------------
-
+c      use ArrayModule, only: getd
+c      use hocoModule, only: epsc, barc
+c      use hocoModule, only: barc
+      double precision getHydynEpsc, getHydynBarc
 #include "aaa.h"
 #include "ho.h"
       character ctau*5, cbim*3, czz*5, txt*33
@@ -3813,14 +3905,14 @@ c-----------------------------------------------------------------------
       delx5=(xmaxhy-xminhy)/(nxhy-1)*0.5
       dely5=(ymaxhy-yminhy)/(nyhy-1)*0.5
       deleta5=(zmaxhy-zminhy)/(nzhy-1)*0.5
-      modu=nint(dtaupl/(tauhy(2)-tauhy(1)))
+      modu=nint(dtaupl/(getHydynTauhy(2)-getHydynTauhy(1)))
       ntau=1+modu*(itau-1)
-      tau=tauhy(ntau)
+      tau=getHydynTauhy(ntau)
       if(tau.le.tauzer+tauup)then
       write(ctau,'(f5.2)')tau
       write(cbim,'(a,i2)')'J',jcentr
       call RootCanvas(npad)
-      call histo2BeginFigure(npad)
+      call histo2BeginFigure()
       txt='energy density [GeV/fm^{3}]   ('
       call RootPave(txt//'(tau='//ctau//' fm/c)   '//cbim//';')
       call histo2BeginPlot(npad/2, 2)
@@ -3841,9 +3933,11 @@ c-----------------------------------------------------------------------
      *,nyhy-2*nyoff
      *,yminhy-dely5+nyoff*dely5*2
      *,ymaxhy+dely5-nyoff*dely5*2)
-      call histo2BeginSubPlot('ooHoEpsilonEtas'
-     *,txt//'($\tau$ ='//ctau//' fm/c) '//cbim
-     *,'$\eta_{s}$ ='//czz
+      call histo2BeginSubPlot(
+     * 'src/KW/freeze.f:ooHoEpsilonEtas(npad,itau1,itau2,dtaupl)'
+     *,'ooHoEpsilonEtas')
+      call histo2AddHeader(
+     * txt//'($\tau$ ='//ctau//' fm/c) '//cbim//' $\eta_{s}$ ='//czz
      *,xminhy-delx5+nxoff*delx5*2
      *,xmaxhy+delx5-nxoff*delx5*2
      *,delx5*2
@@ -3857,10 +3951,10 @@ c-----------------------------------------------------------------------
          xx=xminhy+(ix-1)*delx5*2
          do iy=1,nyhy
             yy=yminhy+(iy-1)*dely5*2
-            eps=epsc(iz,ntau,ix,iy)
-            b1=barc(1,iz,ntau,ix,iy)
-            b2=barc(2,iz,ntau,ix,iy)
-            b3=barc(3,iz,ntau,ix,iy)
+            eps=getHydynEpsc(  iz,ntau,ix,iy)
+            b1= getHydynBarc(1,iz,ntau,ix,iy)
+            b2= getHydynBarc(2,iz,ntau,ix,iy)
+            b3= getHydynBarc(3,iz,ntau,ix,iy)
             tem=PiEos(5,eps,b1,b2,b3)
             if (tem.gt.tfrout) then
                call RootFill(2,xx,yy,eps)
@@ -3880,7 +3974,10 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
       subroutine ooHoTemperatureEtas(npad,itau1,itau2,dtaupl)
 c-----------------------------------------------------------------------
-
+c      use ArrayModule, only: getd
+c      use hocoModule, only: epsc, barc
+c      use hocoModule, only: barc
+      double precision getHydynEpsc, getHydynBarc
 #include "aaa.h"
 #include "ho.h"
       character ctau*5, cbim*3, czz*5, txt*21
@@ -3891,14 +3988,14 @@ c-----------------------------------------------------------------------
       delx5=(xmaxhy-xminhy)/(nxhy-1)*0.5
       dely5=(ymaxhy-yminhy)/(nyhy-1)*0.5
       deleta5=(zmaxhy-zminhy)/(nzhy-1)*0.5
-      modu=nint(dtaupl/(tauhy(2)-tauhy(1)))
+      modu=nint(dtaupl/(getHydynTauhy(2)-getHydynTauhy(1)))
       ntau=1+modu*(itau-1)
-      tau=tauhy(ntau)
+      tau=getHydynTauhy(ntau)
       if(tau.le.tauzer+tauup)then
       write(ctau,'(f5.2)')tau
       write(cbim,'(a,i2)')'J',jcentr
       call RootCanvas(npad)
-      call histo2BeginFigure(npad)
+      call histo2BeginFigure()
       txt='temp-temp_fo [MeV]  ('
       call RootPave(txt//'(tau='//ctau//' fm/c)   '//cbim//';')
       call histo2BeginPlot(npad/2, 2)
@@ -3919,9 +4016,11 @@ c-----------------------------------------------------------------------
      *,nyhy-2*nyoff
      *,yminhy-dely5+nyoff*dely5*2
      *,ymaxhy+dely5-nyoff*dely5*2)
-      call histo2BeginSubPlot('ooHoTemperatureEtas'
-     *,txt//'($\tau$ ='//ctau//' fm/c) '//cbim
-     *,'$\eta_{s}$ ='//czz
+      call histo2BeginSubPlot(
+     * 'src/KW/freeze.f:ooHoTemperatureEtas(npad,itau1,itau2,dtaupl)'
+     *,'ooHoTemperatureEtas')
+      call histo2AddHeader(
+     * txt//'($\tau$ ='//ctau//' fm/c) '//cbim//' $\eta_{s}$ ='//czz
      *,xminhy-delx5+nxoff*delx5*2
      *,xmaxhy+delx5-nxoff*delx5*2
      *,delx5*2
@@ -3935,10 +4034,10 @@ c-----------------------------------------------------------------------
          xx=xminhy+(ix-1)*delx5*2
          do iy=1,nyhy
             yy=yminhy+(iy-1)*dely5*2
-            eps=epsc(iz,ntau,ix,iy)
-            b1=barc(1,iz,ntau,ix,iy)
-            b2=barc(2,iz,ntau,ix,iy)
-            b3=barc(3,iz,ntau,ix,iy)
+            eps=getHydynEpsc(  iz,ntau,ix,iy)
+            b1= getHydynBarc(1,iz,ntau,ix,iy)
+            b2= getHydynBarc(2,iz,ntau,ix,iy)
+            b3= getHydynBarc(3,iz,ntau,ix,iy)
             tem=PiEos(5,eps,b1,b2,b3)
             val=0.
             if(tem.gt.tfrout)val=(tem-tfrout)*1000
@@ -3960,6 +4059,10 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
       subroutine ooHoEpsilonTau(npad,itau1,itau2,dtaupl)
 c-----------------------------------------------------------------------
+c      use ArrayModule, only: getd
+c      use hocoModule, only: epsc, barc
+c      use hocoModule, only: barc
+      double precision getHydynEpsc, getHydynBarc
 
 #include "aaa.h"
 #include "ho.h"
@@ -3972,10 +4075,10 @@ c-----------------------------------------------------------------------
       delx5=(xmaxhy-xminhy)/(nxhy-1)*0.5
       dely5=(ymaxhy-yminhy)/(nyhy-1)*0.5
       deleta5=(zmaxhy-zminhy)/(nzhy-1)*0.5
-      modu=nint(dtaupl/(tauhy(2)-tauhy(1)))
+      modu=nint(dtaupl/(getHydynTauhy(2)-getHydynTauhy(1)))
       write(cbim,'(a,i2)')'J',jcentr
       call RootCanvas(npad)
-      call histo2BeginFigure(npad)
+      call histo2BeginFigure()
       txt='energy density [GeV/fm^{3}]   ('
       call RootPave(txt//'#eta_{s}=0)   '//cbim//';')
       call histo2BeginPlot(npad/2, 2)
@@ -3986,7 +4089,7 @@ c-----------------------------------------------------------------------
       itau=itau+1
       if(itau.gt.itau2)return
       ntau=1+modu*(itau-1)
-      tau=tauhy(ntau)
+      tau=getHydynTauhy(ntau)
       write(ctau,'(f5.2)')tau
       iz=nzhy/2+1
       call RootHisto(2,'tau = '//ctau//';'
@@ -3996,9 +4099,11 @@ c-----------------------------------------------------------------------
      *,nyhy-2*nyoff
      *,yminhy-dely5+nyoff*dely5*2
      *,ymaxhy+dely5-nyoff*dely5*2)
-      call histo2BeginSubPlot('ooHoEpsilonTau'
-     *,txt // '$\eta_{s}$ =0) ' // cbim
-     *,'$\tau$ = ' // ctau
+      call histo2BeginSubPlot(
+     * 'src/KW/freeze.f:ooHoEpsilonTau(npad,itau1,itau2,dtaupl)' 
+     *,'ooHoEpsilonTau')
+      call histo2AddHeader(
+     * txt//'$\eta_{s}$ =0) '//cbim//' $\tau$ = '//ctau
      *,xminhy-delx5+nxoff*delx5*2
      *,xmaxhy+delx5-nxoff*delx5*2
      *,delx5*2
@@ -4012,11 +4117,11 @@ c-----------------------------------------------------------------------
          xx=xminhy+(ix-1)*delx5*2
          do iy=1,nyhy
             yy=yminhy+(iy-1)*dely5*2
-            eps=epsc(iz,ntau,ix,iy)
-            e=epsc(iz,ntau,ix,iy)
-            b1=barc(1,iz,ntau,ix,iy)
-            b2=barc(2,iz,ntau,ix,iy)
-            b3=barc(3,iz,ntau,ix,iy)
+            eps=getHydynEpsc(  iz,ntau,ix,iy)
+            e = getHydynEpsc(  iz,ntau,ix,iy)
+            b1= getHydynBarc(1,iz,ntau,ix,iy)
+            b2= getHydynBarc(2,iz,ntau,ix,iy)
+            b3= getHydynBarc(3,iz,ntau,ix,iy)
             tem=PiEos(5,e,b1,b2,b3)
             if(tem.gt.tfrout) then
                call RootFill(2,xx,yy,eps)
@@ -4035,9 +4140,14 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
       subroutine ooHoTangVelTau(npad,itau1,itau2,dtaupl)
 c-----------------------------------------------------------------------
+c      use ArrayModule, only: getd
+c      use hocoModule, only: epsc, barc, velc
+c      use hocoModule, only: barc, velc
+      double precision getHydynEpsc, getHydynBarc
+      double precision getHydynVelc
 
 #include "aaa.h"
-#include "ho.h"
+#include "ho.h"            
       character ctau*5, cbim*3, txt*26
       common/jcen/jcentr,jmxcentr
       itau=itau1-1
@@ -4047,10 +4157,10 @@ c-----------------------------------------------------------------------
       delx5=(xmaxhy-xminhy)/(nxhy-1)*0.5
       dely5=(ymaxhy-yminhy)/(nyhy-1)*0.5
       deleta5=(zmaxhy-zminhy)/(nzhy-1)*0.5
-      modu=nint(dtaupl/(tauhy(2)-tauhy(1)))
+      modu=nint(dtaupl/(getHydynTauhy(2)-getHydynTauhy(1)))
       write(cbim,'(a,i2)')'J',jcentr
       call RootCanvas(npad)
-      call histo2BeginFigure(npad)
+      call histo2BeginFigure()
       txt='tang velocity [% of c]   ('
       call RootPave(txt//'#eta_{s}=0)   '//cbim//';')
       call histo2BeginPlot(npad/2, 2)
@@ -4061,7 +4171,7 @@ c-----------------------------------------------------------------------
       itau=itau+1
       if(itau.gt.itau2)return
       ntau=1+modu*(itau-1)
-      tau=tauhy(ntau)
+      tau=getHydynTauhy(ntau)
       write(ctau,'(f5.2)')tau
       iz=nzhy/2+1
       call RootHisto(2,'tau = '//ctau//';'
@@ -4071,9 +4181,11 @@ c-----------------------------------------------------------------------
      *,nyhy-2*nyoff
      *,yminhy-dely5+nyoff*dely5*2
      *,ymaxhy+dely5-nyoff*dely5*2)
-      call histo2BeginSubPlot('ooHoTangVelTau'
-     *,txt // '$\eta_{s}$ = 0) ' // cbim
-     *,'$\tau$ = ' // ctau
+      call histo2BeginSubPlot(
+     * 'src/KW/freeze.f:ooHoTangVelTau(npad,itau1,itau2,dtaupl)'
+     *,'ooHoTangVelTau')
+      call histo2AddHeader(
+     * txt//'$\eta_{s}$ = 0) '//cbim//' $\tau$ = '//ctau
      *,xminhy+nxoff*delx5*2
      *,xminhy+(nxhy-nxoff-1)*delx5*2
      *,delx5*2
@@ -4087,17 +4199,17 @@ c-----------------------------------------------------------------------
          xx=xminhy+(ix-1)*delx5*2
          do iy=1+nyoff,nyhy-nyoff
             yy=yminhy+(iy-1)*dely5*2
-            vx=velc(1,iz,ntau,ix,iy)
-            vy=velc(2,iz,ntau,ix,iy)
+            vx=getHydynVelc(1,iz,ntau,ix,iy)
+            vy=getHydynVelc(2,iz,ntau,ix,iy)
             r=sqrt(xx**2+yy**2)
             phi=0
             if(r.gt.0.)phi=sign(1.,yy)*acos(xx/r)
             vtg=vx*sin(phi)-vy*cos(phi)
             vrd=vx*cos(phi)+vy*sin(phi)
-            e=epsc(iz,ntau,ix,iy)
-            b1=barc(1,iz,ntau,ix,iy)
-            b2=barc(2,iz,ntau,ix,iy)
-            b3=barc(3,iz,ntau,ix,iy)
+            e =getHydynEpsc(  iz,ntau,ix,iy)
+            b1=getHydynBarc(1,iz,ntau,ix,iy)
+            b2=getHydynBarc(2,iz,ntau,ix,iy)
+            b3=getHydynBarc(3,iz,ntau,ix,iy)
             tem=PiEos(5,e,b1,b2,b3)
             if(tem.gt.tfrout) then
                call RootFill(2,xx,yy,vtg*100)
@@ -4116,7 +4228,12 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
       subroutine ooHoRadVelTau(npad,itau1,itau2,dtaupl)
 c-----------------------------------------------------------------------
-      
+c      use ArrayModule, only: getd
+c      use hocoModule, only: epsc, barc, velc
+c      use hocoModule, only: barc, velc
+      double precision getHydynEpsc, getHydynBarc
+      double precision getHydynVelc
+
 #include "aaa.h"
 #include "ho.h"
       character ctau*5, cbim*3, txt*26
@@ -4128,10 +4245,10 @@ c-----------------------------------------------------------------------
       delx5=(xmaxhy-xminhy)/(nxhy-1)*0.5
       dely5=(ymaxhy-yminhy)/(nyhy-1)*0.5
       deleta5=(zmaxhy-zminhy)/(nzhy-1)*0.5
-      modu=nint(dtaupl/(tauhy(2)-tauhy(1)))
+      modu=nint(dtaupl/(getHydynTauhy(2)-getHydynTauhy(1)))
       write(cbim,'(a,i2)')'J',jcentr
       call RootCanvas(npad)
-      call histo2BeginFigure(npad)
+      call histo2BeginFigure()
       txt='rad velocity [% of c]   ('
       call RootPave(txt//'#eta_{s}=0)   '//cbim//';')
       call histo2BeginPlot(npad/2, 2)
@@ -4142,7 +4259,7 @@ c-----------------------------------------------------------------------
       itau=itau+1
       if(itau.gt.itau2)return
       ntau=1+modu*(itau-1)
-      tau=tauhy(ntau)
+      tau=getHydynTauhy(ntau)
       write(ctau,'(f5.2)')tau
       iz=nzhy/2+1
       call RootHisto(2,'tau = '//ctau//';'
@@ -4152,9 +4269,11 @@ c-----------------------------------------------------------------------
      *,nyhy-2*nyoff
      *,yminhy-dely5+nyoff*dely5*2
      *,ymaxhy+dely5-nyoff*dely5*2)
-      call histo2BeginSubPlot('ooHoRadVelTau'
-     *,txt//'$\eta_{s}$=0)   '//cbim
-     *,'$\tau$ = '//ctau
+      call histo2BeginSubPlot(
+     * 'src/KW/freeze.f:ooHoRadVelTau(npad,itau1,itau2,dtaupl)'  
+     *,'ooHoRadVelTau')
+      call histo2AddHeader(
+     * txt//'$\eta_{s}$=0) '//cbim//' $\tau$ = '//ctau
      *,xminhy-delx5+nxoff*delx5*2
      *,xmaxhy+delx5-nxoff*delx5*2
      *,delx5*2
@@ -4168,17 +4287,17 @@ c-----------------------------------------------------------------------
          xx=xminhy+(ix-1)*delx5*2
          do iy=1+nyoff,nyhy-nyoff
             yy=yminhy+(iy-1)*dely5*2
-            vx=velc(1,iz,ntau,ix,iy)
-            vy=velc(2,iz,ntau,ix,iy)
+            vx=getHydynVelc(1,iz,ntau,ix,iy)
+            vy=getHydynVelc(2,iz,ntau,ix,iy)
             r=sqrt(xx**2+yy**2)
             phi=0
             if(r.gt.0.)phi=sign(1.,yy)*acos(xx/r)
             vtg=vx*sin(phi)-vy*cos(phi)
             vrd=vx*cos(phi)+vy*sin(phi)
-            e=epsc(iz,ntau,ix,iy)
-            b1=barc(1,iz,ntau,ix,iy)
-            b2=barc(2,iz,ntau,ix,iy)
-            b3=barc(3,iz,ntau,ix,iy)
+            e =getHydynEpsc(  iz,ntau,ix,iy)
+            b1=getHydynBarc(1,iz,ntau,ix,iy)
+            b2=getHydynBarc(2,iz,ntau,ix,iy)
+            b3=getHydynBarc(3,iz,ntau,ix,iy)
             tem=PiEos(5,e,b1,b2,b3)
             if(tem.gt.tfrout.and.vrd.gt.0.) then
                call RootFill(2,xx,yy,vrd*100)
@@ -4221,7 +4340,7 @@ c------------------------------------------------------------------------------
       if(ntauhy.le.0)then
         tauhymax=0
       else
-        tauhymax=tauhy(ntauhy)
+        tauhymax=getHydynTauhy(ntauhy)
       endif
       if(jcentr.gt.0)taumaxi=rclass(jtable(7),1,jcentr)
       do jeta=1,mxetaplot
@@ -4252,15 +4371,16 @@ c------------------------------------------------------------------------------
         if(g)write(ifhi,*)'histoweight ',zfhits(jcentr)
         if(g)write(ifhi,'(a)')'array 2'
         do ngeni=2,mgeni
-         !formely:ntau loop & tau=tauhy(ntau)-(tauhy(2)-tauhy(1))/2
+         !formely:ntau loop & tau=getHydynTauhy(ntau)-(getHydynTauhy(2)-getHydynTauhy(1))/2
          tau=max(tauzer1,tauzer2)
      .  +(ngeni-1)*(taumaxi-max(tauzer1,tauzer2))/(mgeni-1)
          ntau=1
-         do while(tauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
+         do while(getHydynTauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
          ntau=ntau+1
          enddo
          if(ntau.gt.1)then
-          if(abs(tau-tauhy(ntau-1)).lt.abs(tau-tauhy(ntau)))ntau=ntau-1
+          if(abs(tau-getHydynTauhy(ntau-1)).
+     .           lt.abs(tau-getHydynTauhy(ntau)))ntau=ntau-1
          endif
          if(d.and.tauhymax.lt.tau)then
            y=0
@@ -4291,7 +4411,7 @@ c------------------------------------------------------------------------------
       if(ntauhy.le.0)then
         tauhymax=0
       else
-        tauhymax=tauhy(ntauhy)
+        tauhymax=getHydynTauhy(ntauhy)
       endif
       if(jcentr.gt.0)taumaxi=rclass(jtable(7),1,jcentr)
       do jeta=1,mxetaplot
@@ -4322,15 +4442,16 @@ c------------------------------------------------------------------------------
         if(g)write(ifhi,*)'histoweight ',zfhits(jcentr)
         if(g)write(ifhi,'(a)')'array 2'
         do ngeni=2,mgeni
-         !formely:ntau loop & tau=tauhy(ntau)-(tauhy(2)-tauhy(1))/2
+         !formely:ntau loop & tau=getHydynTauhy(ntau)-(getHydynTauhy(2)-getHydynTauhy(1))/2
          tau=max(tauzer1,tauzer2)
      .  +(ngeni-1)*(taumaxi-max(tauzer1,tauzer2))/(mgeni-1)
          ntau=1
-         do while(tauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
+         do while(getHydynTauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
          ntau=ntau+1
          enddo
          if(ntau.gt.1)then
-          if(abs(tau-tauhy(ntau-1)).lt.abs(tau-tauhy(ntau)))ntau=ntau-1
+          if(abs(tau-getHydynTauhy(ntau-1))
+     .           .lt.abs(tau-getHydynTauhy(ntau)))ntau=ntau-1
          endif
          if(d.and.tauhymax.lt.tau)then
             y=0
@@ -4338,7 +4459,7 @@ c------------------------------------------------------------------------------
             y=epsaa(nsurf,neta,ntau,nphi)
           endif
           if(f)call addHo(42+nsurf,jeta,ngeni,ii,y)
-          if(g)write(ifhi,'(2e11.3)')tauhy(ntau),y
+          if(g)write(ifhi,'(2e11.3)')getHydynTauhy(ntau),y
         enddo
         if(g)write(ifhi,'(a)') 'endarray'
         if(g)write(ifhi,'(a)') 'closehisto '
@@ -4363,7 +4484,7 @@ c------------------------------------------------------------------------------
       if(ntauhy.le.0)then
         tauhymax=0
       else
-        tauhymax=tauhy(ntauhy)
+        tauhymax=getHydynTauhy(ntauhy)
       endif
       if(jcentr.gt.0)taumaxi=rclass(jtable(7),1,jcentr)
       do jeta=1,mxetaplot
@@ -4394,15 +4515,16 @@ c------------------------------------------------------------------------------
         if(g)write(ifhi,*)'histoweight ',zfhits(jcentr)
         if(g)write(ifhi,'(a)')'array 2'
         do ngeni=2,mgeni
-         !formely:ntau loop & tau=tauhy(ntau)-(tauhy(2)-tauhy(1))/2
+         !formely:ntau loop & tau=getHydynTauhy(ntau)-(getHydynTauhy(2)-getHydynTauhy(1))/2
          tau=max(tauzer1,tauzer2)
      .  +(ngeni-1)*(taumaxi-max(tauzer1,tauzer2))/(mgeni-1)
          ntau=1
-         do while(tauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
+         do while(getHydynTauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
          ntau=ntau+1
          enddo
          if(ntau.gt.1)then
-          if(abs(tau-tauhy(ntau-1)).lt.abs(tau-tauhy(ntau)))ntau=ntau-1
+          if(abs(tau-getHydynTauhy(ntau-1))
+     .           .lt.abs(tau-getHydynTauhy(ntau)))ntau=ntau-1
          endif
          if(d.and.tauhymax.lt.tau)then
             y=0
@@ -4410,7 +4532,7 @@ c------------------------------------------------------------------------------
             y=radaa(nsurf,neta,ntau,nphi)
           endif
           if(f)call addHo(2+nsurf,jeta,ngeni,ii,y)
-          if(g)write(ifhi,'(2e11.3)')tauhy(ntau),y
+          if(g)write(ifhi,'(2e11.3)')getHydynTauhy(ntau),y
         enddo
         if(g)write(ifhi,'(a)') 'endarray'
         if(g)write(ifhi,'(a)') 'closehisto '
@@ -4434,7 +4556,7 @@ c------------------------------------------------------------------------------
       if(ntauhy.le.0)then
         tauhymax=0
       else
-        tauhymax=tauhy(ntauhy)
+        tauhymax=getHydynTauhy(ntauhy)
       endif
       if(jcentr.gt.0)taumaxi=rclass(jtable(7),1,jcentr)
       do jeta=1,mxetaplot
@@ -4466,15 +4588,16 @@ c------------------------------------------------------------------------------
         if(g)write(ifhi,*)'histoweight ',zfhits(jcentr)
         if(g)write(ifhi,'(a)')'array 2'
         do ngeni=2,mgeni
-         !formely:ntau loop & tau=tauhy(ntau)-(tauhy(2)-tauhy(1))/2
+         !formely:ntau loop & tau=getHydynTauhy(ntau)-(getHydynTauhy(2)-getHydynTauhy(1))/2
          tau=max(tauzer1,tauzer2)
      .  +(ngeni-1)*(taumaxi-max(tauzer1,tauzer2))/(mgeni-1)
          ntau=1
-         do while(tauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
+         do while(getHydynTauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
          ntau=ntau+1
          enddo
          if(ntau.gt.1)then
-          if(abs(tau-tauhy(ntau-1)).lt.abs(tau-tauhy(ntau)))ntau=ntau-1
+          if(abs(tau-getHydynTauhy(ntau-1))
+     .           .lt.abs(tau-getHydynTauhy(ntau)))ntau=ntau-1
          endif
          if(d.and.tauhymax.lt.tau)then
             y=0.
@@ -4512,7 +4635,7 @@ c------------------------------------------------------------------------------
       if(ntauhy.le.0)then
         tauhymax=0
       else
-        tauhymax=tauhy(ntauhy)
+        tauhymax=getHydynTauhy(ntauhy)
       endif
       if(jcentr.gt.0)taumaxi=rclass(jtable(7),1,jcentr)
       do jeta=1,mxetaplot
@@ -4544,15 +4667,16 @@ c------------------------------------------------------------------------------
         if(g)write(ifhi,*)'histoweight ',zfhits(jcentr)
         if(g)write(ifhi,'(a)')'array 2'
         do ngeni=2,mgeni
-         !formely:ntau loop & tau=tauhy(ntau)-(tauhy(2)-tauhy(1))/2
+         !formely:ntau loop & tau=getHydynTauhy(ntau)-(getHydynTauhy(2)-getHydynTauhy(1))/2
          tau=max(tauzer1,tauzer2)
      .  +(ngeni-1)*(taumaxi-max(tauzer1,tauzer2))/(mgeni-1)
          ntau=1
-         do while(tauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
+         do while(getHydynTauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
          ntau=ntau+1
          enddo
          if(ntau.gt.1)then
-          if(abs(tau-tauhy(ntau-1)).lt.abs(tau-tauhy(ntau)))ntau=ntau-1
+          if(abs(tau-getHydynTauhy(ntau-1))
+     .           .lt.abs(tau-getHydynTauhy(ntau)))ntau=ntau-1
          endif
          if(d.and.tauhymax.lt.tau)then
             y=0
@@ -4588,7 +4712,7 @@ c------------------------------------------------------------------------------
       if(ntauhy.le.0)then
         tauhymax=0
       else
-        tauhymax=tauhy(ntauhy)
+        tauhymax=getHydynTauhy(ntauhy)
       endif
       if(jcentr.gt.0)taumaxi=rclass(jtable(7),1,jcentr)
       do jeta=1,mxetaplot
@@ -4618,15 +4742,16 @@ c------------------------------------------------------------------------------
         if(g)write(ifhi,*)'histoweight ',zfhits(jcentr)
         if(g)write(ifhi,'(a)')'array 2'
         do ngeni=2,mgeni
-          !formely:ntau loop & tau=tauhy(ntau)-(tauhy(2)-tauhy(1))/2
+          !formely:ntau loop & tau=getHydynTauhy(ntau)-(getHydynTauhy(2)-getHydynTauhy(1))/2
           tau=max(tauzer1,tauzer2)
      .  +(ngeni-1)*(taumaxi-max(tauzer1,tauzer2))/(mgeni-1)
           ntau=1
-          do while(tauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
+          do while(getHydynTauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
           ntau=ntau+1
           enddo
           if(ntau.gt.1)then
-          if(abs(tau-tauhy(ntau-1)).lt.abs(tau-tauhy(ntau)))ntau=ntau-1
+          if(abs(tau-getHydynTauhy(ntau-1))
+     .            .lt.abs(tau-getHydynTauhy(ntau)))ntau=ntau-1
           endif
           if(d.and.tauhymax.lt.tau)then
             y=0
@@ -4663,7 +4788,7 @@ c------------------------------------------------------------------------------
       if(ntauhy.le.0)then
         tauhymax=0
       else
-        tauhymax=tauhy(ntauhy)
+        tauhymax=getHydynTauhy(ntauhy)
       endif
       if(jcentr.gt.0)taumaxi=rclass(jtable(7),1,jcentr)
       if(jcentr.gt.0)radmaxi=rclass(jtable(7),2,jcentr)
@@ -4682,15 +4807,16 @@ c------------------------------------------------------------------------------
        iphi=iphi+1
        itau=0
        do ngeni=1,mgeni
-         !formely:ntau loop & tau=tauhy(ntau)
+         !formely:ntau loop & tau=getHydynTauhy(ntau)
          tau=max(tauzer1,tauzer2)
      .  +(ngeni-1)*(taumaxi-max(tauzer1,tauzer2))/(mgeni-1)
          ntau=1
-         do while(tauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
+         do while(getHydynTauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
          ntau=ntau+1
          enddo
          if(ntau.gt.1)then
-          if(abs(tau-tauhy(ntau-1)).lt.abs(tau-tauhy(ntau)))ntau=ntau-1
+          if(abs(tau-getHydynTauhy(ntau-1))
+     .           .lt.abs(tau-getHydynTauhy(ntau)))ntau=ntau-1
          endif
          if(mod(ngeni-1,modu).eq.0.and.(ngeni-1)/modu.lt.5)then
          itau=itau+1
@@ -4759,7 +4885,7 @@ c------------------------------------------------------------------------------
       if(ntauhy.le.0)then
         tauhymax=0
       else
-        tauhymax=tauhy(ntauhy)
+        tauhymax=getHydynTauhy(ntauhy)
       endif
       if(jcentr.gt.0)taumaxi=rclass(jtable(7),1,jcentr)
       if(jcentr.gt.0)radmaxi=rclass(jtable(7),2,jcentr)
@@ -4777,15 +4903,16 @@ c------------------------------------------------------------------------------
        iphi=iphi+1
        itau=0
        do ngeni=1,mgeni
-         !formely:ntau loop & tau=tauhy(ntau)
+         !formely:ntau loop & tau=getHydynTauhy(ntau)
          tau=max(tauzer1,tauzer2)
      .  +(ngeni-1)*(taumaxi-max(tauzer1,tauzer2))/(mgeni-1)
          ntau=1
-         do while(tauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
+         do while(getHydynTauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
          ntau=ntau+1
          enddo
          if(ntau.gt.1)then
-          if(abs(tau-tauhy(ntau-1)).lt.abs(tau-tauhy(ntau)))ntau=ntau-1
+          if(abs(tau-getHydynTauhy(ntau-1))
+     .           .lt.abs(tau-getHydynTauhy(ntau)))ntau=ntau-1
          endif
          if(mod(ngeni-1,modu).eq.0.and.(ngeni-1)/modu.lt.5)then
          itau=itau+1
@@ -4853,7 +4980,7 @@ c------------------------------------------------------------------------------
       if(ntauhy.le.0)then
         tauhymax=0
       else
-        tauhymax=tauhy(ntauhy)
+        tauhymax=getHydynTauhy(ntauhy)
       endif
       if(jcentr.gt.0)taumaxi=rclass(jtable(7),1,jcentr)
       if(jcentr.gt.0)radmaxi=rclass(jtable(7),2,jcentr)
@@ -4871,15 +4998,16 @@ c------------------------------------------------------------------------------
        iphi=iphi+1
        itau=0
        do ngeni=1,mgeni
-         !formely:ntau loop & tau=tauhy(ntau)
+         !formely:ntau loop & tau=getHydynTauhy(ntau)
          tau=max(tauzer1,tauzer2)
      .  +(ngeni-1)*(taumaxi-max(tauzer1,tauzer2))/(mgeni-1)
          ntau=1
-         do while(tauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
+         do while(getHydynTauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
          ntau=ntau+1
          enddo
          if(ntau.gt.1)then
-          if(abs(tau-tauhy(ntau-1)).lt.abs(tau-tauhy(ntau)))ntau=ntau-1
+          if(abs(tau-getHydynTauhy(ntau-1))
+     .           .lt.abs(tau-getHydynTauhy(ntau)))ntau=ntau-1
          endif
          if(mod(ngeni-1,modu).eq.0.and.(ngeni-1)/modu.lt.5)then
          itau=itau+1
@@ -4952,7 +5080,7 @@ c------------------------------------------------------------------------------
       if(ntauhy.le.0)then
         tauhymax=0
       else
-        tauhymax=tauhy(ntauhy)
+        tauhymax=getHydynTauhy(ntauhy)
       endif
       if(jcentr.gt.0)taumaxi=rclass(jtable(7),1,jcentr)
       if(jcentr.gt.0)radmaxi=rclass(jtable(7),2,jcentr)
@@ -4970,15 +5098,16 @@ c------------------------------------------------------------------------------
        iphi=iphi+1
        itau=0
        do ngeni=1,mgeni
-         !formely:ntau loop & tau=tauhy(ntau)
+         !formely:ntau loop & tau=getHydynTauhy(ntau)
          tau=max(tauzer1,tauzer2)
      .  +(ngeni-1)*(taumaxi-max(tauzer1,tauzer2))/(mgeni-1)
          ntau=1
-         do while(tauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
+         do while(getHydynTauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
          ntau=ntau+1
          enddo
          if(ntau.gt.1)then
-          if(abs(tau-tauhy(ntau-1)).lt.abs(tau-tauhy(ntau)))ntau=ntau-1
+          if(abs(tau-getHydynTauhy(ntau-1))
+     .           .lt.abs(tau-getHydynTauhy(ntau)))ntau=ntau-1
          endif
          if(mod(ngeni-1,modu).eq.0.and.(ngeni-1)/modu.lt.5)then
          itau=itau+1
@@ -5052,7 +5181,7 @@ c------------------------------------------------------------------------------
       if(ntauhy.le.0)then
         tauhymax=0
       else
-        tauhymax=tauhy(ntauhy)
+        tauhymax=getHydynTauhy(ntauhy)
       endif
       if(jcentr.gt.0)taumaxi=rclass(jtable(7),1,jcentr)
       if(jcentr.gt.0)radmaxi=rclass(jtable(7),2,jcentr)
@@ -5070,15 +5199,16 @@ c------------------------------------------------------------------------------
        iphi=iphi+1
        itau=0
        do ngeni=1,mgeni
-         !formely:ntau loop & tau=tauhy(ntau)
+         !formely:ntau loop & tau=getHydynTauhy(ntau)
          tau=max(tauzer1,tauzer2)
      .  +(ngeni-1)*(taumaxi-max(tauzer1,tauzer2))/(mgeni-1)
          ntau=1
-         do while(tauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
+         do while(getHydynTauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
          ntau=ntau+1
          enddo
          if(ntau.gt.1)then
-          if(abs(tau-tauhy(ntau-1)).lt.abs(tau-tauhy(ntau)))ntau=ntau-1
+          if(abs(tau-getHydynTauhy(ntau-1))
+     .           .lt.abs(tau-getHydynTauhy(ntau)))ntau=ntau-1
          endif
          if(mod(ngeni-1,modu).eq.0.and.(ngeni-1)/modu.lt.5)then
          itau=itau+1
@@ -5150,7 +5280,7 @@ c------------------------------------------------------------------------------
       if(ntauhy.le.0)then
         tauhymax=0
       else
-        tauhymax=tauhy(ntauhy)
+        tauhymax=getHydynTauhy(ntauhy)
       endif
       if(jcentr.gt.0)taumaxi=rclass(jtable(7),1,jcentr)
       if(jcentr.gt.0)radmaxi=rclass(jtable(7),2,jcentr)
@@ -5168,15 +5298,16 @@ c------------------------------------------------------------------------------
        iphi=iphi+1
        itau=0
        do ngeni=1,mgeni
-         !formely:ntau loop & tau=tauhy(ntau)
+         !formely:ntau loop & tau=getHydynTauhy(ntau)
          tau=max(tauzer1,tauzer2)
      .  +(ngeni-1)*(taumaxi-max(tauzer1,tauzer2))/(mgeni-1)
          ntau=1
-         do while(tauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
+         do while(getHydynTauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
          ntau=ntau+1
          enddo
          if(ntau.gt.1)then
-          if(abs(tau-tauhy(ntau-1)).lt.abs(tau-tauhy(ntau)))ntau=ntau-1
+          if(abs(tau-getHydynTauhy(ntau-1))
+     .           .lt.abs(tau-getHydynTauhy(ntau)))ntau=ntau-1
          endif
          if(mod(ngeni-1,modu).eq.0.and.(ngeni-1)/modu.lt.5)then
          itau=itau+1
@@ -5244,7 +5375,7 @@ c------------------------------------------------------------------------------
       if(ntauhy.le.0)then
         tauhymax=0
       else
-        tauhymax=tauhy(ntauhy)
+        tauhymax=getHydynTauhy(ntauhy)
       endif
       if(jcentr.gt.0)taumaxi=rclass(jtable(7),1,jcentr)
       if(jcentr.gt.0)radmaxi=rclass(jtable(7),2,jcentr)
@@ -5256,15 +5387,16 @@ c------------------------------------------------------------------------------
       if(g)write(ifhi,'(a)') '!newpage'
       itau=0
       do ngeni=1,mgeni
-        !formely:ntau loop & tau=tauhy(ntau)
+        !formely:ntau loop & tau=getHydynTauhy(ntau)
         tau=max(tauzer1,tauzer2)
      .  +(ngeni-1)*(taumaxi-max(tauzer1,tauzer2))/(mgeni-1)
         ntau=1
-        do while(tauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
+        do while(getHydynTauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
         ntau=ntau+1
         enddo
         if(ntau.gt.1)then
-         if(abs(tau-tauhy(ntau-1)).lt.abs(tau-tauhy(ntau)))ntau=ntau-1
+         if(abs(tau-getHydynTauhy(ntau-1))
+     .          .lt.abs(tau-getHydynTauhy(ntau)))ntau=ntau-1
         endif
         if(mod(ngeni-1,modu).eq.0.and.(ngeni-1)/modu.lt.5)then
          itau=itau+1
@@ -5317,7 +5449,7 @@ c------------------------------------------------------------------------------
       if(ntauhy.le.0)then
         tauhymax=0
       else
-        tauhymax=tauhy(ntauhy)
+        tauhymax=getHydynTauhy(ntauhy)
       endif
       if(jcentr.gt.0)taumaxi=rclass(jtable(7),1,jcentr)
       if(jcentr.gt.0)radmaxi=rclass(jtable(7),2,jcentr)
@@ -5330,15 +5462,16 @@ c------------------------------------------------------------------------------
       if(g)write(ifhi,'(a)') '!newpage'
       itau=0
       do ngeni=1,mgeni
-        !formely:ntau loop & tau=tauhy(ntau)
+        !formely:ntau loop & tau=getHydynTauhy(ntau)
         tau=max(tauzer1,tauzer2)
      .  +(ngeni-1)*(taumaxi-max(tauzer1,tauzer2))/(mgeni-1)
         ntau=1
-        do while(tauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
+        do while(getHydynTauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
         ntau=ntau+1
         enddo
         if(ntau.gt.1)then
-         if(abs(tau-tauhy(ntau-1)).lt.abs(tau-tauhy(ntau)))ntau=ntau-1
+         if(abs(tau-getHydynTauhy(ntau-1))
+     .          .lt.abs(tau-getHydynTauhy(ntau)))ntau=ntau-1
         endif
          if(mod(ngeni-1,modu).eq.0.and.(ngeni-1)/modu.lt.5)then
          itau=itau+1
@@ -5390,7 +5523,7 @@ c------------------------------------------------------------------------------
       if(ntauhy.le.0)then
         tauhymax=0
       else
-        tauhymax=tauhy(ntauhy)
+        tauhymax=getHydynTauhy(ntauhy)
       endif
       if(jcentr.gt.0)taumaxi=rclass(jtable(7),1,jcentr)
       if(jcentr.gt.0)radmaxi=rclass(jtable(7),2,jcentr)
@@ -5402,15 +5535,16 @@ c------------------------------------------------------------------------------
       if(g)write(ifhi,'(a)') '!newpage'
       itau=0
       do ngeni=1,mgeni
-        !formely:ntau loop & tau=tauhy(ntau)
+        !formely:ntau loop & tau=getHydynTauhy(ntau)
         tau=max(tauzer1,tauzer2)
      .  +(ngeni-1)*(taumaxi-max(tauzer1,tauzer2))/(mgeni-1)
         ntau=1
-        do while(tauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
+        do while(getHydynTauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
         ntau=ntau+1
         enddo
         if(ntau.gt.1)then
-         if(abs(tau-tauhy(ntau-1)).lt.abs(tau-tauhy(ntau)))ntau=ntau-1
+         if(abs(tau-getHydynTauhy(ntau-1))
+     .          .lt.abs(tau-getHydynTauhy(ntau)))ntau=ntau-1
         endif
         if(mod(ngeni-1,modu).eq.0.and.(ngeni-1)/modu.lt.5)then
          itau=itau+1
@@ -5467,7 +5601,7 @@ c------------------------------------------------------------------------------
       if(ntauhy.le.0)then
         tauhymax=0
       else
-        tauhymax=tauhy(ntauhy)
+        tauhymax=getHydynTauhy(ntauhy)
       endif
       if(jcentr.gt.0)taumaxi=rclass(jtable(7),1,jcentr)
       if(jcentr.gt.0)radmaxi=rclass(jtable(7),2,jcentr)
@@ -5479,15 +5613,16 @@ c------------------------------------------------------------------------------
       if(g)write(ifhi,'(a)') '!newpage'
       itau=0
       do ngeni=1,mgeni
-        !formely:ntau loop & tau=tauhy(ntau)
+        !formely:ntau loop & tau=getHydynTauhy(ntau)
         tau=max(tauzer1,tauzer2)
      .  +(ngeni-1)*(taumaxi-max(tauzer1,tauzer2))/(mgeni-1)
         ntau=1
-        do while(tauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
+        do while(getHydynTauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
         ntau=ntau+1
         enddo
         if(ntau.gt.1)then
-         if(abs(tau-tauhy(ntau-1)).lt.abs(tau-tauhy(ntau)))ntau=ntau-1
+         if(abs(tau-getHydynTauhy(ntau-1))
+     .          .lt.abs(tau-getHydynTauhy(ntau)))ntau=ntau-1
         endif 
          if(mod(ngeni-1,modu).eq.0.and.(ngeni-1)/modu.lt.5)then
          itau=itau+1
@@ -5597,7 +5732,7 @@ c------------------------------------------------------------------------------
       if(ntauhy.le.0)then
         tauhymax=0
       else
-        tauhymax=tauhy(ntauhy)
+        tauhymax=getHydynTauhy(ntauhy)
       endif
       if(jcentr.gt.0)taumaxi=rclass(jtable(7),1,jcentr)
       if(jcentr.gt.0)radmaxi=rclass(jtable(7),2,jcentr)
@@ -5612,7 +5747,7 @@ c------------------------------------------------------------------------------
       if(g)write(ifhi,'(a)')       'htyp lin '
       !----------------------
       if(g)write(ifhi,'(a,f4.1)')'xmod lin xrange 0. '
-     . ,tauhy(ntauhxx)
+     . ,getHydynTauhy(ntauhxx)
       if(g)write(ifhi,'(a)')'txt  "xaxis [t] (fm/c)"'
       if(g)write(ifhi,'(a)') 'txt  "title   "'
       if(g)write(ifhi,'(a)') 'ymod lin yrange auto auto '
@@ -5625,15 +5760,16 @@ c------------------------------------------------------------------------------
       if(g)write(ifhi,*)'histoweight ',zfhits(jcentr)
         if(g)write(ifhi,'(a)')'array 2'
       do ngeni=1,mgeni
-        !formely:ntau loop & tau=tauhy(ntau)
+        !formely:ntau loop & tau=getHydynTauhy(ntau)
         tau=max(tauzer1,tauzer2)
      .  +(ngeni-1)*(taumaxi-max(tauzer1,tauzer2))/(mgeni-1)
         ntau=1
-        do while(tauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
+        do while(getHydynTauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
         ntau=ntau+1
         enddo
         if(ntau.gt.1)then
-         if(abs(tau-tauhy(ntau-1)).lt.abs(tau-tauhy(ntau)))ntau=ntau-1
+         if(abs(tau-getHydynTauhy(ntau-1))
+     .          .lt.abs(tau-getHydynTauhy(ntau)))ntau=ntau-1
         endif 
         if(d.and.tauhymax.lt.tau)then
           y=0
@@ -5641,22 +5777,23 @@ c------------------------------------------------------------------------------
           y=eccxav(neta,ntau)
         endif
         if(f)call addHo(42,jeta,ntau,1,y)
-        if(g)write(ifhi,'(2e11.3)')tauhy(ntau),y
+        if(g)write(ifhi,'(2e11.3)')getHydynTauhy(ntau),y
       enddo
       if(g)write(ifhi,'(a)') 'endarray closehisto plot 0-'
       if(g)write(ifhi,'(a,2i1)')'openhisto htyp lin'
       if(g)write(ifhi,*)'histoweight ',zfhits(jcentr)
         if(g)write(ifhi,'(a)')'array 2'
       do ngeni=1,mgeni
-        !formely:ntau loop & tau=tauhy(ntau)
+        !formely:ntau loop & tau=getHydynTauhy(ntau)
         tau=max(tauzer1,tauzer2)
      .  +(ngeni-1)*(taumaxi-max(tauzer1,tauzer2))/(mgeni-1)
         ntau=1
-        do while(tauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
+        do while(getHydynTauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
         ntau=ntau+1
         enddo
         if(ntau.gt.1)then
-         if(abs(tau-tauhy(ntau-1)).lt.abs(tau-tauhy(ntau)))ntau=ntau-1
+         if(abs(tau-getHydynTauhy(ntau-1))
+     .          .lt.abs(tau-getHydynTauhy(ntau)))ntau=ntau-1
         endif
         if(d.and.tauhymax.lt.tau)then
           y=0
@@ -5664,7 +5801,7 @@ c------------------------------------------------------------------------------
           y=eccpav(neta,ntau)
         endif
         if(f)call addHo(42,jeta,ntau,2,y)
-        if(g)write(ifhi,'(2e11.3)')tauhy(ntau),y
+        if(g)write(ifhi,'(2e11.3)')getHydynTauhy(ntau),y
       enddo
       if(g)write(ifhi,'(a)') 'endarray closehisto plot 0-'
       if(g)write(ifhi,'(a,4i1)')'openhisto name avt-'
@@ -5673,16 +5810,17 @@ c------------------------------------------------------------------------------
       if(g)write(ifhi,*)'histoweight ',zfhits(jcentr)
         if(g)write(ifhi,'(a)')'array 2'
       do ngeni=1,mgeni
-        !formely:ntau loop & tau=tauhy(ntau)
+        !formely:ntau loop & tau=getHydynTauhy(ntau)
         tau=max(tauzer1,tauzer2)
      .  +(ngeni-1)*(taumaxi-max(tauzer1,tauzer2))/(mgeni-1)
 
         ntau=1
-        do while(tauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
+        do while(getHydynTauhy(ntau).lt.tau.and.ntau.lt.ntauhxx)
         ntau=ntau+1
         enddo
         if(ntau.gt.1)then
-         if(abs(tau-tauhy(ntau-1)).lt.abs(tau-tauhy(ntau)))ntau=ntau-1
+         if(abs(tau-getHydynTauhy(ntau-1))
+     .          .lt.abs(tau-getHydynTauhy(ntau)))ntau=ntau-1
         endif
         if(d.and.tauhymax.lt.tau)then
           y=0
@@ -5690,31 +5828,10 @@ c------------------------------------------------------------------------------
           y=vtraav(neta,ntau)
         endif
         if(f)call addHo(42,jeta,ntau,3,y)
-        if(g)write(ifhi,'(2e11.3)')tauhy(ntau),y
+        if(g)write(ifhi,'(2e11.3)')getHydynTauhy(ntau),y
       enddo
       if(g)write(ifhi,'(a)') 'endarray closehisto  plot 0'
       enddo
-      end
-
-c------------------------------------------------------------------------------
-      subroutine or999
-c------------------------------------------------------------------------------
-#include "aaa.h"
-      
-      do iloo=1,nptl
-      i=iloo   
-      
-      if(iloo.gt.mxptl)then
-        call restorecccptl(iloo,mxptl+2)
-        i=mxptl+2
-      endif
-      
-      if(iorptl(i).eq.-999)iorptl(i)=0
-
-      if(iloo.gt.mxptl)call dumpcccptl(mxptl+2,iloo)
-
-      enddo
-      
       end
 
 c------------------------------------------------------------------------------
@@ -6423,6 +6540,10 @@ c---------------------------------------------------------------------
 c---------------------------------------------------------------------------------
       subroutine xTests(neta)
 c---------------------------------------------------------------------------------
+c      use ArrayModule, only: getd
+c      use hocoModule, only: epsc
+      double precision getHydynEpsc
+
 #include "aaa.h"
 #include "ho.h"
       common/jcen/jcentr,jmxcentr
@@ -6432,7 +6553,7 @@ c-------------------------------------------------------------------------------
       write(ifhi,'(a)') '!-----------------------------------------!'
       eta=etahy(neta)
       do ntau=1,8
-      tau=tauhy(ntau)
+      tau=getHydynTauhy(ntau)
       write(ifhi,'(a)') 'openhisto htyp lin xmod lin ymod log '
       write(ifhi,'(a,2f8.2,a)') 'xrange -12 12 yrange 0.001 auto'
       write(ifhi,'(a,f4.1,a)')'text 0.1 0.9  "[c]=',eta,'"'
@@ -6443,7 +6564,7 @@ c-------------------------------------------------------------------------------
       write(ifhi,'(a)') 'array 2'
       do nx=1,nxhy
         x=xminhy+(nx-1)*(xmaxhy-xminhy)/(nxhy-1)
-        y=epsc(neta,ntau,nx,nyhy/2+1)
+        y=getHydynEpsc(neta,ntau,nx,nyhy/2+1)
         if(y.gt.1e-3)write(ifhi,'(2e11.3)')x,y
       enddo
       write(ifhi,'(a)') ' endarray closehisto plot 0-'
@@ -6786,7 +6907,7 @@ c----------------------------------------------------------------------
       end
 
 c----------------------------------------------------------------------
-      function centrVar(j)
+      function centrVar(j) ! C1=bim C2=Npom C8=Nhpom
 c----------------------------------------------------------------------
 #include "aaa.h"
 #include "ho.h"
@@ -6849,6 +6970,13 @@ c----------------------------------------------------------------------
       elseif(mod(j,10).eq.7)then !vzero
         x=fmux(2.8, 5.1, 0., 100., 1., 1., 1., -0.468,0.,0.,0.) 
         x=x*0.10  !rescaled!!! to fit into 0-40 range, as Pomerons
+      elseif(j.eq.8)then !C8
+        x=0
+        do i=1,nptl
+         call getistptl(i,istx)
+         call getidptl(i,idx)
+         if((istx.eq.30.or.istx.eq.31).and.int(idx/1000000).eq.3)x=x+1
+        enddo
       else
         stop'in centrVar: wrong j    '
       endif

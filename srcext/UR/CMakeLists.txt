@@ -1,7 +1,28 @@
-# Define this directory's flags:
-set(${PROJECT_NAME}_UR_FORTRAN_FLAGS "-g -mcmodel=large -fPIC -cpp -fbacktrace -ffpe-trap=invalid,zero -fno-automatic -fcheck=bounds" CACHE STRING "${PROJECT_NAME} UR FORTRAN FLAGS")
-# Enable this directory's flags:
-set(CMAKE_Fortran_FLAGS "${${PROJECT_NAME}_UR_FORTRAN_FLAGS}")
+#
+#  This file is part of EPOS4
+#  Copyright (C) 2022 research institutions and authors (See CREDITS file)
+#  This file is distributed under the terms of the GNU General Public License version 3 or later
+#  (See COPYING file for the text of the licence)
+#
+
+
+# Define the compilation flags:
+# Fortran compiler
+if (${CMAKE_Fortran_COMPILER_ID} STREQUAL "GNU")
+  if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64|aarch64")      
+    list(APPEND FORTRAN_COMPILE_FLAGS "-Wno-unused-variable")
+    list(APPEND FORTRAN_COMPILE_FLAGS "-Wno-uninitialized")
+    list(APPEND FORTRAN_COMPILE_FLAGS "-Wno-unused-dummy-argument")
+    list(APPEND FORTRAN_COMPILE_FLAGS "-Wno-unused-label")
+    list(APPEND FORTRAN_COMPILE_FLAGS "-Wno-integer-division")
+    list(APPEND FORTRAN_COMPILE_FLAGS "-Wno-character-truncation")
+    list(JOIN FORTRAN_COMPILE_FLAGS " " FORTRAN_COMPILE_FLAGS)
+  else()
+    message(ERROR "EPOS: EPOS compilation only succeeds on x86_64 or aarch64 architecture")
+  endif()        
+else()
+  message(ERROR "EPOS: Compilation with any compiler other than GCC has not yet been tested")
+endif()
 
 # Do the local stuff:
 set(UR_SRC 
@@ -55,9 +76,6 @@ set(UR_SRC
   whichres.f   
 )
 
-#add_library(UR SHARED ${UR_SRC})
-## set_target_properties(bg PROPERTIES LINKER_LANGUAGE FORTRAN)
-## target_include_directories(UR PRIVATE ../KW/)
-#install(TARGETS UR DESTINATION lib)
-
 add_library(UR OBJECT ${UR_SRC})
+separate_arguments(FORTRAN_COMPILE_FLAGS UNIX_COMMAND ${FORTRAN_COMPILE_FLAGS})
+target_compile_options(UR PUBLIC $<$<COMPILE_LANGUAGE:Fortran>:${FORTRAN_COMPILE_FLAGS}>)

@@ -9,6 +9,30 @@ c-------------------------------------------------------------------------
 c               hydro output
 c-------------------------------------------------------------------------
 
+      integer iBspes, iHoEpsilon, iHoEpsilonEtaY, iHoEpsilonEtas6, 
+     . iHoEpsilonEtas8, iHoEpsilonTau6, iHoEpsilonTau8, iHoRadVel, 
+     . iHoRadVelTau6, iHoTanVel, iHoTangVelTau6, iHoTemperatureEtas6, 
+     . iHoTemperatureEtas8, iHyAverages, iHyBarmuEta, iHyBaryon, 
+     . iHyBaryonEta, iHyEmpty, iHyEntropy, iHyEntropyEta, iHyEos, 
+     . iHyEpsilon, iHyEpsilon2, iHyEpsilonEta, iHyFoBarmu, iHyFoEpsilon, 
+     . iHyFoRadVelocity, iHyFoRadius, iHyFoTangVelocity, iHyFoVol, 
+     . iHyLongVelocity, iHyRadVelocity, iHyTemperature, iQspes, iSource, 
+     . iSspes, ienvar, ifaahlle, ifathlle, ifazhlle, imakefzo, ireadfzo, 
+     . ispes, istat, jspes, kfrout, klax, kspes, mchem, metahxx, metahy, 
+     . mspes, mtemp, mxBeos, mxEeos, mxbimp, mxsurf, mxxBeos, mxxEeos, 
+     . nbimp, nbimpx, ncenthxx, ncenthy, netahxx, nfrout, nlag, nphahy, 
+     . nphihxx, nphihy, nptrhy, nradhxx, nradhy, nspes, ntauhec, 
+     . ntauhxx, ntauhy, nxhxx, nxhy, nyhxx, nyhy, nzhy, nzhyxx
+
+      real Beos, Eeos, aspes, baraa, barij, barzz, bimpar, bimparx, 
+     . centhy, chepoB, chepoQ, chepoS, chot, cohi, dtauhy, eccpav, 
+     . eccxav, efrout, emuaa, emuzz, eost, epsaa, epscrit, epsfin, 
+     . epsij, etahy, fdtau, ffstat, fofac, fofai, ggstat, gspes, oBeos, 
+     . oEeos, phihy, ptrmx, radaa, radhy, rmaxhy, sigij, suraa, 
+     . taumax, taumaxhy, tauminhy, temax, temfo, temin, tfo, tfrout, 
+     . uBeos, uEeos, velaa, velzz, vlmaa, vtraav, wlag, xlag, xmaxhy, 
+     . xminhy, ymaxhy, yminhy, zetahy, zmaxhy, zminhy
+
 #if __TP__
       parameter (nxhxx=1,nyhxx=1,netahxx=1,ntauhxx=1) !points, not bins!!
       parameter(metahxx=1)
@@ -40,20 +64,11 @@ c-------------------------------------------------------------------------
       
       common/hoco3/ntauhec(netahxx,nphihxx)
   
-      common/hoco4/centhy(0:ncenthxx),etahy(netahxx),tauhy(ntauhxx)
+      common/hoco4/centhy(0:ncenthxx),etahy(netahxx)
      *             ,phihy(nphihxx),radhy(nradhxx)
       common/hoco5/zetahy(1-netahxx:netahxx-1)
 
       common/hoco7a/metahy     
-
-c------------------------------------------------------------------------
-
-      double precision velc,epsc,sigc,barc
-      common/hoco0/
-     *              velc(3,netahxx,ntauhxx,nxhxx,nyhxx)
-     *             ,epsc(netahxx,ntauhxx,nxhxx,nyhxx)
-     *             ,sigc(netahxx,ntauhxx,nxhxx,nyhxx)
-     *             ,barc(3,netahxx,ntauhxx,nxhxx,nyhxx)
 
       common/hoco8/taumax,nzhyxx(2),epscrit,rmaxhy
 

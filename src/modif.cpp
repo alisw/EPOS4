@@ -9,7 +9,7 @@
 #include <iostream>
 extern "C" {
   void getnhpom_(int*);
-  void getzng1_(int*);
+  void getrng1_(int*);
   void pfe3modif_();
   void pfe3paramset5_(float* v1,float* v2,float* v3,float* v4,float* v5);
 }
@@ -29,7 +29,7 @@ void pfe3modif_(){
   // int N, Z;
   // float yrmax ,yco, ycoj, fec, taufo;
   // getnhpom_(&N);    // Number of hard Pomerons. Used for pp.   
-  // getzng1_(&Z);     // Centrality (0 = 'peripheral' and 1 = 'central'). Used for AA
+  // getrng1_(&Z);     // Centrality (0 = 'peripheral' and 1 = 'central'). Used for AA
                         // In rare cases, Z may be slighly bigger than 1
   
   // pp 7TeV

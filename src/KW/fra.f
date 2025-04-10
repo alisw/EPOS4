@@ -66,10 +66,18 @@ c          call blist('&',nk1,nkmax)
         if(istptl(nk1).eq.20)then
           nk2=nk1+1
           do while(idptl(nk2).eq.9)
+            if(istptl(nk2).ne.20)then
+              print*,'gakfra parton chain wrong (ist=20 expected)'
+              do nkjj=nk1,nk2
+              print*,'n id ist:',nkjj, idptl(nkjj),istptl(nkjj)
+              enddo
+              stop 'ERROR231027c'
+            endif
             nk2=nk2+1
           enddo
           goto 33                !ok, string from nk1 to nk2
         else
+          if(istptl(nk1).eq.22)write(ifmt,'(a)')'Skip 22 parton'
           nk1=nk1+1
         endif
       enddo
@@ -180,12 +188,12 @@ c Excited remnant due to split
         p1(5)=sqrt(p1(5))
         if(iorrem.eq.0)pmior=sngl(p1(5))
       else
-        write(ifmt,'(a,5e10.3,$)')'WARNING gakfra (m2<0) 5-mom str = '
-     .  ,p1(1),p1(2),p1(3),p1(4),p1(5)
-        do i=nk1,nk2
-          write(ifmt,'(a,5e10.3,$)')'parton = ',(pptl(k,i),k=1,5)
-        enddo
-        write(ifmt,'(a)')' '
+        write(ifmt,'(a)')'WARNING gakfra String m2 < 0'
+c        write(ifmt,'(a,5e10.3,$)')'5-mom str = '
+c     .  ,p1(1),p1(2),p1(3),p1(4),p1(5)
+c        do i=nk1,nk2
+c          write(ifmt,'(a,5e10.3,$)')'  parton = ',(pptl(k,i),k=1,5)
+c        enddo
         if(p1(5).lt.-1d-4)then
           !return only if it is not a problem due to limited precision (very high momentum)
           write(ifmt,'(a,e10.3,a)')
@@ -516,16 +524,16 @@ c...................light string....................................
 
       if(sqrt(max(0.d0,pf(nob,nob))).lt.amm)then
         id=idsp(  idptl(nk1),idptl(nk2) )
-          if(ish.ge.1)then
-       write (ifch,*)
+        if(ish.ge.1)then
+          write (ifch,*)
      .       '-------string too light to decay--------'
-          write (ifch,*) id,p1(5),amm
-          write (ifch,*) id, sqrt(max(0.d0,pf(nob,nob))) ,amm
-       endif
-      if(id.ne.0)then
+          write (ifch,*) id,p1(5),amm,nk1,nk2
+          write (ifch,*) id, sqrt(max(0.d0,pf(nob,nob))) ,amm,nptl+1
+        endif
+        if(id.ne.0)then
         am=sqrt(max(0.d0,pf(nob,nob)))
         call idress(id,am,idr,iadj)
-        if(ish.ge.1)write (ifch,*) id,am,idr,iadj
+        if(ish.ge.1)write (ifch,*) id,nptl+1,am,idr,iadj
         nptl=nptl+1
         if(nptl.gt.mxptl)
      &       call utstop('gakfra (light): mxptl too small ...&')
@@ -570,8 +578,8 @@ c...................light string....................................
         call idtau(idptl(nptl),pptl(4,nptl),pptl(5,nptl),taugm)
         tivptl(2,nptl)=tivptl(1,nptl)+taugm*(-alog(rangen()))
         if(abs(p1(5)-am).gt.0.01.and.ish.ge.1)then
-          write (ifmt,*) 'light string  ---  particle off-shell!!!!'
-          write (ifmt,*) idr,'  mass:',p1(5),'  should be:',am
+          write (ifmt,'(2a,i6,2f8.2)') 'WARNING light string,',
+     .    ' ptl off-shell, id mass minmass:',idr,p1(5),am
         endif
         goto 98
       endif

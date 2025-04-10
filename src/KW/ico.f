@@ -20,8 +20,10 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
       subroutine IniCon(nin,nev,ierrico)
 c-----------------------------------------------------------------------
+c      use icoModule, only: createIcoE, createIcoV, createIcoF, 
+c     .     setIcoIcoE, setIcoIcoV, setIcoIcoF,
+c     .     getIcoIcoE, getIcoIcoV, getIcoIcoF
 #include "aaa.h"
-#include "ico.h"
 #include "ems.h"
       double precision seedf
       character*80 fn
@@ -31,6 +33,19 @@ c-----------------------------------------------------------------------
       common /cioicoplot/ioicoplot
       data ncntmico/0/
       save ncntmico
+
+      double precision getIcoIcoT
+      real getIcoIcoE, getIcoIcoV, getIcoIcoF
+      real value
+      integer nxico,nyico,nzico
+      real xminico, xmaxico, yminico, ymaxico, zminico, zmaxico
+      call getIcoDim(nxico,nyico,nzico)
+      call getIcoBound(
+     .     xminico, xmaxico, 
+     .     yminico, ymaxico, 
+     .     zminico, zmaxico
+     .     )
+
       inicop=0
       if(iorsdf.eq.3)inicop=1
       if(iorsdf.eq.5)inicop=2
@@ -81,11 +96,26 @@ c-----------------------------------------------------------------------
      . .or.yminicox.ne.yminico.or.ymaxicox.ne.ymaxico
      . .or.zminicox.ne.zminico.or.zmaxicox.ne.zmaxico)
      .  stop'IniCon: different x/y/zminico or x/y/zmaxico\n\n'
-        read(97,*)
-     .   (((IcoE(ix,iy,iz)         ,ix=1,nxico),iy=1,nyico),iz=1,nzico)
-     . ,((((IcoV(i,ix,iy,iz),i=1,3),ix=1,nxico),iy=1,nyico),iz=1,nzico)
-     . ,((((IcoF(i,ix,iy,iz),i=1,3),ix=1,nxico),iy=1,nyico),iz=1,nzico)
+c     .   (((IcoE(ix,iy,iz)         ,ix=1,nxico),iy=1,nyico),iz=1,nzico)
+c     . ,((((IcoV(i,ix,iy,iz),i=1,3),ix=1,nxico),iy=1,nyico),iz=1,nzico)
+c     . ,((((IcoF(i,ix,iy,iz),i=1,3),ix=1,nxico),iy=1,nyico),iz=1,nzico)
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+        do iz=1,nzico
+           do iy=1,nyico
+              do ix=1,nxico
+                 read(97,*) value
+                 call setIcoIcoE(ix,iy,iz,value)
+                 do i=1,3
+                    read(97,*) value
+                    call setIcoIcoV(i,ix,iy,iz,value)
+                    call setIcoIcoF(i,ix,iy,iz,value)
+                 end do
+              end do
+           end do
+        end do
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
         close(97)
+
         if(nsmooth.gt.0)call SmoothIco
         call amaxIcoE(wmax,x,y,z)
         write(ifmt,'(a,f9.2,a,3f8.2)')'wmax',wmax,' x,y,eta  ',x,y,z
@@ -175,9 +205,12 @@ c-----------------------------------------------------------------------
             write(97,*) nxico,nyico,nzico
             write(97,*) xminico,xmaxico,yminico,ymaxico,zminico,zmaxico
             write(97,*)
-     .   (((IcoE(ix,iy,iz)         ,ix=1,nxico),iy=1,nyico),iz=1,nzico)
-     . ,((((IcoV(i,ix,iy,iz),i=1,3),ix=1,nxico),iy=1,nyico),iz=1,nzico)
-     . ,((((IcoF(i,ix,iy,iz),i=1,3),ix=1,nxico),iy=1,nyico),iz=1,nzico)
+     .   (((getIcoIcoE(ix,iy,iz)
+     .           ,ix=1,nxico),iy=1,nyico),iz=1,nzico)
+     . ,((((getIcoIcoV(i,ix,iy,iz),i=1,3)
+     .           ,ix=1,nxico),iy=1,nyico),iz=1,nzico)
+     . ,((((getIcoIcoF(i,ix,iy,iz)
+     .           ,i=1,3),ix=1,nxico),iy=1,nyico),iz=1,nzico)
             !if(ispherio.eq.0)call xIco2
             close(97)
           endif
@@ -190,7 +223,7 @@ c-----------------------------------------------------------------------
             write(97,*) nxico,nyico,nzico
             write(97,*) xminico,xmaxico,yminico,ymaxico,zminico,zmaxico
             write(97,*)
-     .     (((((IcoT(i1,i2,ix,iy,iz),i1=1,4),i2=1,4),
+     .     (((((getIcoIcoT(i1,i2,ix,iy,iz),i1=1,4),i2=1,4),
      ,      ix=1,nxico),iy=1,nyico),iz=1,nzico)
             close(97)
           endif
@@ -215,9 +248,18 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
       subroutine amaxIcoE(wmax,x,y,z)
 c-----------------------------------------------------------------------
+c      use icoModule, only: getIcoIcoE, setIcoIcoE
 #include "aaa.h"
-#include "ico.h"
       common/cwmaxIcoE/wmaxIcoE
+      integer nxico,nyico,nzico
+      real xminico, xmaxico, yminico, ymaxico, zminico, zmaxico
+      call getIcoDim(nxico,nyico,nzico)
+      call getIcoBound(
+     .     xminico, xmaxico, 
+     .     yminico, ymaxico, 
+     .     zminico, zmaxico
+     .     )
+
       wmax=0.
       x=0.
       y=0.
@@ -228,7 +270,9 @@ c-----------------------------------------------------------------------
       do ix=1,nxico
       do iy=1,nyico
       do iz=1,nzico
-      w=IcoE(ix,iy,iz)
+c      w=IcoE(ix,iy,iz)
+      w=getIcoIcoE(ix,iy,iz)
+c       print*,ix, iy, iz, w
       if(w.gt.wmax)then
         wmax=w
         i=ix
@@ -244,16 +288,23 @@ c-----------------------------------------------------------------------
         y=yminico+(j-0.5)*(ymaxico-yminico)/nyico
         z=zminico+(k-0.5)*(zmaxico-zminico)/nzico
       endif
-
       end
 
 c-----------------------------------------------------------------------
       subroutine SmoothIco
 c-----------------------------------------------------------------------
+c      use icoModule, only: getIcoIcoE, setIcoIcoE,
+c     . getIcoIcoV, setIcoIcoV,
+c     . getIcoIcoF, setIcoIcoF
 #include "aaa.h"
-#include "ico.h"
-      double precision  IcoTx, IcoCx
+      integer nxicomax,nyicomax,nzicomax
+      parameter (nxicomax=161,nyicomax=161,nzicomax=45) !nb of bins (uneven!!!)
+
+      real getIcoIcoE, getIcoIcoV, getIcoIcoF
       real IcoEx, IcoVx, IcoFx
+      
+      double precision getIcoIcoT, getIcoIcoC
+      double precision IcoTx, IcoCx
       dimension
      . IcoTx(4,4,nxicomax,nyicomax,nzicomax)
      .,IcoCx(3,4,nxicomax,nyicomax,nzicomax)
@@ -263,6 +314,8 @@ c-----------------------------------------------------------------------
       double precision w(-5:5),w4(-2:2),w6(-3:3)
       data w4 /1.d0, 4.d0, 6.d0, 4.d0, 1.d0/
       data w6 /1.d0, 6.d0, 15.d0, 20.d0, 15.d0, 6.d0, 1.d0/
+      integer nxico,nyico,nzico
+      call getIcoDim(nxico,nyico,nzico)
 
       write(ifmt,*)'smoothing initial conditions, nsmooth =',nsmooth
 
@@ -280,17 +333,18 @@ c-----------------------------------------------------------------------
       do ix=1,nxico
         do iy=1,nyico
           do iz=1,nzico
-            IcoEx(ix,iy,iz)=IcoE(ix,iy,iz)
+c            IcoEx(ix,iy,iz)=IcoE(ix,iy,iz)
+             IcoEx(ix,iy,iz)=getIcoIcoE(ix,iy,iz)
             do i=1,3
-            IcoVx(i,ix,iy,iz)=IcoV(i,ix,iy,iz)
-            IcoFx(i,ix,iy,iz)=IcoF(i,ix,iy,iz)
+            IcoVx(i,ix,iy,iz)=getIcoIcoV(i,ix,iy,iz)
+            IcoFx(i,ix,iy,iz)=getIcoIcoF(i,ix,iy,iz)
             enddo
             do j=1,4
             do i=1,4
-            IcoTx(i,j,ix,iy,iz)=IcoT(i,j,ix,iy,iz)
+            IcoTx(i,j,ix,iy,iz)=getIcoIcoT(i,j,ix,iy,iz)
             enddo
             do i=1,3
-            IcoCx(i,j,ix,iy,iz)=IcoC(i,j,ix,iy,iz)
+            IcoCx(i,j,ix,iy,iz)=getIcoIcoC(i,j,ix,iy,iz)
             enddo
             enddo
           enddo
@@ -300,17 +354,18 @@ c-----------------------------------------------------------------------
       do ix=1,nxico
         do iy=1,nyico
           do iz=1,nzico
-            IcoE(ix,iy,iz)=0.
+c            IcoE(ix,iy,iz)=0.
+             call setIcoIcoE(ix,iy,iz,0.e0)
             do i=1,3
-            IcoV(i,ix,iy,iz)=0.
-            IcoF(i,ix,iy,iz)=0.
+            call setIcoIcoV(i,ix,iy,iz,0.e0)
+            call setIcoIcoF(i,ix,iy,iz,0.e0)
             enddo
             do j=1,4
             do i=1,4
-            IcoT(i,j,ix,iy,iz)=0.
+            call setIcoIcoT(i,j,ix,iy,iz,0.d0)
             enddo
             do i=1,3
-            IcoC(i,j,ix,iy,iz)=0.
+            call setIcoIcoC(i,j,ix,iy,iz,0.d0)
             enddo
             enddo
           enddo
@@ -322,22 +377,29 @@ c-----------------------------------------------------------------------
         do nx=max(1,ix-nn),min(nxico,ix+nn)
         do ny=max(1,iy-nn),min(nyico,iy+nn)
           do iz=1,nzico
-            IcoE(ix,iy,iz)=IcoE(ix,iy,iz)
-     .     +IcoEx(nx,ny,iz)*w(ix-nx)*w(iy-ny)
+c            IcoE(ix,iy,iz)=IcoE(ix,iy,iz)
+c     .     +IcoEx(nx,ny,iz)*w(ix-nx)*w(iy-ny)
+             call setIcoIcoE(ix,iy,iz,
+     .        getIcoIcoE(ix,iy,iz)
+     .       +real(IcoEx(nx,ny,iz)*w(ix-nx)*w(iy-ny)))
             do i=1,3
-            IcoV(i,ix,iy,iz)=IcoV(i,ix,iy,iz)
-     .     +IcoVx(i,nx,ny,iz)*w(ix-nx)*w(iy-ny)
-            IcoF(i,ix,iy,iz)=IcoF(i,ix,iy,iz)
-     .     +IcoFx(i,nx,ny,iz)*w(ix-nx)*w(iy-ny)
+            call setIcoIcoV(i,ix,iy,iz,
+     .        getIcoIcoV(i,ix,iy,iz)
+     .       +real(IcoVx(i,nx,ny,iz)*w(ix-nx)*w(iy-ny)))
+            call setIcoIcoF(i,ix,iy,iz,
+     .        getIcoIcoF(i,ix,iy,iz)
+     .       +real(IcoFx(i,nx,ny,iz)*w(ix-nx)*w(iy-ny)))
             enddo
             do j=1,4
             do i=1,4
-            IcoT(i,j,ix,iy,iz)=IcoT(i,j,ix,iy,iz)
-     .     +IcoTx(i,j,nx,ny,iz)*w(ix-nx)*w(iy-ny)
+               call setIcoIcoT(i,j,ix,iy,iz,
+     .              getIcoIcoT(i,j,ix,iy,iz)
+     .     +dble(IcoTx(i,j,nx,ny,iz)*w(ix-nx)*w(iy-ny)))
             enddo
             do i=1,3
-            IcoC(i,j,ix,iy,iz)=IcoC(i,j,ix,iy,iz)
-     .     +IcoCx(i,j,nx,ny,iz)*w(ix-nx)*w(iy-ny)
+               call setIcoIcoC(i,j,ix,iy,iz,
+     .              getIcoIcoC(i,j,ix,iy,iz)
+     .     +dble(IcoCx(i,j,nx,ny,iz)*w(ix-nx)*w(iy-ny)))
             enddo
             enddo
           enddo
@@ -345,7 +407,7 @@ c-----------------------------------------------------------------------
         enddo
       enddo
       enddo
-      end
+      end subroutine SmoothIco
 
 c-----------------------------------------------------------------------
       subroutine IcoStr(iflag,ierrico)
@@ -359,8 +421,13 @@ c           = 3 normalization
 c
 c     output: common blocks /Ico1/ - /Ico5/
 c-----------------------------------------------------------------------
+c      use icoModule, only: getIcoIcoE, setIcoIcoE,
+c     .     getIcoIcoV, setIcoIcoV,
+c     .     getIcoIcoF, setIcoIcoF
 #include "aaa.h"
-#include "ico.h"
+      integer nxicomax,nyicomax,nzicomax
+      parameter (nxicomax=161,nyicomax=161,nzicomax=45) !nb of bins (uneven!!!)
+
       double precision tpro,zpro,ttar,ztar,ttaus,detap,detat
       common/cttaus/tpro,zpro,ttar,ztar,ttaus,detap,detat
       common /Ico10/ntot,ish0,irs
@@ -368,7 +435,7 @@ c-----------------------------------------------------------------------
       common/cranphi/ranphi
       common/cninx/ninx
       common/celoss/eloss
-      common/cee1ico/ee1ico,eistico,ee1hll
+c      common/cee1ico/ee1ico,eistico,ee1hll
       double precision  IcoTx, IcoCx,IcoTxx, IcoCxx
       real IcoEx, IcoVx, IcoFx,IcoExx, IcoVxx, IcoFxx
       real gint(3),g2int(3)
@@ -391,7 +458,8 @@ c-----------------------------------------------------------------------
       real pskip(4),pcoro(4)
       common /cnoskip/pcore(4),qcore(4)
       save pskip,pcoro
-      common/cchkengy/ichkengy/cchkengy2/esollxx,eistxx
+c      common/cchkengy/ichkengy
+      common/cchkengy2/esollxx,eistxx
       common /cnoskipadd/qcoreadd(4)
       real ar4(4),psum(4)
       parameter(ihhmax=5)
@@ -400,6 +468,18 @@ c-----------------------------------------------------------------------
       data dhh2 / 0.1, 0.3,  0.3, -0.3,  -0.3 /
       data ncntico/0/
       save ncntico
+
+      double precision getIcoIcoT, getIcoIcoC
+      integer getAccumJerr
+
+      integer nxico,nyico,nzico
+      real xminico, xmaxico, yminico, ymaxico, zminico, zmaxico
+      call getIcoDim(nxico,nyico,nzico)
+      call getIcoBound(
+     .     xminico, xmaxico, 
+     .     yminico, ymaxico, 
+     .     zminico, zmaxico
+     .     )
 
       nxicomx=nxicomax
       nyicomx=nyicomax
@@ -420,17 +500,18 @@ c-----------------------------------------------------------------------
  1    do ix=1,nxico
         do iy=1,nyico
           do iz=1,nzico
-            IcoE(ix,iy,iz)=0
+c            IcoE(ix,iy,iz)=0
+            call setIcoIcoE(ix,iy,iz,0.)
             do i2=1,3
-            IcoV(i2,ix,iy,iz)=0
-            IcoF(i2,ix,iy,iz)=0
+            call setIcoIcoV(i2,ix,iy,iz,0.)
+            call setIcoIcoF(i2,ix,iy,iz,0.)
             enddo
             do i1=1,4
             do i2=1,3
-            IcoC(i2,i1,ix,iy,iz)=0.
+            call setIcoIcoC(i2,i1,ix,iy,iz,0.d0)
             enddo
             do i2=1,4
-            IcoT(i1,i2,ix,iy,iz)=0.
+            call setIcoIcoT(i1,i2,ix,iy,iz,0.d0)
             enddo
             enddo
           enddo
@@ -485,7 +566,7 @@ c-----------------------------------------------------------------------
       g2int(3)=1-exp(-9/2.0)
       dxico=(xmaxico-xminico)/nxico
       dyico=(ymaxico-yminico)/nyico
-      dzico=(zmaxico-zminico )/nzico
+      dzico=(zmaxico-zminico)/nzico
       !---------------------------
       sigmad=radeft !r-smearing
       if(sigmad.lt.0.999*dxico)stop'####### ERROR 06022016 #######'
@@ -554,13 +635,13 @@ c-----------------------------------------------------------------------
         endif
       enddo
 
-      if(istrs.eq.0.and.irmn.eq.0)return   !strings from remnant
+      if(istrs.eq.0.and.irmn.eq.0)goto 55   !strings from remnant
 
       nk1=1
       if(istrs.eq.0)nk1=nsmax+1
       if(irmn.eq.0)nkmax=nsmax
 
-      if(nkmax.eq.0)return          !no string
+      if(nkmax.eq.0)goto 55          !no string
 
       !...........strings.............................................
 
@@ -619,9 +700,12 @@ c-----------------------------------------------------------------------
           nk1=nk1+1
         endif
       enddo                     ! next string
+
+ 55   continue
+
       reno=1
       if(qcore(4).gt.0.)reno=pcore(4)/qcore(4)
-
+ 
       !~~~diagonalize T
 
       if(ish.ge.7)write(ifch,'(a)')
@@ -794,7 +878,7 @@ c     .     ,ix,iy,iz,(IcoFx(i3,ix,iy,iz),i3=1,3)
       call RotateIcoX2XX(phievt
      .,nxicomx,nyicomx,nzicomx,IcoTx,IcoCx,IcoEx,IcoVx,IcoFx
      .,IcoTxx,IcoCxx,IcoExx,IcoVxx,IcoFxx)
-      call IniFlowIni(nxicomx,nyicomx,nzicomx,IcoExx)
+      call IniFlowIni(nxicomx,nyicomx,nzicomx,IcoExx)     
       if(iranphi.eq.1)then
        ranphi=eccphi(2)
       else
@@ -811,22 +895,25 @@ c     .     ,ix,iy,iz,(IcoFx(i3,ix,iy,iz),i3=1,3)
       do ix=1,nxico
         do iy=1,nyico
           do iz=1,nzico
-              IcoE(ix,iy,iz)
-     .       =IcoE(ix,iy,iz)+IcoExx(ix,iy,iz)
+c              IcoE(ix,iy,iz)
+c     .       =IcoE(ix,iy,iz)+IcoExx(ix,iy,iz)
+             call setIcoIcoE(ix,iy,iz,
+     .            getIcoIcoE(ix,iy,iz)
+     .            +IcoExx(ix,iy,iz))
               do i2=1,3
-              IcoV(i2,ix,iy,iz)
-     .       =IcoV(i2,ix,iy,iz)+IcoVxx(i2,ix,iy,iz)
-              IcoF(i2,ix,iy,iz)
-     .       =IcoF(i2,ix,iy,iz)+IcoFxx(i2,ix,iy,iz)
+                call setIcoIcoV(i2,ix,iy,iz,
+     .             getIcoIcoV(i2,ix,iy,iz)+IcoVxx(i2,ix,iy,iz))
+                call setIcoIcoF(i2,ix,iy,iz,
+     .             getIcoIcoF(i2,ix,iy,iz)+IcoFxx(i2,ix,iy,iz))
               enddo
               do i1=1,4
               do i2=1,3
-              IcoC(i2,i1,ix,iy,iz)
-     .       =IcoC(i2,i1,ix,iy,iz)+IcoCxx(i2,i1,ix,iy,iz)
+                 call setIcoIcoC(i2,i1,ix,iy,iz,
+     .                getIcoIcoC(i2,i1,ix,iy,iz)+IcoCxx(i2,i1,ix,iy,iz))
               enddo
               do i2=1,4
-              IcoT(i1,i2,ix,iy,iz)
-     .       =IcoT(i1,i2,ix,iy,iz)+IcoTxx(i1,i2,ix,iy,iz)
+              call setIcoIcoT(i1,i2,ix,iy,iz,
+     .                getIcoIcoT(i1,i2,ix,iy,iz)+IcoTxx(i1,i2,ix,iy,iz))
               enddo
               enddo
           enddo
@@ -878,7 +965,7 @@ c     .     ,ix,iy,iz,(IcoFx(i3,ix,iy,iz),i3=1,3)
      .  write(ifmt,'(1x,a,41x,f15.1,a)')'+++ecore+eloss++',ecoeloss,' *'
         write(ifmt,'(1x,a,41x,f15.1)')  '+++EfluidSimpl++',ee2
         write(ifmt,'(1x,a,41x,f15.1,a)')'+++++Efluid+++++',ee1,' *'
-        ee1ico=ee1
+        call setIcoEe1ico(ee1)
 
         if(pcore(4).ne.0.)then
         egain=ee1-ecoeloss
@@ -887,18 +974,18 @@ c     .     ,ix,iy,iz,(IcoFx(i3,ix,iy,iz),i3=1,3)
         eist=pcoro(4)
         esollxx=esoll
         eistxx=eist
-        ichkengy=1
+        call setIcoIchkengy(1)
         call chkengy(ierrchk)
         if(ierrchk.eq.1)then
           ierrico=1
           goto 1001
         endif
-        ichkengy=2
+        call setIcoIchkengy(2)
         else
-        ichkengy=2
+        call setIcoIchkengy(2)
         esollxx=-1
         endif
-        eistico=esollxx
+        call setIcoEistico(esollxx)
         !call checkengy('after rescaling ')
 
         if(abs(einit-efina).gt.0.01*einit.and.irescl.ge.1)then
@@ -923,7 +1010,7 @@ c     .     ,ix,iy,iz,(IcoFx(i3,ix,iy,iz),i3=1,3)
           if(ish.ge.0)
      .    write(ifmt,*)'WARNING  reno = ',pcore(4),'/',qcore(4)
      .    ,'=',reno,'   => REDO'
-          jerr(18)=jerr(18)+1  ! pcore(4) .NE. qcore(4)
+          call setAccumJerr(18,getAccumJerr(18)+1)  ! pcore(4) .NE. qcore(4)
               ierrico=1
               goto 1001
         endif
@@ -954,38 +1041,45 @@ c                 normalization
       do ix=1,nxico
         do iy=1,nyico
           do iz=1,nzico
-            IcoE(ix,iy,iz)
-     .     =IcoE(ix,iy,iz)/za
+c            IcoE(ix,iy,iz)
+c     .     =IcoE(ix,iy,iz)/za
+             call setIcoIcoE(ix,iy,iz,
+     .             getIcoIcoE(ix,iy,iz)/za)
             do i2=1,3
-              IcoV(i2,ix,iy,iz)
-     .       =IcoV(i2,ix,iy,iz)/za
+              call setIcoIcoV(i2,ix,iy,iz,
+     .              getIcoIcoV(i2,ix,iy,iz)/za)
             enddo
             do i2=1,3
-              IcoF(i2,ix,iy,iz)
-     .       =IcoF(i2,ix,iy,iz)/za
+              call setIcoIcoF(i2,ix,iy,iz,
+     .              getIcoIcoF(i2,ix,iy,iz)/za)
             enddo
             do i1=1,4
               do i2=1,3
-                IcoC(i2,i1,ix,iy,iz)
-     .         =IcoC(i2,i1,ix,iy,iz)/za
+                call setIcoIcoC(i2,i1,ix,iy,iz,
+     .                getIcoIcoC(i2,i1,ix,iy,iz)/za)
               enddo
               do i2=1,4
-                IcoT(i1,i2,ix,iy,iz)
-     .         =IcoT(i1,i2,ix,iy,iz)/za
+                call setIcoIcoT(i1,i2,ix,iy,iz,
+     .                getIcoIcoT(i1,i2,ix,iy,iz)/za)
               enddo
             enddo
           enddo
         enddo
       enddo
       return
-      end
+      end subroutine IcoStr
 
 c--------------------------------------------------------------------------
       subroutine chkengy(ierrchk)
 c--------------------------------------------------------------------------
 #include "aaa.h"
-      common/cchkengy/ichkengy/cchkengy2/esollxx,eistxx
+c      common/cchkengy/ichkengy
+      common/cchkengy2/esollxx,eistxx
+      integer ichkengy
+      integer getIcoIchkengy
+
       ierrchk=0
+      ichkengy=getIcoIchkengy()
       if(ichkengy.eq.2)return
       if(ichkengy.eq.0)then
         if(esollxx.lt.0.)return
@@ -1054,7 +1148,9 @@ c-----------------------------------------------------------------------
       ! jtyp: 1=spectator  2=remnant  3=string
       !-----------------------------------------------------------------
 #include "aaa.h"
-#include "ico.h"
+      integer nxicomax,nyicomax,nzicomax
+      parameter (nxicomax=161,nyicomax=161,nzicomax=45) !nb of bins (uneven!!!)
+
       common/cxyzt/xptl(mxptl+29),yptl(mxptl+29),zptl(mxptl+29)
      * ,tptl(mxptl+29),optl(mxptl+29),uptl(mxptl+29),sptl(mxptl+29)
      *,rptl(mxptl+29,3)
@@ -1410,7 +1506,9 @@ c--------------------------------------------------------------------------
       dimension ps(5),xo(4),ifl(3),pp(4),qq(4),nfl(3)
       common /Ico10/ntot,ish0,irs
 #include "aaa.h"
-#include "ico.h"
+      integer nxicomax,nyicomax,nzicomax
+      parameter (nxicomax=161,nyicomax=161,nzicomax=45) !nb of bins (uneven!!!)
+
       double precision  IcoTx, IcoCx
       real IcoEx, IcoVx, IcoFx
       common /cnoskip/pcore(4),qcore(4)
@@ -1430,6 +1528,16 @@ c--------------------------------------------------------------------------
       !real qq(4)
       data ncnticoadd/0/
       save ncnticoadd
+      integer nxico,nyico,nzico
+      real xminico, xmaxico, yminico, ymaxico, zminico, zmaxico
+
+      call getIcoDim(nxico,nyico,nzico)
+      call getIcoBound(
+     .     xminico, xmaxico, 
+     .     yminico, ymaxico, 
+     .     zminico, zmaxico
+     .     )
+
 
 c Just to avoid warnings with gfortran
       ldum=.false.
@@ -1661,7 +1769,6 @@ c------------------------------------------------------------------------------
       !-----------------------------------
       subroutine DiagTmunu(Tmunu,u,v,gamma,eps,nonz,ix,iy,iz)
 #include "aaa.h"
-#include "ico.h"
       double precision Tmunu(4,4),u(4),v(4),gamma,eps
       integer nonz,ix,iy,iz
       double precision beta,b
@@ -1727,7 +1834,6 @@ c------------------------------------------------------------------------------
       !---------------------------
       subroutine DiagTmunuFull(Tmunu,u,v,gamma,eps,nonz,ix,iy,iz)
 #include "aaa.h"
-#include "ico.h"
       double precision Tmunu(4,4),u(4),v(4),gamma,eps
       integer nonz,ix,iy,iz
       double precision g,a, Lor(4,4),w(4),sum
@@ -1957,7 +2063,6 @@ c---------------------------------------------------------------------
      .,IcoTxx,IcoCxx,IcoExx,IcoVxx,IcoFxx)
 c---------------------------------------------------------------------
 #include "aaa.h"
-#include "ico.h"
       double precision aa(2,2)
       double precision  IcoTx, IcoCx,IcoTxx, IcoCxx
       real IcoEx, IcoVx, IcoFx,IcoExx, IcoVxx, IcoFxx
@@ -1973,6 +2078,16 @@ c---------------------------------------------------------------------
      .,IcoVxx(3,nxicomx,nyicomx,nzicomx)
      .,IcoFxx(3,nxicomx,nyicomx,nzicomx)
       double precision  gi(2),gj(2)
+      integer nxico,nyico,nzico
+      real xminico, xmaxico, yminico, ymaxico, zminico, zmaxico
+
+      call getIcoDim(nxico,nyico,nzico)
+      call getIcoBound(
+     .     xminico, xmaxico, 
+     .     yminico, ymaxico, 
+     .     zminico, zmaxico
+     .     )
+
       delx=(xmaxico-xminico)/nxico
       dely=(ymaxico-yminico)/nyico
       do ix=1,nxico
@@ -2104,7 +2219,6 @@ c---------------------------------------------------------------------
      .,IcoTxx,IcoCxx,IcoExx,IcoVxx,IcoFxx, ee1xx ,ee2xx)
 c---------------------------------------------------------------------
 #include "aaa.h"
-#include "ico.h"
       double precision  IcoTx, IcoCx,IcoTxx, IcoCxx
       real IcoEx, IcoVx, IcoFx,IcoExx, IcoVxx, IcoFxx
       dimension
@@ -2120,6 +2234,16 @@ c---------------------------------------------------------------------
      .,IcoFxx(3,nxicomx,nyicomx,nzicomx)
       double precision  gi(2)
       real etadi(8:38)
+      integer nxico,nyico,nzico
+      real xminico, xmaxico, yminico, ymaxico, zminico, zmaxico
+
+      call getIcoDim(nxico,nyico,nzico)
+      call getIcoBound(
+     .     xminico, xmaxico, 
+     .     yminico, ymaxico, 
+     .     zminico, zmaxico
+     .     )
+
       do i=8,38
         etadi(i)=0
       enddo
@@ -2230,7 +2354,7 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
 #include "aaa.h"
       character text*16, txtwar*7
-      common/cee1ico/ee1ico,eistico,ee1hll
+c      common/cee1ico/ee1ico,eistico,ee1hll
       real sum(4)
       txtwar='       '
       einit=maproj*engy/2+matarg*engy/2
@@ -2260,9 +2384,19 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
       subroutine xIco3
 c-----------------------------------------------------------------------
+c      use icoModule, only: getIcoIcoE
 #include "aaa.h"
-#include "ico.h"
       logical ok
+      integer nxico,nyico,nzico
+      real xminico, xmaxico, yminico, ymaxico, zminico, zmaxico
+
+      call getIcoDim(nxico,nyico,nzico)
+      call getIcoBound(
+     .     xminico, xmaxico, 
+     .     yminico, ymaxico, 
+     .     zminico, zmaxico
+     .     )
+
       dxico=(xmaxico-xminico)/nxico
       dyico=(ymaxico-yminico)/nyico
       dzico=(zmaxico-zminico )/nzico
@@ -2302,7 +2436,8 @@ c      if(ii.eq.3)write(ifhi,'(a)')'txt  "title centr 5"'
         w=0
         do nx=1,nxico
         do ny=1,nyico
-        w=w+IcoE(nx,ny,n)*tauzer*dxico*dyico*dzico
+c        w=w+IcoE(nx,ny,n)*tauzer*dxico*dyico*dzico
+        w=w+getIcoIcoE(nx,ny,n)*tauzer*dxico*dyico*dzico
         enddo
         enddo
         else
@@ -2318,12 +2453,25 @@ c      enddo
 c-----------------------------------------------------------------------
       subroutine xIco(nev)
 c-----------------------------------------------------------------------
+c      use icoModule, only: getIcoIcoE
 #include "aaa.h"
-#include "ico.h"
 #include "ems.h"
+      integer nxicomax,nyicomax,nzicomax
+      parameter (nxicomax=161,nyicomax=161,nzicomax=45) !nb of bins (uneven!!!)
+
       real IcE(20,nxicomax,nzicomax)
       integer nIcE(20)
       save IcE,nIcE
+      integer nxico,nyico,nzico
+      real xminico, xmaxico, yminico, ymaxico, zminico, zmaxico
+
+      call getIcoDim(nxico,nyico,nzico)
+      call getIcoBound(
+     .     xminico, xmaxico, 
+     .     yminico, ymaxico, 
+     .     zminico, zmaxico
+     .     )
+
       if(abs(ninicon).gt.1)return
       ixmin=1      !1+nxico/8*2
       ixmax=nxico  !1+nxico/8*6
@@ -2396,7 +2544,9 @@ c-----------------------------------------------------------------------
         nIcE(kk)=nIcE(kk)+1
         do ix=ixmin,ixmax
           do iz=izmin,izmax
-            IcE(kk,ix,iz)=IcE(kk,ix,iz)+IcoE(ix,nyico/2+1,iz)
+c            IcE(kk,ix,iz)=IcE(kk,ix,iz)+IcoE(ix,nyico/2+1,iz)
+             IcE(kk,ix,iz)=IcE(kk,ix,iz)
+     .            +getIcoIcoE(ix,nyico/2+1,iz)
           enddo
         enddo
       endif
@@ -2450,9 +2600,18 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
       subroutine xIco2
 c-----------------------------------------------------------------------
+c      use icoModule, only: getIcoIcoE
 #include "aaa.h"
-#include "ico.h"
       common/ciprint2d/iprint2d
+      integer nxico,nyico,nzico
+      real xminico, xmaxico, yminico, ymaxico, zminico, zmaxico
+
+      call getIcoDim(nxico,nyico,nzico)
+      call getIcoBound(
+     .     xminico, xmaxico, 
+     .     yminico, ymaxico, 
+     .     zminico, zmaxico
+     .     )
 
       if(iprint2d.eq.1)then
 
@@ -2475,8 +2634,10 @@ c-----------------------------------------------------------------------
      .(nint( (xminico+(ix-0.5)*dx)*100 ),ix=ixmin,ixmax)
       do iy=iymax,iymin,-1
         iiy=nint( (yminico+(iy-0.5)*dy)*100 )
+c        write(ifch,'(i5,2x,99i4)')iiy
+c     .  ,(nint(IcoE(ix,iy,iz)),ix=ixmin,ixmax)
         write(ifch,'(i5,2x,99i4)')iiy
-     .  ,(nint(IcoE(ix,iy,iz)),ix=ixmin,ixmax)
+     .  ,(nint(getIcoIcoE(ix,iy,iz)),ix=ixmin,ixmax)
       enddo
 
       enddo
@@ -2510,53 +2671,62 @@ c      root->X(N)
 c
 c with a valid keyword X (see below in the code)
 c-----------------------------------------------------------------------
-
+c      use icoModule, only: getIcoIcoE
 #include "aaa.h"
-#include "ico.h"
-        common /Ico10/ntot,ish0,irs
-        character word*(*)
-        character fmt*8
+      common /Ico10/ntot,ish0,irs
+      character word*(*)
+      character fmt*8
+      integer nxico,nyico,nzico
+      real xminico, xmaxico, yminico, ymaxico, zminico, zmaxico
+      call getIcoDim(nxico,nyico,nzico)
+      call getIcoBound(
+     .     xminico, xmaxico, 
+     .     yminico, ymaxico, 
+     .     zminico, zmaxico
+     .     )
 
-        length1=index(word,';')-1
-        fmt='(a6,a  )'
-        if(length1.le.9)then
-          write(fmt(6:6),'(i1)')length1
-        elseif(length1.le.99)then
-          write(fmt(6:7),'(i2)')length1
-        else
-          stop'ERROR 29032021'
-        endif
-
-        nzoff=6
-        nyoff=7
-
-        zminoff=zminico+nzoff*(zmaxico-zminico)/nzico
-        zmaxoff=zmaxico-nzoff*(zmaxico-zminico)/nzico
-        yminoff=yminico+nyoff*(ymaxico-yminico)/nyico
-        ymaxoff=ymaxico-nyoff*(ymaxico-yminico)/nyico
-        kval=0
-        ival=0
-        kmax=1
-        do k=2,length1
-          if(word(k:k).eq.'(')kval=k+1
-          if(word(k:k).eq.')')kmax=k-1
-        enddo
-        length=length1
-        if(kval.gt.0)then
+      length1=index(word,';')-1
+      fmt='(a6,a  )'
+      if(length1.le.9)then
+         write(fmt(6:6),'(i1)')length1
+      elseif(length1.le.99)then
+         write(fmt(6:7),'(i2)')length1
+      else
+         stop'ERROR 29032021'
+      endif
+      
+      nzoff=6
+      nyoff=7
+      
+      zminoff=zminico+nzoff*(zmaxico-zminico)/nzico
+      zmaxoff=zmaxico-nzoff*(zmaxico-zminico)/nzico
+      yminoff=yminico+nyoff*(ymaxico-yminico)/nyico
+      ymaxoff=ymaxico-nyoff*(ymaxico-yminico)/nyico
+      kval=0
+      ival=0
+      kmax=1
+      do k=2,length1
+         if(word(k:k).eq.'(')kval=k+1
+         if(word(k:k).eq.')')kmax=k-1
+       enddo
+       length=length1
+       if(kval.gt.0)then
           length=kval-2
           read(word(kval:kmax),*)ival
-        endif
-        write(ifmt,fmt)'Graph ',word(1:length1)
+       endif
+       write(ifmt,fmt)'Graph ',word(1:length1)
 
                 if(word(1:length).eq.'IniConEnergydensityEtaY')then
 
         call RootCanvas(1)
-        call histo2BeginFigure(1)
+        call histo2BeginFigure()
         call histo2BeginPlot(1, 1)  
         call RootHisto(2,'energy density [GeV/fm^{3}]    (y=0);'
      *   ,nzico-2*nzoff,zminoff,zmaxoff
      *   ,nyico-2*nyoff,yminoff,ymaxoff)
-        call histo2BeginSubPlot(word(1:length)
+        call histo2BeginSubPlot('src/KW/ico.f:xIniCon(word)'
+     *        ,'IniConEnergydensityEtaY')
+        call histo2AddHeader(word(1:length)
      *        ,'energy density [GeV/f$m^{3}$]    (y=0)' 
      *        ,'energy density [GeV/f$m^{3}$]    (y=0)'
      *        ,zminoff,zmaxoff,(zmaxico-zminico)/nzico
@@ -2567,8 +2737,11 @@ c-----------------------------------------------------------------------
           zz=zminico+(float(iz)-0.5)*(zmaxico-zminico)/nzico
           do iy=1+nyoff,nyico-nyoff
             yy=yminico+(float(iy)-0.5)*(ymaxico-yminico)/nyico
-            call RootFill(2,zz,yy,IcoE(ix,iy,iz))
-            call histo2FillArray(2,zz,yy,IcoE(ix,iy,iz))
+c            call RootFill(2,zz,yy,IcoE(ix,iy,iz))
+c            call histo2FillArray(2,zz,yy,IcoE(ix,iy,iz))
+            call RootFill(2,zz,yy,getIcoIcoE(ix,iy,iz))
+            call histo2FillArray(2,zz,yy,
+     .           getIcoIcoE(ix,iy,iz))
           enddo
         enddo
         call RootDraw('contz;','#eta_{s};','y [fm];')
@@ -2581,13 +2754,15 @@ c-----------------------------------------------------------------------
         zz=zminico+(float(iz)-0.5)*(zmaxico-zminico)/nzico
         write(fmt,'(f7.2)')zz
         call RootCanvas(-3)
-        call histo2BeginFigure(-3)
+        call histo2BeginFigure()
         call histo2BeginPlot(1, 1)
         call RootHisto(2
      *   ,'energy density [GeV/fm^{3}]    (#eta_{s}='//fmt//');'
      *   ,nxico,xminico,xmaxico
      *   ,nyico,yminico,ymaxico)
-        call histo2BeginSubPlot(word(1:length) 
+        call histo2BeginSubPlot('src/KW/ico.f:xIniCon(word)'
+     *        ,'IniConEnergydensityXY')
+        call histo2AddHeader(word(1:length) 
      *        ,'energy density [GeV/fm^{3}] ($\eta_{s}$ = '//fmt//')'
      *        ,'energy density [GeV/fm^{3}] ($\eta_{s}$ = '//fmt//')'
      *        ,xminico
@@ -2601,8 +2776,11 @@ c-----------------------------------------------------------------------
           xx=xminico+(float(ix)-0.5)*(xmaxico-xminico)/nxico
           do iy=1,nyico
             yy=yminico+(float(iy)-0.5)*(ymaxico-yminico)/nyico
-            call RootFill(2,xx,yy,IcoE(ix,iy,iz))
-            call histo2FillArray(2,xx,yy,IcoE(ix,iy,iz))
+c            call RootFill(2,xx,yy,IcoE(ix,iy,iz))
+c            call histo2FillArray(2,xx,yy,IcoE(ix,iy,iz))
+            call RootFill(2,xx,yy,getIcoIcoE(ix,iy,iz))
+            call histo2FillArray(2,xx,yy,
+     *           getIcoIcoE(ix,iy,iz))
           enddo
         enddo
         call RootDraw('colz;','x [fm];','y [fm];')
@@ -2612,9 +2790,11 @@ c-----------------------------------------------------------------------
                 elseif(word(1:length).eq.'IniConXvelocityXY')then
 
         call RootCanvas(1)
-        call histo2BeginFigure(-3)
+        call histo2BeginFigure()
         call histo2BeginPlot(1, 1)
-         call histo2BeginSubPlot(word(1:length)
+        call histo2BeginSubPlot('src/KW/ico.f:xIniCon(word)'
+     *        ,'IniConXvelocityXY')
+        call histo2AddHeader(word(1:length)
      *        ,'x velocity    ($\eta_{s}$ = 0)'
      *        ,'x velocity    ($\eta_{s}$ = 0)'
      *        ,yminico
@@ -2632,8 +2812,8 @@ c-----------------------------------------------------------------------
           yy=yminico+(float(iy)-0.5)*(ymaxico-yminico)/nyico
           do ix=1,nxico
             xx=xminico+(float(ix)-0.5)*(xmaxico-xminico)/nxico
-            call RootFill(2,yy,xx,IcoV(1,ix,iy,iz))
-            call histo2FillArray(2,yy,xx,IcoV(1,ix,iy,iz))
+            call RootFill(2,yy,xx,getIcoIcoV(1,ix,iy,iz))
+            call histo2FillArray(2,yy,xx,getIcoIcoV(1,ix,iy,iz))
           enddo
         enddo
         call RootDraw('contz;','y [fm];','x [fm];')
@@ -2643,9 +2823,11 @@ c-----------------------------------------------------------------------
                 elseif(word(1:length).eq.'IniConXvelocityXEta')then
 
         call RootCanvas(1)
-         call histo2BeginFigure(-3)
-         call histo2BeginPlot(1, 1)
-         call histo2BeginSubPlot(word(1:length)
+        call histo2BeginFigure()
+        call histo2BeginPlot(1, 1)
+        call histo2BeginSubPlot('src/KW/ico.f:xIniCon(word)'
+     *        ,'IniConXvelocityXEta')
+        call histo2AddHeader(word(1:length)
      *        ,'x velocity    (y=0);'
      *        ,'x velocity    (y=0);'
      *        ,zminoff
@@ -2662,8 +2844,8 @@ c-----------------------------------------------------------------------
           zz=zminico+(float(iz)-0.5)*(zmaxico-zminico)/nzico
           do ix=1,nxico
             xx=xminico+(float(ix)-0.5)*(xmaxico-xminico)/nxico
-            call RootFill(2,zz,xx,IcoV(1,ix,iy,iz))
-            call histo2FillArray(2,zz,xx,IcoV(1,ix,iy,iz))
+            call RootFill(2,zz,xx,getIcoIcoV(1,ix,iy,iz))
+            call histo2FillArray(2,zz,xx,getIcoIcoV(1,ix,iy,iz))
           enddo
         enddo
         call RootDraw('contz;','#eta_{s};','x [fm];')
@@ -2673,9 +2855,11 @@ c-----------------------------------------------------------------------
                 elseif(word(1:length).eq.'IniConRapidityXY')then
 
         call RootCanvas(1)
-        call histo2BeginFigure(-3)
+        call histo2BeginFigure()
         call histo2BeginPlot(1, 1)
-        call histo2BeginSubPlot(word(1:length)
+        call histo2BeginSubPlot('src/KW/ico.f:xIniCon(word)'
+     *        ,'IniConSflavorXEta')
+        call histo2AddHeader(word(1:length)
      *        ,'rapidity    ($\eta_{s}$ = 0);'
      *        ,'rapidity    ($\eta_{s}$ = 0);'
      *        ,yminico
@@ -2693,8 +2877,9 @@ c-----------------------------------------------------------------------
           yy=yminico+(float(iy)-0.5)*(ymaxico-yminico)/nyico
           do ix=1,nxico
             xx=xminico+(float(ix)-0.5)*(xmaxico-xminico)/nxico
-            vz=IcoV(3,ix,iy,iz)
-            en=IcoE(ix,iy,iz)
+            vz=getIcoIcoV(3,ix,iy,iz)
+c            en=IcoE(ix,iy,iz)
+            en=getIcoIcoE(ix,iy,iz)
             rap=0
             if(en.gt.0.)rap=0.5*alog((1+vz)/(1-vz))+zz
             call RootFill(2,yy,xx,rap)
@@ -2708,9 +2893,11 @@ c-----------------------------------------------------------------------
                 elseif(word(1:length).eq.'IniConRapidityXEta')then
 
         call RootCanvas(1)
-        call histo2BeginFigure(1)
+        call histo2BeginFigure()
         call histo2BeginPlot(1, 1)
-        call histo2BeginSubPlot(word(1:length)
+        call histo2BeginSubPlot('src/KW/ico.f:xIniCon(word)'
+     *        ,'IniConRapidityXEta')
+        call histo2AddHeader(word(1:length)
      *        ,'rapidity    (y=0)'
      *        ,'rapidity    (y=0)'
      *        ,zminoff
@@ -2727,8 +2914,9 @@ c-----------------------------------------------------------------------
           zz=zminico+(float(iz)-0.5)*(zmaxico-zminico)/nzico
           do ix=1,nxico
             xx=xminico+(float(ix)-0.5)*(xmaxico-xminico)/nxico
-            vz=IcoV(3,ix,iy,iz)
-            en=IcoE(ix,iy,iz)
+            vz=getIcoIcoV(3,ix,iy,iz)
+c            en=IcoE(ix,iy,iz)
+            en=getIcoIcoE(ix,iy,iz)
             rap=0
             if(en.gt.0.)rap=0.5*alog((1+vz)/(1-vz))+zz
              call RootFill(2,zz,xx,rap)
@@ -2742,9 +2930,11 @@ c-----------------------------------------------------------------------
                 elseif(word(1:length).eq.'IniConUDflavorXY')then
 
         call RootCanvas(1)
-        call histo2BeginFigure(1)
+        call histo2BeginFigure()
         call histo2BeginPlot(1, 1)
-        call histo2BeginSubPlot(word(1:length)
+        call histo2BeginSubPlot('src/KW/ico.f:xIniCon(word)'
+     *        ,'IniConUDflavorXY')
+        call histo2AddHeader(word(1:length)
      *        ,'rapidity    ($\eta_{s}$ = 0)'
      *        ,'rapidity    ($\eta_{s}$ = 0)'
      *        ,yminico
@@ -2761,9 +2951,10 @@ c-----------------------------------------------------------------------
           yy=yminico+(float(iy)-0.5)*(ymaxico-yminico)/nyico
           do ix=1,nxico
             xx=xminico+(float(ix)-0.5)*(xmaxico-xminico)/nxico
-            call RootFill(2,yy,xx,IcoF(1,ix,iy,iz)+IcoF(2,ix,iy,iz))
+            call RootFill(2,yy,xx,
+     *           getIcoIcoF(1,ix,iy,iz)+getIcoIcoF(2,ix,iy,iz))
             call histo2FillArray(2,
-     *                      yy,xx,IcoF(1,ix,iy,iz)+IcoF(2,ix,iy,iz))
+     *           yy,xx,getIcoIcoF(1,ix,iy,iz)+getIcoIcoF(2,ix,iy,iz))
           enddo
         enddo
         call RootDraw('contz;','y [fm];','x [fm];')
@@ -2773,9 +2964,11 @@ c-----------------------------------------------------------------------
                 elseif(word(1:length).eq.'IniConUDflavorXEta')then
 
         call RootCanvas(1)
-        call histo2BeginFigure(1)
+        call histo2BeginFigure()
         call histo2BeginPlot(1, 1)
-        call histo2BeginSubPlot(word(1:length)
+        call histo2BeginSubPlot('src/KW/ico.f:xIniCon(word)'
+     *        ,'IniConUDflavorXEta')
+        call histo2AddHeader(word(1:length)
      *        ,'ud flavor    (y=0)'
      *        ,'ud flavor    (y=0)'
      *        ,zminoff
@@ -2792,9 +2985,10 @@ c-----------------------------------------------------------------------
           zz=zminico+(float(iz)-0.5)*(zmaxico-zminico)/nzico
           do ix=1,nxico
             xx=xminico+(float(ix)-0.5)*(xmaxico-xminico)/nxico
-            call RootFill(2,zz,xx,IcoF(1,ix,iy,iz)+IcoF(2,ix,iy,iz))
+            call RootFill(2,zz,xx,
+     *           getIcoIcoF(1,ix,iy,iz)+getIcoIcoF(2,ix,iy,iz))
             call histo2FillArray(2,zz,xx,
-     *                            IcoF(1,ix,iy,iz)+IcoF(2,ix,iy,iz))
+     *           getIcoIcoF(1,ix,iy,iz)+getIcoIcoF(2,ix,iy,iz))
           enddo
         enddo
         call RootDraw('contz;','#eta_{s};','x [fm];')
@@ -2804,9 +2998,11 @@ c-----------------------------------------------------------------------
                 elseif(word(1:length).eq.'IniConUflavorXY')then
 
         call RootCanvas(1)
-        call histo2BeginFigure(1)
+        call histo2BeginFigure()
         call histo2BeginPlot(1, 1)
-        call histo2BeginSubPlot(word(1:length)
+        call histo2BeginSubPlot('src/KW/ico.f:xIniCon(word)'
+     *        ,'IniConUflavorXY')
+        call histo2AddHeader(word(1:length)
      *        ,'u flavor    ($\eta_{s}$ = 0)'
      *        ,'u flavor    ($\eta_{s}$ = 0)'
      *        ,yminico
@@ -2824,8 +3020,8 @@ c-----------------------------------------------------------------------
           yy=yminico+(float(iy)-0.5)*(ymaxico-yminico)/nyico
           do ix=1,nxico
             xx=xminico+(float(ix)-0.5)*(xmaxico-xminico)/nxico
-            call RootFill(2,yy,xx,IcoF(1,ix,iy,iz))
-            call histo2FillArray(2,yy,xx,IcoF(1,ix,iy,iz))
+            call RootFill(2,yy,xx,getIcoIcoF(1,ix,iy,iz))
+            call histo2FillArray(2,yy,xx,getIcoIcoF(1,ix,iy,iz))
           enddo
         enddo
         call RootDraw('contz;','y [fm];','x [fm];')
@@ -2835,9 +3031,11 @@ c-----------------------------------------------------------------------
                 elseif(word(1:length).eq.'IniConUflavorXEta')then
 
         call RootCanvas(1)
-        call histo2BeginFigure(1)
+        call histo2BeginFigure()
         call histo2BeginPlot(1, 1)
-        call histo2BeginSubPlot(word(1:length)
+        call histo2BeginSubPlot('src/KW/ico.f:xIniCon(word)'
+     *        ,'IniConUflavorXEta')
+        call histo2AddHeader(word(1:length)
      *        ,'u flavor    (y=0)'
      *        ,'u flavor    (y=0)'
      *        ,zminoff
@@ -2855,8 +3053,8 @@ c-----------------------------------------------------------------------
           zz=zminico+(float(iz)-0.5)*(zmaxico-zminico)/nzico
           do ix=1,nxico
             xx=xminico+(float(ix)-0.5)*(xmaxico-xminico)/nxico
-            call RootFill(2,zz,xx,IcoF(1,ix,iy,iz))
-            call histo2FillArray(2,zz,xx,IcoF(1,ix,iy,iz))
+            call RootFill(2,zz,xx,getIcoIcoF(1,ix,iy,iz))
+            call histo2FillArray(2,zz,xx,getIcoIcoF(1,ix,iy,iz))
           enddo
         enddo
         call RootDraw('contz;','#eta_{s};','x [fm];')
@@ -2866,9 +3064,11 @@ c-----------------------------------------------------------------------
                 elseif(word(1:length).eq.'IniConDflavorXY')then
 
         call RootCanvas(1)
-        call histo2BeginFigure(1)
+        call histo2BeginFigure()
         call histo2BeginPlot(1, 1)
-        call histo2BeginSubPlot(word(1:length)
+        call histo2BeginSubPlot('src/KW/ico.f:xIniCon(word)'
+     *        ,'IniConDflavorXY')
+        call histo2AddHeader(word(1:length)
      *        ,'d flavor    ($\eta_{s}$ = 0)'
      *        ,'d flavor    ($\eta_{s}$ = 0)'
      *        ,yminico
@@ -2886,8 +3086,8 @@ c-----------------------------------------------------------------------
           yy=yminico+(float(iy)-0.5)*(ymaxico-yminico)/nyico
           do ix=1,nxico
             xx=xminico+(float(ix)-0.5)*(xmaxico-xminico)/nxico
-            call RootFill(2,yy,xx,IcoF(2,ix,iy,iz))
-            call histo2FillArray(2,yy,xx,IcoF(2,ix,iy,iz))
+            call RootFill(2,yy,xx,getIcoIcoF(2,ix,iy,iz))
+            call histo2FillArray(2,yy,xx,getIcoIcoF(2,ix,iy,iz))
           enddo
         enddo
         call RootDraw('contz;','y [fm];','x [fm];')
@@ -2897,9 +3097,11 @@ c-----------------------------------------------------------------------
                 elseif(word(1:length).eq.'IniConDflavorXEta')then
 
         call RootCanvas(1)
-        call histo2BeginFigure(1)
+        call histo2BeginFigure()
         call histo2BeginPlot(1, 1)
-        call histo2BeginSubPlot(word(1:length)
+        call histo2BeginSubPlot('src/KW/ico.f:xIniCon(word)'
+     *        ,'IniConDflavorXEta')
+        call histo2AddHeader(word(1:length)
      *        ,'d flavor    (y=0)'
      *        ,'d flavor    (y=0)'
      *        ,zminoff
@@ -2917,8 +3119,8 @@ c-----------------------------------------------------------------------
           zz=zminico+(float(iz)-0.5)*(zmaxico-zminico)/nzico
           do ix=1,nxico
             xx=xminico+(float(ix)-0.5)*(xmaxico-xminico)/nxico
-            call RootFill(2,zz,xx,IcoF(2,ix,iy,iz))
-            call histo2FillArray(2,zz,xx,IcoF(2,ix,iy,iz))
+            call RootFill(2,zz,xx,getIcoIcoF(2,ix,iy,iz))
+            call histo2FillArray(2,zz,xx,getIcoIcoF(2,ix,iy,iz))
           enddo
         enddo
         call RootDraw('contz;','#eta_{s};','x [fm];')
@@ -2928,9 +3130,11 @@ c-----------------------------------------------------------------------
                 elseif(word(1:length).eq.'IniConSflavorXY')then
 
         call RootCanvas(1)
-        call histo2BeginFigure(1)
+        call histo2BeginFigure()
         call histo2BeginPlot(1, 1) 
-        call histo2BeginSubPlot(word(1:length)
+        call histo2BeginSubPlot('src/KW/ico.f:xIniCon(word)'
+     *        ,'IniConSflavorXY')
+        call histo2AddHeader(word(1:length)
      *        ,'s flavor    ($\eta_{s}$ = 0)'
      *        ,'s flavor    ($\eta_{s}$ = 0)'
      *        ,yminico
@@ -2948,8 +3152,8 @@ c-----------------------------------------------------------------------
           yy=yminico+(float(iy)-0.5)*(ymaxico-yminico)/nyico
           do ix=1,nxico
             xx=xminico+(float(ix)-0.5)*(xmaxico-xminico)/nxico
-            call RootFill(2,yy,xx,IcoF(3,ix,iy,iz))
-            call histo2FillArray(2,yy,xx,IcoF(3,ix,iy,iz))
+            call RootFill(2,yy,xx,getIcoIcoF(3,ix,iy,iz))
+            call histo2FillArray(2,yy,xx,getIcoIcoF(3,ix,iy,iz))
           enddo
         enddo
         call RootDraw('contz;','y [fm];','x [fm];')
@@ -2959,9 +3163,11 @@ c-----------------------------------------------------------------------
                 elseif(word(1:length).eq.'IniConSflavorXEta')then
 
         call RootCanvas(1)
-        call histo2BeginFigure(1)
+        call histo2BeginFigure()
         call histo2BeginPlot(1, 1)
-        call histo2BeginSubPlot(word(1:length)
+        call histo2BeginSubPlot('src/KW/ico.f:xIniCon(word)'
+     *        ,'IniConSflavorXEta')
+        call histo2AddHeader(word(1:length)
      *        ,'s flavor    (y=0)'
      *        ,'s flavor    (y=0)'
      *        ,zminoff
@@ -2979,8 +3185,8 @@ c-----------------------------------------------------------------------
           zz=zminico+(float(iz)-0.5)*(zmaxico-zminico)/nzico
           do ix=1,nxico
             xx=xminico+(float(ix)-0.5)*(xmaxico-xminico)/nxico
-            call RootFill(2,zz,xx,IcoF(3,ix,iy,iz))
-            call histo2FillArray(2,zz,xx,IcoF(3,ix,iy,iz))
+            call RootFill(2,zz,xx,getIcoIcoF(3,ix,iy,iz))
+            call histo2FillArray(2,zz,xx,getIcoIcoF(3,ix,iy,iz))
           enddo
         enddo
         call RootDraw('contz;','#eta_{s};','x [fm];')
@@ -3003,7 +3209,6 @@ c-----------------------------------------------------------------------
       subroutine xSpaceTime(kkk)
 c-----------------------------------------------------------------------
 #include "aaa.h"
-#include "ico.h"
 #include "ems.h"
       common/cmean/xmean,ymean
       common/cshft/xshft,yshft
@@ -3051,7 +3256,6 @@ c-----------------------------------------------------------------------
       subroutine xBinary(xmax)
 c-----------------------------------------------------------------------
 #include "aaa.h"
-#include "ico.h"
 #include "ems.h"
       write(ifhi,'(a)')       '!----------------------------------'
       write(ifhi,'(a)')       '!   coord            '
@@ -3098,8 +3302,8 @@ c
 c    iii=1: plot also possible Pomerons
 c    jjj>0: multiplicity trigger (useful for pp)
 c------------------------------------------------xSpace-----------------------
+c      use icoModule, only: getIcoIcoE
 #include "aaa.h"
-#include "ico.h"
 #include "ems.h"
       common/cxyzt/xptl(mxptl+29),yptl(mxptl+29),zptl(mxptl+29)
      * ,tptl(mxptl+29),optl(mxptl+29),uptl(mxptl+29),sptl(mxptl+29)
@@ -3112,6 +3316,15 @@ c------------------------------------------------xSpace-----------------------
       character ch1s*3,ch2s*3,ch1r*3,ch2r*3,ch1*3,ch2*3,chh*3
       common/cshft/xshft,yshft
       common/ciprint2d/iprint2d
+      integer nxico,nyico,nzico
+      real xminico, xmaxico, yminico, ymaxico, zminico, zmaxico
+
+      call getIcoDim(nxico,nyico,nzico)
+      call getIcoBound(
+     .     xminico, xmaxico, 
+     .     yminico, ymaxico, 
+     .     zminico, zmaxico
+     .     )
 
       call utpri('xcorec',ish,ishini,4)
 
@@ -3285,7 +3498,8 @@ c------------------------------------------------xSpace-----------------------
          x=xminico+(ix-0.5)*(xmaxico-xminico)/nxico
          y=yminico+(iy-0.5)*(ymaxico-yminico)/nyico
          !print*,x,y,IcoE(ix,iy,iz)
-         if(IcoE(ix,iy,iz).gt.2)
+c         if(IcoE(ix,iy,iz).gt.2)
+         if(getIcoIcoE(ix,iy,iz).gt.2)
      .    write(ifhi,'(2e11.3)')   x   +xshft
      .      ,                      y   +yshft
         enddo
@@ -3854,7 +4068,6 @@ c-----------------------------------------------------------------------
       subroutine xxIcoPlot(cipl,cxi,cmod,zeta,kpl)
 c-----------------------------------------------------------------------
 #include "aaa.h"
-#include "ico.h"
       common/ceve/neve
       common/xyz/delx,dely,delz,nxzero,nyzero,nzzero
       character cx*1,cxi*1,cipl*4,name*15,cfl*1,cmod*3
@@ -3863,6 +4076,15 @@ c-----------------------------------------------------------------------
       logical g
       data nax/0/ nicnt/0/
       save nax,asm,iasm,nicnt
+      integer nxico,nyico,nzico
+      real xminico, xmaxico, yminico, ymaxico, zminico, zmaxico
+      call getIcoDim(nxico,nyico,nzico)
+      call getIcoBound(
+     .     xminico, xmaxico, 
+     .     yminico, ymaxico, 
+     .     zminico, zmaxico
+     .     )
+
       nax=nax+1
       nicnt=nicnt+1
       g=.false.
@@ -4135,9 +4357,19 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
       function wIcoPI3(x,y,z,m) !polynomial interpolation
 c-----------------------------------------------------------------------
+c      use icoModule, only: getIcoIcoE, getIcoIcoV, getIcoIcoF
 #include "aaa.h"
-#include "ico.h"
       real wx(2),wy(2),wz(2)
+      integer nxico,nyico,nzico
+      real xminico, xmaxico, yminico, ymaxico, zminico, zmaxico
+
+      call getIcoDim(nxico,nyico,nzico)
+      call getIcoBound(
+     .     xminico, xmaxico, 
+     .     yminico, ymaxico, 
+     .     zminico, zmaxico
+     .     )
+
       tau0 = tauzer
       delxico=(xmaxico-xminico)/nxico
       delyico=(ymaxico-yminico)/nyico
@@ -4166,19 +4398,20 @@ c-----------------------------------------------------------------------
         do k=1,2
           select case (m)   
           case(0)
-        w=w+wx(i)*wy(j)*wz(k)*IcoE(  jx+i-1,jy+j-1,jz+k-1)
+c        w=w+wx(i)*wy(j)*wz(k)*IcoE(  jx+i-1,jy+j-1,jz+k-1)
+        w=w+wx(i)*wy(j)*wz(k)*getIcoIcoE(  jx+i-1,jy+j-1,jz+k-1)
           case(1)
-        w=w+wx(i)*wy(j)*wz(k)*IcoV(1,jx+i-1,jy+j-1,jz+k-1)
+        w=w+wx(i)*wy(j)*wz(k)*getIcoIcoV(1,jx+i-1,jy+j-1,jz+k-1)
           case(2)
-        w=w+wx(i)*wy(j)*wz(k)*IcoV(2,jx+i-1,jy+j-1,jz+k-1)
+        w=w+wx(i)*wy(j)*wz(k)*getIcoIcoV(2,jx+i-1,jy+j-1,jz+k-1)
           case(3)
-        w=w+wx(i)*wy(j)*wz(k)*IcoV(3,jx+i-1,jy+j-1,jz+k-1)*tau0
+        w=w+wx(i)*wy(j)*wz(k)*getIcoIcoV(3,jx+i-1,jy+j-1,jz+k-1)*tau0
           case(4)
-        w=w+wx(i)*wy(j)*wz(k)*IcoF(1,jx+i-1,jy+j-1,jz+k-1)
+        w=w+wx(i)*wy(j)*wz(k)*getIcoIcoF(1,jx+i-1,jy+j-1,jz+k-1)
           case(5)
-        w=w+wx(i)*wy(j)*wz(k)*IcoF(2,jx+i-1,jy+j-1,jz+k-1)
+        w=w+wx(i)*wy(j)*wz(k)*getIcoIcoF(2,jx+i-1,jy+j-1,jz+k-1)
           case(6)
-        w=w+wx(i)*wy(j)*wz(k)*IcoF(3,jx+i-1,jy+j-1,jz+k-1)
+        w=w+wx(i)*wy(j)*wz(k)*getIcoIcoF(3,jx+i-1,jy+j-1,jz+k-1)
           end select 
         enddo
         enddo
@@ -4193,9 +4426,18 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
       function wIcoPI1(z,m) !polynomial interpolation
 c-----------------------------------------------------------------------
+c      use icoModule, only: getIcoIcoE, getIcoIcoV, getIcoIcoF
 #include "aaa.h"
-#include "ico.h"
       real wz(2)
+      integer nxico,nyico,nzico
+      real xminico, xmaxico, yminico, ymaxico, zminico, zmaxico
+      call getIcoDim(nxico,nyico,nzico)
+      call getIcoBound(
+     .     xminico, xmaxico, 
+     .     yminico, ymaxico, 
+     .     zminico, zmaxico
+     .     )
+
       tau0 = tauzer
       delzico=(zmaxico-zminico)/nzico
       w=0
@@ -4210,19 +4452,20 @@ c-----------------------------------------------------------------------
         do k=1,2
           select case (m)   
           case(0)
-        w=w+wz(k)*IcoE(  i,j,jz+k-1)
+c        w=w+wz(k)*IcoE(  i,j,jz+k-1)
+        w=w+wz(k)*getIcoIcoE(  i,j,jz+k-1)
           case(1)
-        w=w+wz(k)*IcoV(1,i,j,jz+k-1)
+        w=w+wz(k)*getIcoIcoV(1,i,j,jz+k-1)
           case(2)
-        w=w+wz(k)*IcoV(2,i,j,jz+k-1)
+        w=w+wz(k)*getIcoIcoV(2,i,j,jz+k-1)
           case(3)
-        w=w+wz(k)*IcoV(3,i,j,jz+k-1)*tau0
+        w=w+wz(k)*getIcoIcoV(3,i,j,jz+k-1)*tau0
           case(4)
-        w=w+wz(k)*IcoF(1,i,j,jz+k-1)
+        w=w+wz(k)*getIcoIcoF(1,i,j,jz+k-1)
           case(5)
-        w=w+wz(k)*IcoF(2,i,j,jz+k-1)
+        w=w+wz(k)*getIcoIcoF(2,i,j,jz+k-1)
           case(6)
-        w=w+wz(k)*IcoF(3,i,j,jz+k-1)
+        w=w+wz(k)*getIcoIcoF(3,i,j,jz+k-1)
           end select 
         enddo
         enddo
