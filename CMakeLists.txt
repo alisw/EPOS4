@@ -333,7 +333,7 @@ list(APPEND LINK_LIBRARY_LIST
     $ENV{CGAL_ROOT}/lib/libCGAL.so
     )    
 
-target_link_libraries(Xepos ${LINK_LIBRARY_LIST})
+target_link_libraries(Xepos PUBLIC ${LINK_LIBRARY_LIST})
 
 
 ####################################################################################
