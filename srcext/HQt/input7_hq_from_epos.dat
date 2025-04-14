@@ -1,0 +1,29 @@
+7 			plasma type/3:Bjorken, no transv exp./5:Heinz & Kolb/6:Huovinen (RHIC, b=0)/7:EPOS
+0 13	                 b_inf & bsup (bounds on impact parameter)
+208			A (197 or 208)
+2760d0 			sqrt(s) (200d0 or 5500d0)
+1 1			tot nb collisions & nb subruns (technical)
+2 			1 for Fokker Planck / 2 for Boltzmann
+0.1			(bjorken) time step for evolution
+0 			0 for evol -> QGP] / 1 for evol -> mixed phase]
+.true.			if decrease of rate in the mixed phase (propto eps)
+.false.			cronin kt kicks ? (.true. or .false.)
+0 1.0			reduction of dofs in EPOS (0:none,1:HBS,2:EPOSpara,3:therm.mass)	c: T_max/Tc
+0			cranck Q+Q<->quarkonia cross sect. (0: none/1: standard)
+2			1:fragmentation / 2: coalescence / 3(standard):mixed
+3			fragm. type:1:delta(z=1)/2:Peterson/3(std):Cacciari and Nason
+2			coal type; 1: historic; 2: Dover
+.true. 			if collisionnal process
+4 			model for Boltzmann collisions (elast)
+1.			K factor for rates
+4 	1		Fokker Planck transp coeff (elast) and type of tuning
+1.			K factor for transport coeff
+.false.  0.3	 	if radiative process / alpha_s for rad
+.true.			if full QCD in the radiative process
+1			typelpm
+.true.			if LPM implemented
+.false. 0.0		if damping and damping coefficient
+1			p-distrib type of QQbar/1:FONLL pt-anti correl/2: idem no pt-correl/3:Pythia
+0.2			dissoc. temperature of J/Psi in plasma (Tc -> 0.3; 1D10 for no melting)
+0.3			dissoc. temperature of Upsilon in plasma (Tc -> 0.3; 1D10 for no melting)
+1. 0. 1. 0.		multipl. factor for Q product (c,psi,b,upsi); put negative value for abs numbers

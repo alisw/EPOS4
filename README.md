@@ -1,15 +1,16 @@
-## The EPOS4 project
-
-A dedicated web page provides information about the 
-["EPOS4 project"](https://klaus.pages.in2p3.fr/epos4/), 
-concerning the underlying physics, the code package, 
-and contact information. 
-
-When you use EPOS4, please cite the papers in section
-["Cite"](https://klaus.pages.in2p3.fr/epos4/code/cite).
-
-----
-
-The package may be installed and compiled as explained in section 
-["Install"](https://klaus.pages.in2p3.fr/epos4/code/install).
-
+## The EPOS4HQ project
+ 
+                                                                      
+              EPOS4HQ 1.0 (the first EPOS4HQ release)                 
+                                                                      
+                  Based on EPOS 4.0.3 / HQ 5.13                       
+                                                                      
+ A dedicated web page provides information about the EPOS4HQ project: 
+     https://klaus.pages.in2p3.fr/epos4/highlights/epos4hq.html       
+                                                                      
+       When you use EPOS4HQ, please cite the basic EPOS4 papers       
+            https://klaus.pages.in2p3.fr/epos4/code/cite              
+                    and the basis EPOS4HQ papers                      
+      https://journals.aps.org/prc/pdf/10.1103/PhysRevC.110.024909    
+      https://journals.aps.org/prd/pdf/10.1103/PhysRevD.109.054011    
+                                                                      
