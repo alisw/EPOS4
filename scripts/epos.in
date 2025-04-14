@@ -9,41 +9,41 @@ if [ $# -le 0 ]; then
 fi
 
 # check if the following environement variables have been defined
-if [ -z ${EPO4} ]; then
-    export EPO4=${EPOS4_ROOT}
-    echo "For compatibility reason with older versions, EPO4 has to be defined by default as the EPOS source directory: " $EPO4
+if [ -z ${EPO4HQ} ]; then
+    export EPO4HQ=${EPOS4HQ_ROOT}
+    echo "For compatibility reason with older versions, EPO4HQ has to be defined by default as the EPOS source directory: " $EPO4HQ
 fi
 
 if [ -z ${DAT} ]; then
     # this directory is needed to retrieve the files README.md and VERSION.txt
-    export DAT=${EPO4}
+    export DAT=${EPO4HQ}
     echo "DAT will be defined by default as: " $DAT
 fi
 
 if [ -z ${OPT} ]; then
-    export OPT=${EPO4}examples/
+    export OPT=${EPO4HQ}examples/
     echo "OPT will be defined by default as: " $OPT
     # create directory if needed, no error if existing
     mkdir -p ${OPT}
 fi
 
 if [ -z ${HTO} ]; then
-    export HTO=${EPO4}histo/
+    export HTO=${EPO4HQ}histo/
     echo "HTO will be defined by default as: " $HTO
     # create directory if needed, no error if existing
     mkdir -p ${HTO}
 fi
 
 if [ -z ${CHK} ]; then
-    export CHK=${EPO4}check/
+    export CHK=${EPO4HQ}check/
     echo "CHK will be defined by default as: " $CHK
     # create directory if needed, no error if existing    
     mkdir -p ${CHK}
 fi
 
-SRC=${EPO4}'src/'   
-SRCEXT=${EPO4}'srcext/'
-CONF=${EPO4}'config/'
+SRC=${EPO4HQ}'src/'   
+SRCEXT=${EPO4HQ}'srcext/'
+CONF=${EPO4HQ}'config/'
 
 if [ $OPT = './' ]; then 
     OPX=`pwd`/
@@ -251,7 +251,7 @@ clinput=z-${one}'.clinput'
  echo "!!!beginoptns spherio !No longer used." >> $clinput
  echo "!!!...                !See version < 3118  " >> $clinput
  echo "!!!endoptns spherio   !if needed again         " >> $clinput
- echo "fname pathep $EPO4" >> $clinput
+ echo "fname pathep $EPO4HQ" >> $clinput
  echo "!-------HQ--------" >> $clinput
  echo "fname user1  ${SRCEXT}HQt/" >> $clinput
  echo "fname user2  ${HTO}z-${one}.hq" >> $clinput
@@ -299,7 +299,7 @@ clinput=z-${one}'.clinput'
 # to use gdb, type "epos ..." as usually, then in gdb type "run", then "z-clinput"  
 #gdb ${OBJ}epos$EPOVSN/bin/Xepos 
 
-time  ${EPO4}bin/Xepos -n <<EOF
+time  ${EPO4HQ}bin/Xepos -n <<EOF
 $clinput
 EOF
 rm $clinput

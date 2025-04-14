@@ -19,7 +19,7 @@ include("GNUInstallDirs")
 option(INTERNAL_USE "internal use" FALSE)
 
 # @ONLY : Restrict variable replacement to references of the form @VAR@. This is useful for configuring scripts that use ${VAR} syntax.
-configure_file(scripts/epos.in scripts/epos @ONLY)
+configure_file(scripts/epos.in scripts/eposhq @ONLY)
 
 if(INTERNAL_USE)
   message(STATUS "EPOS: compilation in mode INTERNAL_USE")
@@ -359,7 +359,7 @@ if (EPOS_ENABLE_TESTING)
   file(COPY examples/proton_proton_scattering_no_hydro.optns
     DESTINATION  ${CMAKE_BINARY_DIR}/test1/examples/)
   add_test(NAME proton_proton_scattering_no_hydro
-    COMMAND ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/epos proton_proton_scattering_no_hydro
+    COMMAND ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/eposhq proton_proton_scattering_no_hydro
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/${test_name}/)
   set_tests_properties(proton_proton_scattering_no_hydro PROPERTIES ENVIRONMENT 
     "EPO=${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/;OPT=${CMAKE_BINARY_DIR}/${test_name}/examples/;HTO=${CMAKE_BINARY_DIR}/${test_name}/histo/;CHK=${CMAKE_BINARY_DIR}/${test_name}/check/")
@@ -373,7 +373,7 @@ if (EPOS_ENABLE_TESTING)
   file(COPY examples/proton_proton_scattering_with_hydro.optns
     DESTINATION  ${CMAKE_BINARY_DIR}/test2/examples/)
   add_test(NAME proton_proton_scattering_with_hydro
-    COMMAND ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/epos proton_proton_scattering_with_hydro
+    COMMAND ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/eposhq proton_proton_scattering_with_hydro
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/${test_name}/)
   set_tests_properties(proton_proton_scattering_with_hydro PROPERTIES ENVIRONMENT 
     "EPO=${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/;OPT=${CMAKE_BINARY_DIR}/${test_name}/examples/;HTO=${CMAKE_BINARY_DIR}/${test_name}/histo/;CHK=${CMAKE_BINARY_DIR}/${test_name}/check/")
@@ -392,7 +392,7 @@ endif()
 ####################################################################################
 ####################################################################################
 install(TARGETS Xepos DESTINATION ${CMAKE_INSTALL_BINDIR})
-install(FILES ${CMAKE_BINARY_DIR}/scripts/epos
+install(FILES ${CMAKE_BINARY_DIR}/scripts/eposhq
   DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT config
   PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
   GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE

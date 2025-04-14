@@ -1,0 +1,6 @@
+0.1		timein
+60.01           timefin
+0.25		time step for quarkonia analysis
+0.4 		temp dissoc
+.false.		if interpolation
+0.       	schemeRemler the way deltap is shared btween fwd and bckd points(standard:0.)

@@ -1,0 +1,45 @@
+7 			plasma type/3:Bjorken, no transv exp./5:Heinz & Kolb/6:Huovinen (RHIC, b=0)/7:EPOS
+9.83 11.	                 b_inf & bsup (bounds on impact parameter)
+208			A (197 or 208)
+5500d0 			sqrt(s) (200d0 or 5500d0)
+1 1 1		        tot nb collisions & nb subruns (technical)
+.true.                  ifallow skip of failed HQ events
+2 			1 for Fokker Planck / 2 for Boltzmann
+0.1			(bjorken) time step for evolution
+0 			0 for evol -> QGP] / 1 for evol -> mixed phase]
+.false.			if decrease of rate in the mixed phase (propto eps)
+.false. 1		init external spectra for c quark ? which type 
+.false. 1		if shadowing for c and which curve (1:central;2:low;3:high)
+.false. 0		init external spectra for b quark ? which type        
+.false. 0		if shadowing for b and which curve
+.false.			if all HQ generated at 0 rapidity
+.false.			cronin kt kicks ? (.true. or .false.)
+1			production mechanism for hhbar if HQ from HQ chosen (1: NNcollision, 2: elem collisions)
+0 1.0			reduction of dofs in EPOS (0:none,1:HBS,2:EPOSpara,3:therm.mass)	c: T_max/Tc
+0			cranck Q+Q<->quarkonia cross sect. (0: none/1: standard)
+3			1:fragmentation / 2: coalescence / 3(standard):mixed
+3			fragm. type:1:delta(z=1)/2:Peterson/3(std):Cacciari and Nason
+5 .true. 0.155		coal type; 1: historic; 2: Dover; 3: Dover with bug corrected; 4 set 2017(new); 5 set 2023 / if coal in fluid cell /tempcoal /  
+.false.	 		if one saves info on the hadronization (book keeping) 
+.true. 			if collisionnal process
+4 			model for Boltzmann collisions (elast)
+1.			K factor for rates
+4 	1		Fokker Planck transp coeff (elast) and type of tuning
+1.			K factor for transport coeff
+.true.  0.3	 	if radiative process / alpha_s for rad
+.true.			if full QCD in the radiative process
+1			typelpmdamp (if ifdamping is .true.)
+.true.			if LPM implemented
+.false. 0.0		if damping and damping coefficient
+0    	   	 	if Q-Qbar semi-classical dynamics (0 or 1)
+.true.			if correction for the  cm shift due to QQbar evol 
+.false. 		if reduction of singlet due to interference
+0.05  0.05		relative and absolute deltap for a collision to be considered as "hard enough"
+0.01  0.05		same for corona decision
+2			p-distrib type of QQbar/1:FONLL pt-anti correl/2: idem no pt-correl/3:Pythia
+2   			type of distribution for the distance between Q and Qbar (0: uniform for r<r0;1: fixed;2:gaussian) 
+0.25 0.08		parameter of the distance distribution for ccbar (0: rmax, 1: r-value; 2: sigma) 
+0.2			dissoc. temperature of J/Psi in plasma (Tc -> 0.3; 1D10 for no melting)
+0.3			dissoc. temperature of Upsilon in plasma (Tc -> 0.3; 1D10 for no melting)
+1. 0. 1. 0.		multipl. factor for Q product (c,psi,b,upsi); put negative value for abs numbers
+1 'y0'	 		upper boundary on rapidity and associated name
