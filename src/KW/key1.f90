@@ -486,10 +486,15 @@
           elseif(engy.lt.10000.)then ; fuuu=0.170*max(min(X,18.),3.)!pp7T,pp8T
           else                       ; fuuu=0.150*max(min(X,18.),3.)!pp13T
           endif 
-        elseif(amassMax.le.20.)then!OO
+        elseif(amassMax.le.16.)then!OO
           if(engy.lt.400)then       ; fuuu=max(0.078+0.00264*X,0.0174*(X+0.5))!OO200
           elseif(engy.lt.10000)then ; fuuu=max(0.50+0.0167*X,0.109*(X+0.475))!OO5T
           else                      ; fuuu=max(0.50+0.0167*X,0.109*(X+0.475))
+          endif
+        elseif(amassMax.le.20.)then!NeNe
+          if(engy.lt.400)then       ; fuuu=max(0.078+0.00264*X,0.0087+0.0174*X) !NeNe200
+          elseif(engy.lt.10000)then ; fuuu=max(0.500+0.01670*X,0.0900+0.1000*X)  !NeNe5T
+          else                      ; fuuu=max(0.500+0.01670*X,0.0900+0.1000*X)
           endif
         elseif(amassMax.le.50.)then!ArAr
           if(engy.lt.10000)then     ; fuuu=max(0.50+0.0167*X,0.109*(X+0.475))!ArAr5T
