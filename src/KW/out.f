@@ -225,6 +225,7 @@ c     nspecn=npnevt+ntnevt
         call fillhepmc(iextree,ihepmc3,nrevt,fegyevt,dy, iprojZ, iprojA
      .  , itargZ, itargA, nhard, ngl, npartproj, nparttarg
      .  , nspecprojp, nspecprojn, nspectargp, nspectargn, nptevt, cnt
+     .  , phi
      .  , sigt, id, ist, ity, ior, px, py, pz, eam, x, y, z, t
      .  , hepmc_record_mode, hepmc_tau_decay, hepmc_record_id_nb
      .  , hepmc_record_id_list)
@@ -721,6 +722,7 @@ c    .       ,hepmc_record_id_list)
              call fillhepmc(iextree,ihepmc3,nrevt,fegyevt,dy,laproj
      .       , maproj, latarg, matarg, nhard, ngl, npartproj, nparttarg
      .       , nspecprojp, nspecprojn, nspectargp, nspectargn, np, bm
+     .       , phi
      .       , sigt, id, ist, ity, ior, px, py, pz, eam, x, y, z, t
      .       , hepmc_record_mode, hepmc_tau_decay, hepmc_record_id_nb
      .       , hepmc_record_id_list)

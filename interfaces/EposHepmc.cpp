@@ -36,7 +36,7 @@ extern "C" void fillhepmc_(int *_iextree, int *_ihepmc3, int *_nevt, float *_eng
                     int *_iprojZ, int *_iprojA, int *_itargZ, int *_itargA,
                     int *_nhard, int *_ncoll, int *_npartproj, int *_nparttarg,
                     int *_nspecprojp, int *_nspecprojn, int *_nspectargp, int *_nspectargn, 
-                    int *_np, float *_bim, float *_sigtot,
+                    int *_np, float *_bim, float *_phi, float *_sigtot,
                     int *_id, int *_ist, int *_ity, int *_ior, float *_px, float *_py,
                     float *_pz, float *_m, float *_x, float *_y, float *_z, float *_t,
                     int *_record_mode, float *_tau_decay, int *_record_id_nb,
@@ -225,6 +225,7 @@ double get_mass(int A, int Z) {
  (recorded only if _iextree == 1)
  * @param _np number of particles in the event
  * @param _bim impact parameter
+ * @param _phi reaction (event) plane angle
  * @param _sigtot corresponding pp cross-section (recorded only if _iextree ==
  1)
  * @param _id particle id : see tables in file KWt/idt.dt : first column for
@@ -256,7 +257,7 @@ void fillhepmc_(int *_iextree, int *_ihepmc3, int *_nevt, float *_eng, float *_d
                 int *_iprojZ, int *_iprojA, int *_itargZ, int *_itargA,
                 int *_nhard, int *_ncoll, int *_npartproj, int *_nparttarg,
 		int *_nspecprojp, int *_nspecprojn, int *_nspectargp, int *_nspectargn, 
-                int *_np, float *_bim, 
+                int *_np, float *_bim, float *_phi,
                 float *_sigtot, int *_id, int *_ist, int *_ity, int *_ior,
                 float *_px, float *_py, float *_pz, float *_m, float *_x,
                 float *_y, float *_z, float *_t, int *_record_mode,
@@ -402,6 +403,7 @@ void fillhepmc_(int *_iextree, int *_ihepmc3, int *_nevt, float *_eng, float *_d
   if (A_proj > 1 || A_targ > 1) {
     HepMC3::GenHeavyIonPtr hi = std::make_shared<HepMC3::GenHeavyIon>();
     hi->impact_parameter = *_bim; //  impact parameter
+    hi->event_plane_angle = *_phi; //  reaction (event) plane angle
     //  Provide following info only if new tree used (from EPOS 4)
     if (*_iextree == 1) {
       hi->Ncoll_hard = *_nhard;         //  number of hard interactions
